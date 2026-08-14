@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ensambles — AMBIENTES EXTREMOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--gunmetal-700); }
+  .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; }
+  .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
+  .grid-section { padding: 48px; }
+
+  .config-card { display: grid; grid-template-columns: 1fr 1fr; background: linear-gradient(120deg, var(--gunmetal-800), var(--gunmetal-700)); border: 1px solid var(--orange); border-radius: 4px; overflow: hidden; margin-bottom: 32px; }
+  .config-card-text { padding: 36px 40px; display: flex; flex-direction: column; justify-content: center; }
+  .config-badge { display: inline-block; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; margin-bottom: 14px; width: fit-content; }
+  .config-card-text h2 { font-size: 26px; font-weight: 600; margin-bottom: 10px; }
+  .config-card-text p { color: var(--steel-300); font-size: 14px; margin-bottom: 20px; max-width: 400px; }
+  .config-card-visual { background: linear-gradient(145deg, var(--gunmetal-700), var(--gunmetal-900)); display: flex; align-items: center; justify-content: center; color: var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; min-height: 220px; }
+
+  .subsection-label { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel-300); margin-bottom: 18px; }
+
+  @media (max-width: 800px) {
+    .config-card { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
+    .intro h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="ensambles.html" class="active">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="breadcrumb">
+  <a href="index.html">Inicio</a> / <span>Ensambles</span>
+</div>
+
+<section class="intro">
+  <div class="eyebrow">Ensambles</div>
+  <h1>Ensambles eléctricos prefabricados y a medida</h1>
+  <p>Cable y conectores preconfigurados para sensores y control, listos para instalar o adaptados a su aplicación.</p>
+</section>
+
+<section class="grid-section">
+
+  <div class="config-card">
+    <div class="config-card-text">
+      <span class="config-badge">Configurador externo</span>
+      <h2>Configurador de Ensambles</h2>
+      <p>Defina cable, conectores, longitud y protecciones para armar un ensamble a la medida exacta de su aplicación.</p>
+      <a class="btn-primary" href="#" style="width:fit-content;">Abrir configurador</a>
+    </div>
+    <div class="config-card-visual">Vista previa del configurador</div>
+  </div>
+
+  <div class="subsection-label">Modelos estándar</div>
+  <div class="product-grid">
+
+    <a class="product-card" href="ensambles-temposonics.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Ensamble Temposonics</span></div>
+      <div class="product-body">
+        <h3>Ensamble para Sensor Temposonics</h3>
+        <p>Cable y conector preconfigurados para sensores de posición Temposonics (MTS).</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="ensamble-encoder.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Ensamble Encoder</span></div>
+      <div class="product-body">
+        <h3>Ensamble para Encoder</h3>
+        <p>Cable y conector preconfigurados para encoders de posición y velocidad.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="ensamble-control-m12.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Ensamble Control M12</span></div>
+      <div class="product-body">
+        <h3>Ensamble para Control M12</h3>
+        <p>Cable y conector M12 preconfigurados para señales de control.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<div class="cta-final">
+  <div class="cta-text">
+    <h2>¿Necesita una configuración diferente?</h2>
+    <p>También fabricamos ensambles especiales de acuerdo con los requerimientos de su aplicación.</p>
+  </div>
+  <a class="btn-primary" href="index.html#contacto">Solicitar información</a>
+</div>
+
+</body>
+</html>

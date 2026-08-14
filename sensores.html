@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensores — AMBIENTES EXTREMOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--gunmetal-700); }
+  .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; }
+  .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
+
+  .fork { display: grid; grid-template-columns: 1fr 1fr; min-height: 460px; }
+  .fork-path { padding: 56px 48px; display: flex; flex-direction: column; justify-content: center; position: relative; text-decoration: none; color: inherit; transition: background 0.25s; }
+  .fork-path:first-child { border-right: 1px solid var(--gunmetal-700); }
+  .fork-path:hover { background: var(--gunmetal-800); }
+  .fork-eyebrow { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
+  .fork-path h2 { font-size: 28px; font-weight: 600; margin-bottom: 14px; max-width: 380px; }
+  .fork-path p { color: var(--steel-300); font-size: 15px; max-width: 400px; margin-bottom: 20px; }
+  .fork-list { list-style: none; margin-bottom: 24px; }
+  .fork-list li { font-size: 13px; color: var(--steel-100); padding: 6px 0; border-bottom: 1px solid var(--gunmetal-700); }
+  .fork-cta { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
+  .fork-divider { display: flex; align-items: center; justify-content: center; }
+
+  @media (max-width: 800px) {
+    .fork { grid-template-columns: 1fr; }
+    .fork-path:first-child { border-right: none; border-bottom: 1px solid var(--gunmetal-700); }
+  }
+  @media (max-width: 600px) {
+    .intro { padding-left: 24px; padding-right: 24px; }
+    .intro h1 { font-size: 32px; }
+    .fork-path { padding: 40px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html" class="active">Sensores</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="breadcrumb">
+  <a href="index.html">Inicio</a> / <span>Sensores</span>
+</div>
+
+<section class="intro">
+  <div class="eyebrow">Sensores</div>
+  <h1>Sensores de posición, velocidad y proximidad</h1>
+  <p>Tecnología NSD para medición confiable en condiciones de alta temperatura, vibración e impacto mecánico.</p>
+</section>
+
+<div class="fork">
+  <a class="fork-path" href="aplicaciones-siderurgicas.html">
+    <span class="fork-eyebrow">Explorar por</span>
+    <h2>Aplicación siderúrgica</h2>
+    <p>Encuentre el sensor adecuado según el proceso en el que se instalará.</p>
+    <ul class="fork-list">
+      <li>Horno de Arco Eléctrico (EAF)</li>
+      <li>Colada Continua (CC)</li>
+      <li>Laminación en caliente (HSM)</li>
+      <li>Laminación en frío (FM)</li>
+      <li>Otras aplicaciones</li>
+    </ul>
+    <span class="fork-cta">Ver aplicaciones
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+    </span>
+  </a>
+
+  <a class="fork-path" href="productos.html">
+    <span class="fork-eyebrow">Explorar por</span>
+    <h2>Tipo de producto</h2>
+    <p>Vaya directo al tipo de sensor que necesita, sin pasar por la aplicación.</p>
+    <ul class="fork-list">
+      <li>Posición de cilindros hidráulicos</li>
+      <li>Encoders de posición</li>
+      <li>Encoders de velocidad</li>
+      <li>Encoder con sensor de temperatura y vibración</li>
+      <li>Sensor magnético de proximidad</li>
+    </ul>
+    <span class="fork-cta">Ver productos
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+    </span>
+  </a>
+</div>
+
+<div class="cta-final">
+  <div class="cta-text">
+    <h2>¿No está seguro qué sensor necesita?</h2>
+    <p>Cuéntenos su aplicación y le ayudamos a identificar la solución adecuada.</p>
+  </div>
+  <a class="btn-primary" href="index.html#contacto">Solicitar asesoría técnica</a>
+</div>
+
+</body>
+</html>

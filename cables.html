@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cables — AMBIENTES EXTREMOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--gunmetal-700); }
+  .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; }
+  .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
+  .grid-section { padding: 48px; }
+
+  .config-card { display: grid; grid-template-columns: 1fr 1fr; background: linear-gradient(120deg, var(--gunmetal-800), var(--gunmetal-700)); border: 1px solid var(--orange); border-radius: 4px; overflow: hidden; margin-bottom: 32px; }
+  .config-card-text { padding: 36px 40px; display: flex; flex-direction: column; justify-content: center; }
+  .config-badge { display: inline-block; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; margin-bottom: 14px; width: fit-content; }
+  .config-card-text h2 { font-size: 26px; font-weight: 600; margin-bottom: 10px; }
+  .config-card-text p { color: var(--steel-300); font-size: 14px; margin-bottom: 20px; max-width: 400px; }
+  .config-card-visual { background: linear-gradient(145deg, var(--gunmetal-700), var(--gunmetal-900)); display: flex; align-items: center; justify-content: center; color: var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; min-height: 220px; }
+
+  .filter-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+  .pill { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-size: 13px; padding: 9px 16px; border-radius: 20px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .pill.active, .pill:hover { border-color: var(--orange); color: var(--orange); }
+
+  .type-badge-sm { display: inline-block; background: var(--gunmetal-700); color: var(--steel-100); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 9px; border-radius: 3px; margin-bottom: 10px; }
+
+  @media (max-width: 800px) { .config-card { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) {
+    .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
+    .intro h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="cables.html" class="active">Cables</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="breadcrumb">
+  <a href="index.html">Inicio</a> / <span>Cables</span>
+</div>
+
+<section class="intro">
+  <div class="eyebrow">Cables</div>
+  <h1>Cables para alta temperatura y ambientes severos</h1>
+  <p>Cables de potencia, control, instrumentación y termopar diseñados para operar bajo calor, vibración y ambientes corrosivos.</p>
+</section>
+
+<section class="grid-section">
+
+  <div class="config-card">
+    <div class="config-card-text">
+      <span class="config-badge">Configurador</span>
+      <h2>Configurador de Cable</h2>
+      <p>Seleccione calibre, número de conductores, blindaje y temperatura de operación para encontrar el cable adecuado.</p>
+      <a class="btn-primary" href="configurador.html" style="width:fit-content;">Abrir configurador</a>
+    </div>
+    <div class="config-card-visual">Vista previa del configurador</div>
+  </div>
+
+  <div class="filter-pills">
+    <span class="pill active">Los más confiables</span>
+    <span class="pill">Potencia</span>
+    <span class="pill">Control</span>
+    <span class="pill">Instrumentación</span>
+    <span class="pill">Termopar</span>
+  </div>
+
+  <div class="product-grid">
+
+    <a class="product-card" href="thermal-3x18.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Thermal 3x18</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Instrumentación</span>
+        <h3>Thermal 3x18</h3>
+        <p>Cable blindado 450°C/300V para instrumentación en ambientes de alta temperatura.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="thermal-7x20.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Thermal 7x20</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Control</span>
+        <h3>Thermal 7x20</h3>
+        <p>Cable multiconductor para señales de control en ambientes de alta temperatura.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="thermal-16-tr.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Thermal 16 TR</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Control</span>
+        <h3>Thermal 16 TR</h3>
+        <p>Cable trenzado resistente a alta temperatura para líneas de control.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="thermal-super-cable.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Thermal Super Cable</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Potencia</span>
+        <h3>Thermal Super Cable</h3>
+        <p>Cable de potencia de alto desempeño para condiciones extremas de temperatura.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="thermal-termopar-tipo-k.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Termopar Tipo K</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Termopar</span>
+        <h3>Thermal Termopar Tipo K</h3>
+        <p>Cable de compensación tipo K para medición de temperatura de precisión.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="draka-marino-7x16.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Draka Marino 7x16</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Control</span>
+        <h3>Draka Marino 7x16</h3>
+        <p>Cable de control con certificación marina para ambientes corrosivos.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="draka-4x10.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Draka 4x10</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Potencia</span>
+        <h3>Draka 4x10</h3>
+        <p>Cable de potencia de 4 conductores para distribución eléctrica industrial.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="draka-500-mcm.html">
+      <div class="product-photo"><span class="photo-placeholder">Foto Draka 500 MCM</span></div>
+      <div class="product-body">
+        <span class="type-badge-sm">Potencia</span>
+        <h3>Draka 500 MCM</h3>
+        <p>Cable de potencia de gran calibre para cargas industriales de alta demanda.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<div class="cta-final">
+  <div class="cta-text">
+    <h2>¿No encuentra el cable que necesita?</h2>
+    <p>Use el configurador o cuéntenos su aplicación para encontrar la solución adecuada.</p>
+  </div>
+  <a class="btn-primary" href="index.html#contacto">Cuéntenos su aplicación</a>
+</div>
+
+</body>
+</html>

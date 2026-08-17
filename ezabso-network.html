@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ezABSO Network Series — Encoder Multivuelta para Redes Industriales | AMBIENTES EXTREMOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .hero { padding: 32px 48px 40px; max-width: 760px; }
+  .eyebrow { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
+  .hero h1 { font-size: 34px; font-weight: 600; margin-bottom: 14px; }
+  .hero .subtitle { color: var(--steel-100); font-size: 16px; margin-bottom: 24px; max-width: 620px; }
+  .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
+  .badge-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 7px 14px; border-radius: 20px; }
+
+  .main-image-wrap { padding: 0 48px 48px; max-width: 1000px; }
+  .main-image { aspect-ratio: 16/9; background: linear-gradient(145deg, var(--gunmetal-800), var(--gunmetal-900)); border: 1px solid var(--gunmetal-700); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .content { padding: 0 48px 48px; max-width: 1000px; }
+  .section { padding-top: 40px; border-top: 1px solid var(--gunmetal-700); margin-top: 40px; }
+  .section:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .section-title { font-size: 22px; font-weight: 600; margin-bottom: 18px; }
+
+  .desc p { color: var(--steel-100); font-size: 15px; max-width: 720px; margin-bottom: 12px; }
+
+  .specs-table { width: 100%; border-collapse: collapse; max-width: 720px; }
+  .specs-table tr { border-bottom: 1px solid var(--gunmetal-700); }
+  .specs-table td { padding: 13px 12px; font-size: 14px; }
+  .specs-table td:first-child { color: var(--steel-300); width: 260px; font-weight: 500; }
+  .specs-table td:last-child { color: var(--white); }
+  .specs-table tr:hover { background: var(--gunmetal-800); }
+
+  .cq-field { display: flex; flex-direction: column; gap: 6px; max-width: 320px; }
+  .cq-field label { font-size: 12px; color: var(--steel-300); }
+  .cq-field select {
+    background: var(--gunmetal-800);
+    border: 1px solid var(--gunmetal-600);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 11px 14px;
+    border-radius: 3px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238b969c' stroke-width='1.4' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  .protocol-note { font-size: 12px; color: var(--steel-300); margin-top: 12px; max-width: 620px; }
+
+  .downloads-list { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
+  .download-item { display: flex; align-items: center; gap: 14px; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 4px; padding: 16px 18px; }
+  .pdf-icon { width: 38px; height: 38px; border-radius: 3px; background: var(--orange-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+  .download-text { flex: 1; }
+  .download-text .title { font-size: 14px; font-weight: 600; color: var(--white); }
+  .download-text .sub { font-size: 12px; color: var(--steel-300); margin-top: 2px; }
+  .pdf-btn { background: transparent; border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 9px 16px; border-radius: 3px; cursor: pointer; white-space: nowrap; }
+
+  @media (max-width: 700px) {
+    .hero, .main-image-wrap, .content { padding-left: 24px; padding-right: 24px; }
+    .hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html" class="active">Sensores</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="breadcrumb">
+  <a href="index.html">Inicio</a> / <a href="sensores.html">Sensores</a> / <a href="productos.html">Por tipo de producto</a> / <span>ezABSO Network Series</span>
+</div>
+
+<section class="hero">
+  <div class="eyebrow">Encoders inteligentes · ezABSO</div>
+  <h1>ezABSO Network Series — Encoder Multivuelta para Redes Industriales</h1>
+  <p class="subtitle">Encoder absoluto multivuelta con salida directa a red industrial — sin batería, sin partes desechables.</p>
+  <div class="badge-row">
+    <span class="badge-pill">Multivuelta absoluto</span>
+    <span class="badge-pill">CC-Link / PROFIBUS / EtherNet-IP</span>
+  </div>
+  <div>
+    <button class="btn-primary">Solicitar cotización</button>
+  </div>
+</section>
+
+<div class="main-image-wrap">
+  <div class="main-image">Foto ezABSO Network Series — pendiente</div>
+</div>
+
+<div class="content">
+
+  <div class="section desc">
+    <h2 class="section-title">Descripción</h2>
+    <p>ezABSO Network Series lleva el mismo principio de inducción electromagnética de la línea ezABSO directo a la red industrial, sin necesidad de un convertidor externo — hasta 8,778 vueltas de detección absoluta, con hasta 2,301,100,032 divisiones totales.</p>
+    <p>Al ser absoluto, conserva la posición real incluso si el equipo se mueve con la alimentación apagada — no requiere rehomear al reconectar.</p>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Características principales</h2>
+    <table class="specs-table">
+      <tr><td>Vueltas totales</td><td>8,778</td></tr>
+      <tr><td>Divisiones máximas</td><td>2,301,100,032 (8,778 vueltas × 262,144)</td></tr>
+      <tr><td>Alimentación</td><td>10.8 – 28.8 VDC</td></tr>
+      <tr><td>Temperatura de operación</td><td>-20°C a +80°C (CC-Link / PROFIBUS) · -20°C a +75°C (EtherNet/IP)</td></tr>
+      <tr><td>Temperatura de almacenamiento</td><td>-20°C a +90°C</td></tr>
+      <tr><td>Grado de protección</td><td>IP66 (eje: IP64 durante rotación)</td></tr>
+      <tr><td>Resistencia a vibración</td><td>200 m/s²</td></tr>
+      <tr><td>Resistencia a impacto</td><td>2,000 m/s²</td></tr>
+      <tr><td>Velocidad mecánica permisible</td><td>6,000 r/min</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Protocolo de comunicación</h2>
+    <div class="cq-field">
+      <label>Seleccione el protocolo</label>
+      <select>
+        <option>CC-Link</option>
+        <option>PROFIBUS-DP</option>
+        <option>EtherNet/IP</option>
+      </select>
+    </div>
+    <p class="protocol-note">CC-Link y PROFIBUS-DP admiten hasta 42 y 124 unidades esclavas respectivamente. EtherNet/IP opera a 10/100 Mbps con hasta 3 conexiones de I/O.</p>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Descargas</h2>
+    <div class="downloads-list">
+      <div class="download-item">
+        <div class="pdf-icon">📄</div>
+        <div class="download-text">
+          <div class="title">Ficha técnica ezABSO Network Series</div>
+          <div class="sub">Especificaciones completas y dimensiones</div>
+        </div>
+        <button class="pdf-btn">Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="cta-final">
+  <div class="cta-text">
+    <h2>¿Necesita Ethernet industrial de alta velocidad?</h2>
+    <p>Conozca ezABSO Network CC-Link IE TSN, con comunicación a 1 Gbps.</p>
+  </div>
+  <a class="btn-primary" href="ezabso-network-tsn.html">Ver ezABSO CC-Link IE TSN</a>
+</div>
+
+</body>
+</html>

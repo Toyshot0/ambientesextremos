@@ -36,6 +36,17 @@
   .type-card .tname { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
   .type-card .tdesc { font-size: 12px; color: var(--steel-300); }
 
+  .variant-list { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
+  .variant-item { display: flex; align-items: center; gap: 14px; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 16px 18px; }
+  .variant-item.default { border-color: var(--orange); }
+  .variant-radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--steel-300); flex-shrink: 0; position: relative; }
+  .variant-item.default .variant-radio { border-color: var(--orange); }
+  .variant-item.default .variant-radio::after { content: ""; position: absolute; inset: 3px; background: var(--orange); border-radius: 50%; }
+  .variant-text { flex: 1; }
+  .variant-text .vname { font-size: 14px; font-weight: 600; color: var(--white); }
+  .variant-text .vdesc { font-size: 12px; color: var(--steel-300); margin-top: 2px; }
+  .variant-badge { font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--orange); border: 1px solid var(--orange); padding: 3px 8px; border-radius: 3px; }
+
   .downloads-list { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
   .download-item { display: flex; align-items: center; gap: 14px; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 4px; padding: 16px 18px; }
   .pdf-icon { width: 38px; height: 38px; border-radius: 3px; background: var(--orange-dim); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
@@ -110,6 +121,27 @@
       <tr><td>Temperatura de operación</td><td>5°C a 120°C</td></tr>
     </table>
     <p class="specs-note">CYLNUC existe en varias series según el tipo de aplicación (general, ligera, para molino siderúrgico, entre otras) — cada una con su propio rango de diámetros y presiones. La configuración exacta se define junto con su aplicación específica.</p>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Variantes disponibles</h2>
+    <div class="variant-list">
+      <div class="variant-item default">
+        <span class="variant-radio"></span>
+        <div class="variant-text">
+          <div class="vname">Heavy Duty</div>
+          <div class="vdesc">Máxima resistencia a impacto, vibración y temperatura — recomendado para ambientes industriales severos.</div>
+        </div>
+        <span class="variant-badge">Recomendado</span>
+      </div>
+      <div class="variant-item">
+        <span class="variant-radio"></span>
+        <div class="variant-text">
+          <div class="vname">General Purpose</div>
+          <div class="vdesc">Versión estándar para aplicaciones sin condiciones extremas.</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="section">

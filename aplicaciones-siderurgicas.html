@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplicaciones Siderúrgicas — AMBIENTES EXTREMOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--gunmetal-700); }
+  .intro h1 { font-size: 40px; font-weight: 600; margin-bottom: 16px; }
+  .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
+  .grid-section { padding: 48px; }
+
+  .process-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .process-card { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 28px; text-decoration: none; color: inherit; display: flex; flex-direction: column; transition: border-color 0.25s, transform 0.25s; }
+  .process-card:hover { border-color: var(--orange); transform: translateY(-3px); }
+  .process-count { display: inline-block; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; margin-bottom: 14px; width: fit-content; }
+  .process-card h2 { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
+  .process-card p { color: var(--steel-300); font-size: 14px; margin-bottom: 16px; }
+  .process-preview { font-size: 13px; color: var(--steel-100); line-height: 1.8; }
+  .process-link { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin-top: auto; padding-top: 16px; }
+
+  @media (max-width: 800px) { .process-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) {
+    .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
+    .intro h1 { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html" class="active">Sensores</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="breadcrumb">
+  <a href="index.html">Inicio</a> / <a href="sensores.html">Sensores</a> / <span>Aplicaciones Siderúrgicas</span>
+</div>
+
+<section class="intro">
+  <div class="eyebrow">Sensores · Aplicaciones</div>
+  <h1>Aplicaciones en la industria siderúrgica</h1>
+  <p>Sensores NSD comprobados en campo a lo largo de todo el proceso de fabricación de acero, desde coquización hasta bobinado.</p>
+</section>
+
+<section class="grid-section">
+  <div class="process-grid">
+
+    <a class="process-card" href="aplicaciones-coquizacion.html">
+      <span class="process-count">6 aplicaciones</span>
+      <h2>Coquización</h2>
+      <p>Preparación del coque para el proceso de reducción del mineral de hierro.</p>
+      <div class="process-preview">Carro de carga de carbón · Empujador de coque · Limpiador/elevador de tapa de horno · y más</div>
+      <span class="process-link">Ver aplicaciones →</span>
+    </a>
+
+    <a class="process-card" href="aplicaciones-conversion.html">
+      <span class="process-count">5 aplicaciones</span>
+      <h2>Convertidor</h2>
+      <p>Conversión del arrabio en acero mediante inyección de oxígeno.</p>
+      <div class="process-preview">Grúa de cuchara · Lanza/sub-lanza · Ángulo de inclinación · y más</div>
+      <span class="process-link">Ver aplicaciones →</span>
+    </a>
+
+    <a class="process-card" href="aplicaciones-colada-continua.html">
+      <span class="process-count">11 aplicaciones</span>
+      <h2>Colada Continua</h2>
+      <p>Solidificación continua del acero líquido en planchones o palanquillas.</p>
+      <div class="process-preview">Torreta de cuchara · Molde de ancho variable · Boquilla deslizante · Cortador de antorcha · y más</div>
+      <span class="process-link">Ver aplicaciones →</span>
+    </a>
+
+    <a class="process-card" href="aplicaciones-laminacion-caliente.html">
+      <span class="process-count">20 aplicaciones</span>
+      <h2>Laminación en Caliente</h2>
+      <p>Horno de recalentamiento, prensa de dimensionamiento, molino de laminación y bobinadora.</p>
+      <div class="process-preview">Viga caminante · Desplazamiento de rodillo · Looper · Mandril de bobinadora · y más</div>
+      <span class="process-link">Ver aplicaciones →</span>
+    </a>
+
+  </div>
+</section>
+
+<div class="cta-final">
+  <div class="cta-text">
+    <h2>¿No encuentra su aplicación exacta?</h2>
+    <p>Cuéntenos el proceso y le ayudamos a identificar el sensor adecuado.</p>
+  </div>
+  <a class="btn-primary" href="index.html#contacto">Cuéntenos su aplicación</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>{const n=document.querySelector('nav');if(!n)return;const b=document.createElement('button');b.className='menu-toggle';b.setAttribute('aria-label','Abrir menú');b.innerHTML='☰';b.onclick=()=>n.classList.toggle('open');document.querySelector('header').insertBefore(b,n);});

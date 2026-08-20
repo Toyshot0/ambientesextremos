@@ -7,17 +7,27 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css">
 <style>
-  .hero { position: relative; min-height: 560px; display: flex; align-items: center; padding: 0 48px; background: linear-gradient(120deg, rgba(20,24,27,0.92), rgba(20,24,27,0.75)), linear-gradient(145deg, var(--gunmetal-800), var(--gunmetal-900)); border-bottom: 1px solid var(--gunmetal-700); }
+  .hero {
+    position: relative;
+    min-height: 640px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 48px 64px;
+    background-image:
+      linear-gradient(90deg, rgba(10,12,14,0.94) 0%, rgba(10,12,14,0.75) 32%, rgba(10,12,14,0.15) 62%, rgba(10,12,14,0.35) 100%),
+      linear-gradient(0deg, rgba(10,12,14,0.85) 0%, rgba(10,12,14,0.05) 45%, rgba(10,12,14,0.25) 100%),
+      url('hero-home.jpg');
+    background-size: cover;
+    background-position: center 42%;
+    border-bottom: 1px solid var(--gunmetal-700);
+  }
   .hero-content { max-width: 640px; }
-  .hero-content h1 { font-size: 52px; font-weight: 700; margin-bottom: 16px; }
+  .hero-content h1 { font-size: 56px; font-weight: 700; margin-bottom: 16px; text-shadow: 0 2px 24px rgba(0,0,0,0.4); }
   .hero-content p { font-size: 18px; color: var(--steel-100); margin-bottom: 28px; max-width: 520px; }
-  .hero-placeholder-tag { position: absolute; top: 20px; right: 20px; background: rgba(20,24,27,0.85); border: 1px solid var(--gunmetal-600); color: var(--steel-300); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; padding: 6px 12px; border-radius: 3px; }
 
-  .problem-strip { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--gunmetal-700); }
-  .problem-item { padding: 32px 24px; text-align: center; border-right: 1px solid var(--gunmetal-700); }
-  .problem-item:last-child { border-right: none; }
-  .problem-icon { width: 40px; height: 40px; margin: 0 auto 14px; border: 1.5px solid var(--orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--orange); font-size: 18px; }
-  .problem-item h3 { font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--steel-100); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 7px 14px; }
+  .hero-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
 
   .categories { padding: 64px 48px; max-width: 1280px; margin: 0 auto; }
   .section-heading { text-align: center; margin-bottom: 40px; }
@@ -26,22 +36,44 @@
   .category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
   .category-card { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; overflow: hidden; text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.25s; }
   .category-card:hover { border-color: var(--orange); transform: translateY(-3px); }
-  .category-photo { aspect-ratio: 4/3; background: linear-gradient(145deg, var(--gunmetal-700), var(--gunmetal-900)); display: flex; align-items: center; justify-content: center; color: var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .category-photo { aspect-ratio: 4/3; overflow: hidden; }
+  .category-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
+  .category-card:hover .category-photo img { transform: scale(1.05); }
   .category-body { padding: 20px; border-top: 3px solid var(--orange); }
   .category-body h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
   .category-body p { font-size: 13px; color: var(--steel-300); margin-bottom: 12px; }
   .category-link { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
 
+  .closing-cta {
+    position: relative;
+    min-height: 380px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-image:
+      linear-gradient(0deg, rgba(10,12,14,0.92) 0%, rgba(10,12,14,0.6) 55%, rgba(10,12,14,0.75) 100%),
+      url('cta-bg.jpg');
+    background-size: cover;
+    background-position: center 35%;
+    border-top: 1px solid var(--gunmetal-700);
+    border-bottom: 1px solid var(--gunmetal-700);
+  }
+  .closing-cta-inner { max-width: 560px; padding: 0 24px; }
+  .closing-cta h2 { font-size: 34px; font-weight: 600; margin-bottom: 14px; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
+  .closing-cta p { font-size: 16px; color: var(--steel-100); margin-bottom: 28px; }
+
   @media (max-width: 900px) {
-    .problem-strip { grid-template-columns: repeat(2, 1fr); }
     .category-grid { grid-template-columns: repeat(2, 1fr); }
     .hero-content h1 { font-size: 36px; }
+    .hero { min-height: 520px; background-position: center 30%; }
   }
   @media (max-width: 600px) {
     .hero, .categories { padding-left: 24px; padding-right: 24px; }
-    .problem-strip { grid-template-columns: 1fr; }
     .category-grid { grid-template-columns: 1fr; }
-    .problem-item { border-right: none; border-bottom: 1px solid var(--gunmetal-700); }
+    .hero { padding-bottom: 40px; min-height: 460px; }
+    .closing-cta h2 { font-size: 26px; }
+    .closing-cta { min-height: 320px; }
   }
 </style>
 </head>
@@ -61,32 +93,19 @@
 </header>
 
 <section class="hero">
-  <span class="hero-placeholder-tag">Imagen pendiente — EAF / colada continua</span>
   <div class="hero-content">
     <h1>AMBIENTES EXTREMOS</h1>
     <p>Tecnologías para aplicaciones industriales severas.</p>
+    <div class="hero-tags">
+      <span class="hero-tag"><span class="dot"></span>Temperaturas extremas</span>
+      <span class="hero-tag"><span class="dot"></span>Polvos finos</span>
+      <span class="hero-tag"><span class="dot"></span>Vapor y agua</span>
+      <span class="hero-tag"><span class="dot"></span>Vibración e impacto mecánico</span>
+      <span class="hero-tag"><span class="dot"></span>Químicos corrosivos</span>
+    </div>
     <a class="btn-primary" href="#contacto">Cuéntenos su aplicación</a>
   </div>
 </section>
-
-<div class="problem-strip">
-  <div class="problem-item">
-    <div class="problem-icon">🔥</div>
-    <h3>Altas temperaturas</h3>
-  </div>
-  <div class="problem-item">
-    <div class="problem-icon">〜</div>
-    <h3>Vibración y movimiento</h3>
-  </div>
-  <div class="problem-item">
-    <div class="problem-icon">☁</div>
-    <h3>Vapor y humedad</h3>
-  </div>
-  <div class="problem-item">
-    <div class="problem-icon">⚠</div>
-    <h3>Ambientes industriales severos</h3>
-  </div>
-</div>
 
 <section class="categories">
   <div class="section-heading">
@@ -96,7 +115,7 @@
   </div>
   <div class="category-grid">
     <a class="category-card" href="sensores.html">
-      <div class="category-photo">Foto Sensores</div>
+      <div class="category-photo"><img src="cat-sensores.jpg" alt="Sensores NSD Absocoder en ambiente de acería"></div>
       <div class="category-body">
         <h3>Sensores</h3>
         <p>Posición, velocidad y proximidad para procesos siderúrgicos.</p>
@@ -104,7 +123,7 @@
       </div>
     </a>
     <a class="category-card" href="cables.html">
-      <div class="category-photo">Foto Cables</div>
+      <div class="category-photo"><img src="cat-cables.jpg" alt="Cable blindado para alta temperatura"></div>
       <div class="category-body">
         <h3>Cables</h3>
         <p>Cables para alta temperatura, potencia, control e instrumentación.</p>
@@ -112,7 +131,7 @@
       </div>
     </a>
     <a class="category-card" href="ensambles.html">
-      <div class="category-photo">Foto Ensambles</div>
+      <div class="category-photo"><img src="cat-ensambles.jpg" alt="Ensambles de conectores industriales"></div>
       <div class="category-body">
         <h3>Ensambles</h3>
         <p>Ensambles prefabricados y configurables para sensores y control.</p>
@@ -120,13 +139,21 @@
       </div>
     </a>
     <a class="category-card" href="protecciones.html">
-      <div class="category-photo">Foto Protecciones</div>
+      <div class="category-photo"><img src="cat-protecciones.jpg" alt="Manguera con protección térmica Pyrojacket"></div>
       <div class="category-body">
         <h3>Protecciones</h3>
         <p>Protección térmica, aislamiento y conducción para ambientes severos.</p>
         <span class="category-link">Ver más →</span>
       </div>
     </a>
+  </div>
+</section>
+
+<section class="closing-cta">
+  <div class="closing-cta-inner">
+    <h2>¿Listo para encontrar su solución?</h2>
+    <p>Cuéntenos el reto de su aplicación y le ayudamos a identificar la tecnología adecuada para su ambiente.</p>
+    <a class="btn-primary" href="#contacto">Cuéntenos su aplicación</a>
   </div>
 </section>
 

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de Clientes — AMBIENTES EXTREMOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .login-wrap { min-height: calc(100vh - 73px); display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+  .login-card { width: 100%; max-width: 400px; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 40px 36px; }
+  .login-card h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+  .login-card .sub { font-size: 14px; color: var(--steel-300); margin-bottom: 28px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 13px; color: var(--steel-300); margin-bottom: 6px; }
+  .field input { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 12px 14px; border-radius: 3px; }
+  .field input:focus { outline: none; border-color: var(--orange); }
+  .login-btn { width: 100%; margin-top: 8px; }
+  .error-msg { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 18px; display: none; }
+  .forgot-link { display: block; text-align: center; margin-top: 18px; font-size: 13px; color: var(--steel-300); text-decoration: none; }
+  .forgot-link:hover { color: var(--orange); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="login-wrap">
+  <div class="login-card">
+    <h1>Portal de Clientes</h1>
+    <p class="sub">Ingrese para ver el estatus de sus proyectos.</p>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input type="email" id="email" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-primary login-btn" id="loginBtn">Iniciar sesión</button>
+    </form>
+
+    <a class="forgot-link" href="#" id="forgotLink">¿Olvidó su contraseña?</a>
+  </div>
+</div>
+
+<script src="portal-config.js"></script>
+<script>
+  const form = document.getElementById('loginForm');
+  const errorMsg = document.getElementById('errorMsg');
+  const loginBtn = document.getElementById('loginBtn');
+
+  // Si ya hay sesión activa, ir directo al dashboard
+  supabaseClient.auth.getSession().then(({ data }) => {
+    if (data.session) window.location.href = 'dashboard.html';
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = 'none';
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Ingresando...';
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errorMsg.textContent = 'Correo o contraseña incorrectos.';
+      errorMsg.style.display = 'block';
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Iniciar sesión';
+      return;
+    }
+
+    window.location.href = 'dashboard.html';
+  });
+
+  document.getElementById('forgotLink').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    if (!email) {
+      errorMsg.textContent = 'Escriba su correo arriba y presione "¿Olvidó su contraseña?" de nuevo.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+    errorMsg.style.display = 'block';
+    errorMsg.style.background = 'rgba(60,180,100,0.12)';
+    errorMsg.style.borderColor = '#2ecc71';
+    errorMsg.style.color = '#7fe0a5';
+    errorMsg.textContent = error ? 'No se pudo enviar el correo de recuperación.' : 'Le enviamos un correo con instrucciones para restablecer su contraseña.';
+  });
+</script>
+
+</body>
+</html>

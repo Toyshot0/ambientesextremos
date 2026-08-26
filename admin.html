@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administración — Portal de Clientes</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; }
+  .admin-header h1 { font-size: 22px; font-weight: 600; }
+  .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
+  .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  .admin-content { padding: 32px 48px 64px; max-width: 1000px; }
+  .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
+
+  .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; }
+  .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
+  .field input, .field select, .field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--orange); }
+
+  .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
+  .submit-btn:hover { background: #d0531a; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 14px; }
+  .list-item:last-child { border-bottom: none; }
+  .list-item .meta { font-size: 12px; color: var(--steel-300); }
+
+  .msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
+  .msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
+  .msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="admin-header">
+  <h1>Administración — Portal de Clientes</h1>
+  <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+</div>
+
+<div class="admin-content" id="adminContent">
+  <p style="color:var(--steel-300);">Verificando acceso...</p>
+</div>
+
+<script src="portal-config.js"></script>
+<script>
+  const adminContent = document.getElementById('adminContent');
+  let clientsCache = [];
+
+  async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.location.href = 'portal.html'; return; }
+
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', session.user.id).single();
+    if (!adminRow) {
+      adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos de administrador.</div>';
+      return;
+    }
+
+    renderAdmin();
+  }
+
+  function renderAdmin() {
+    adminContent.innerHTML = `
+      <div class="panel">
+        <h2>Registrar cliente</h2>
+        <p style="font-size:13px; color:var(--steel-300); margin-bottom:16px;">
+          Primero cree el login del cliente en Supabase → Authentication → Users → Add user, copie su UUID, y péguelo aquí junto con sus datos.
+        </p>
+        <div id="clientMsg" class="msg"></div>
+        <form id="clientForm">
+          <div class="form-row">
+            <div class="field"><label>UUID del usuario (de Supabase Auth)</label><input type="text" id="clientUuid" required placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+            <div class="field"><label>Correo del cliente</label><input type="email" id="clientEmail" required></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Empresa</label><input type="text" id="clientCompany" required></div>
+            <div class="field"><label>Nombre de contacto</label><input type="text" id="clientContact"></div>
+          </div>
+          <button type="submit" class="submit-btn">Guardar cliente</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Crear proyecto</h2>
+        <div id="projectMsg" class="msg"></div>
+        <form id="projectForm">
+          <div class="form-row single">
+            <div class="field"><label>Cliente</label><select id="projectClient" required><option value="">Seleccione...</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Nombre del proyecto</label><input type="text" id="projectName" required></div>
+            <div class="field"><label>Estatus inicial</label><input type="text" id="projectStatus" value="Pendiente" required></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Descripción</label><textarea id="projectDesc"></textarea></div>
+          </div>
+          <button type="submit" class="submit-btn">Crear proyecto</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Agregar actualización de estatus</h2>
+        <div id="updateMsg" class="msg"></div>
+        <form id="updateForm">
+          <div class="form-row single">
+            <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Nuevo estatus</label><input type="text" id="updateStatus" required placeholder="Ej. En fabricación, Listo para envío..."></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
+          </div>
+          <button type="submit" class="submit-btn">Publicar actualización</button>
+        </form>
+      </div>
+    `;
+
+    loadClientsIntoSelects();
+    loadProjectsIntoSelect();
+
+    document.getElementById('clientForm').addEventListener('submit', submitClient);
+    document.getElementById('projectForm').addEventListener('submit', submitProject);
+    document.getElementById('updateForm').addEventListener('submit', submitUpdate);
+  }
+
+  async function loadClientsIntoSelects() {
+    const { data } = await supabaseClient.from('portal_clients').select('id, company_name').order('company_name');
+    clientsCache = data || [];
+    const sel = document.getElementById('projectClient');
+    sel.innerHTML = '<option value="">Seleccione...</option>' + clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('');
+  }
+
+  async function loadProjectsIntoSelect() {
+    const { data } = await supabaseClient.from('portal_projects').select('id, name, portal_clients(company_name)').order('created_at', { ascending: false });
+    const sel = document.getElementById('updateProject');
+    sel.innerHTML = '<option value="">Seleccione...</option>' + (data || []).map(p => `<option value="${p.id}">${escapeHtml(p.portal_clients ? p.portal_clients.company_name + ' — ' : '')}${escapeHtml(p.name)}</option>`).join('');
+  }
+
+  async function submitClient(e) {
+    e.preventDefault();
+    const msg = document.getElementById('clientMsg');
+    const { error } = await supabaseClient.from('portal_clients').insert({
+      id: document.getElementById('clientUuid').value.trim(),
+      email: document.getElementById('clientEmail').value,
+      company_name: document.getElementById('clientCompany').value,
+      contact_name: document.getElementById('clientContact').value,
+    });
+    msg.className = error ? 'msg error' : 'msg success';
+    msg.textContent = error ? 'Error: ' + error.message : 'Cliente guardado correctamente.';
+    if (!error) { document.getElementById('clientForm').reset(); loadClientsIntoSelects(); }
+  }
+
+  async function submitProject(e) {
+    e.preventDefault();
+    const msg = document.getElementById('projectMsg');
+    const { error } = await supabaseClient.from('portal_projects').insert({
+      client_id: document.getElementById('projectClient').value,
+      name: document.getElementById('projectName').value,
+      description: document.getElementById('projectDesc').value,
+      current_status: document.getElementById('projectStatus').value,
+    });
+    msg.className = error ? 'msg error' : 'msg success';
+    msg.textContent = error ? 'Error: ' + error.message : 'Proyecto creado correctamente.';
+    if (!error) { document.getElementById('projectForm').reset(); document.getElementById('projectStatus').value = 'Pendiente'; loadProjectsIntoSelect(); }
+  }
+
+  async function submitUpdate(e) {
+    e.preventDefault();
+    const msg = document.getElementById('updateMsg');
+    const projectId = document.getElementById('updateProject').value;
+    const statusLabel = document.getElementById('updateStatus').value;
+
+    const { error: updateError } = await supabaseClient.from('portal_project_updates').insert({
+      project_id: projectId,
+      status_label: statusLabel,
+      note: document.getElementById('updateNote').value,
+    });
+
+    if (!updateError) {
+      await supabaseClient.from('portal_projects').update({ current_status: statusLabel, updated_at: new Date().toISOString() }).eq('id', projectId);
+    }
+
+    msg.className = updateError ? 'msg error' : 'msg success';
+    msg.textContent = updateError ? 'Error: ' + updateError.message : 'Actualización publicada — ya la puede ver el cliente.';
+    if (!updateError) document.getElementById('updateForm').reset();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'portal.html';
+  });
+
+  init();
+</script>
+
+</body>
+</html>

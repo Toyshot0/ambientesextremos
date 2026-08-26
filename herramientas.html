@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Herramientas — AMBIENTES EXTREMOS</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<style>
+  .tools-wrap { max-width: 600px; margin: 0 auto; padding: 64px 24px; }
+  .tools-wrap h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+  .tools-wrap .sub { font-size: 14px; color: var(--steel-300); margin-bottom: 32px; }
+  .tool-link { display: flex; align-items: center; justify-content: space-between; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 20px 24px; margin-bottom: 14px; text-decoration: none; color: inherit; transition: border-color 0.2s; }
+  .tool-link:hover { border-color: var(--orange); }
+  .tool-link .tname { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
+  .tool-link .tdesc { font-size: 13px; color: var(--steel-300); }
+  .tool-link .arrow { color: var(--orange); font-size: 18px; flex-shrink: 0; margin-left: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="tools-wrap">
+  <h1>Herramientas internas</h1>
+  <p class="sub">Accesos directos — esta página no está enlazada desde ningún otro lugar del sitio.</p>
+
+  <a class="tool-link" href="admin.html">
+    <div>
+      <div class="tname">Administración de Proyectos</div>
+      <div class="tdesc">Registrar clientes, crear proyectos, publicar actualizaciones de estatus.</div>
+    </div>
+    <span class="arrow">→</span>
+  </a>
+
+  <a class="tool-link" href="https://arneses-app.vercel.app/historial" target="_blank" rel="noopener">
+    <div>
+      <div class="tname">Historial de Ensambles</div>
+      <div class="tdesc">Configuraciones de arneses creadas por clientes en el configurador.</div>
+    </div>
+    <span class="arrow">↗</span>
+  </a>
+
+  <a class="tool-link" href="portal.html">
+    <div>
+      <div class="tname">Portal de Clientes (vista pública)</div>
+      <div class="tdesc">Para probar cómo lo ve un cliente al iniciar sesión.</div>
+    </div>
+    <span class="arrow">→</span>
+  </a>
+</div>
+
+</body>
+</html>

@@ -6,43 +6,48 @@
 <title>AMBIENTES EXTREMOS — Tecnologías para aplicaciones industriales severas</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .hero {
-    position: relative;
-    min-height: 640px;
+  /* ===== Hero compacto: texto + 4 imágenes en la misma pantalla ===== */
+  .hero-compact {
     display: flex;
-    align-items: flex-end;
-    padding: 0 48px 64px;
+    flex-direction: column;
+    min-height: calc(100vh - 73px);
+  }
+
+  .hero-text {
+    position: relative;
+    padding: 44px 48px 36px;
     background-image:
-      linear-gradient(90deg, rgba(10,12,14,0.94) 0%, rgba(10,12,14,0.75) 32%, rgba(10,12,14,0.15) 62%, rgba(10,12,14,0.35) 100%),
-      linear-gradient(0deg, rgba(10,12,14,0.85) 0%, rgba(10,12,14,0.05) 45%, rgba(10,12,14,0.25) 100%),
+      linear-gradient(90deg, rgba(10,12,14,0.94) 0%, rgba(10,12,14,0.8) 40%, rgba(10,12,14,0.4) 100%),
       url('hero-home.jpg');
     background-size: cover;
-    background-position: center 42%;
+    background-position: center 38%;
     border-bottom: 1px solid var(--gunmetal-700);
   }
-  .hero-content { max-width: 640px; }
-  .hero-content h1 { font-size: 56px; font-weight: 700; margin-bottom: 16px; text-shadow: 0 2px 24px rgba(0,0,0,0.4); }
-  .hero-content p { font-size: 18px; color: var(--steel-100); margin-bottom: 28px; max-width: 520px; }
+  .hero-text-inner { max-width: 680px; }
+  .hero-text h1 { font-size: 44px; font-weight: 700; margin-bottom: 10px; text-shadow: 0 2px 20px rgba(0,0,0,0.4); }
+  .hero-text .subtitle { font-size: 17px; color: var(--steel-100); margin-bottom: 14px; }
 
-  .hero-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
-  .hero-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--steel-100); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 7px 14px; }
-  .hero-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--orange); flex-shrink: 0; }
+  .hero-tags-plain { font-size: 14px; color: var(--steel-100); margin-bottom: 22px; line-height: 1.8; }
+  .hero-tags-plain .dot-sep { color: var(--orange); margin: 0 10px; font-weight: 700; }
 
-  .categories { padding: 64px 48px; max-width: 1280px; margin: 0 auto; }
-  .section-heading { text-align: center; margin-bottom: 40px; }
-  .section-heading h2 { font-size: 30px; font-weight: 600; margin-bottom: 12px; }
-  .section-heading p { color: var(--steel-300); font-size: 15px; }
-  .category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-  .category-card { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; overflow: hidden; text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.25s; }
-  .category-card:hover { border-color: var(--orange); transform: translateY(-3px); }
-  .category-photo { aspect-ratio: 4/3; overflow: hidden; }
-  .category-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
-  .category-card:hover .category-photo img { transform: scale(1.05); }
-  .category-body { padding: 20px; border-top: 3px solid var(--orange); }
-  .category-body h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-  .category-body p { font-size: 13px; color: var(--steel-300); margin-bottom: 12px; }
-  .category-link { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+  /* ===== Franja de 4 imágenes, pegadas, sin sección gris ===== */
+  .category-strip {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    background: var(--gunmetal-900);
+    min-height: 260px;
+  }
+  .category-tile { position: relative; overflow: hidden; display: block; text-decoration: none; }
+  .category-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
+  .category-tile:hover img { transform: scale(1.06); }
+  .category-tile .tile-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10,12,14,0.88) 0%, rgba(10,12,14,0.1) 45%, transparent 70%); }
+  .category-tile .tile-label { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 18px; font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 17px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--white); }
+  .category-tile .tile-sub { position: absolute; left: 18px; right: 18px; bottom: 46px; font-size: 12px; color: var(--steel-100); opacity: 0; transition: opacity 0.25s; }
+  .category-tile:hover .tile-sub { opacity: 1; }
 
   .closing-cta {
     position: relative;
@@ -63,15 +68,34 @@
   .closing-cta h2 { font-size: 34px; font-weight: 600; margin-bottom: 14px; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
   .closing-cta p { font-size: 16px; color: var(--steel-100); margin-bottom: 28px; }
 
+  /* ===== Modal "Cuéntenos su aplicación" ===== */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,12,14,0.75); z-index: 200; align-items: center; justify-content: center; padding: 24px; }
+  .modal-overlay.open { display: flex; }
+  .modal-box { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; width: 100%; max-width: 460px; padding: 32px 30px; position: relative; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--steel-300); font-size: 20px; cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: var(--orange); }
+  .modal-box h3 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .modal-box .modal-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 22px; }
+  .modal-field { margin-bottom: 14px; }
+  .modal-field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
+  .modal-field input, .modal-field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 11px 13px; border-radius: 3px; }
+  .modal-field textarea { min-height: 90px; resize: vertical; }
+  .modal-field input:focus, .modal-field textarea:focus { outline: none; border-color: var(--orange); }
+  .modal-submit { width: 100%; margin-top: 6px; }
+  .modal-msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
+  .modal-msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
+  .modal-msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
+
   @media (max-width: 900px) {
-    .category-grid { grid-template-columns: repeat(2, 1fr); }
-    .hero-content h1 { font-size: 36px; }
-    .hero { min-height: 520px; background-position: center 30%; }
+    .hero-text h1 { font-size: 34px; }
+    .category-strip { grid-template-columns: repeat(2, 1fr); min-height: 420px; }
   }
   @media (max-width: 600px) {
-    .hero, .categories { padding-left: 24px; padding-right: 24px; }
-    .category-grid { grid-template-columns: 1fr; }
-    .hero { padding-bottom: 40px; min-height: 460px; }
+    .hero-compact { min-height: auto; }
+    .hero-text { padding: 32px 24px 28px; }
+    .hero-text h1 { font-size: 28px; }
+    .category-strip { grid-template-columns: 1fr; min-height: auto; }
+    .category-tile { aspect-ratio: 16/10; }
     .closing-cta h2 { font-size: 26px; }
     .closing-cta { min-height: 320px; }
   }
@@ -93,59 +117,40 @@
   </nav>
 </header>
 
-<section class="hero">
-  <div class="hero-content">
-    <h1>AMBIENTES EXTREMOS</h1>
-    <p>Tecnologías para aplicaciones industriales severas.</p>
-    <div class="hero-tags">
-      <span class="hero-tag"><span class="dot"></span>Temperaturas extremas</span>
-      <span class="hero-tag"><span class="dot"></span>Polvos finos</span>
-      <span class="hero-tag"><span class="dot"></span>Vapor y agua</span>
-      <span class="hero-tag"><span class="dot"></span>Vibración e impacto mecánico</span>
-      <span class="hero-tag"><span class="dot"></span>Químicos corrosivos</span>
+<section class="hero-compact">
+  <div class="hero-text">
+    <div class="hero-text-inner">
+      <h1>AMBIENTES EXTREMOS</h1>
+      <p class="subtitle">Tecnologías para aplicaciones industriales severas.</p>
+      <p class="hero-tags-plain">Temperaturas extremas <span class="dot-sep">•</span> Polvos finos <span class="dot-sep">•</span> Vapor y agua <span class="dot-sep">•</span> Vibración e impacto mecánico <span class="dot-sep">•</span> Químicos corrosivos</p>
+      <button class="btn-primary" id="openModalHero">Cuéntenos su aplicación</button>
     </div>
-    <a class="btn-primary" href="#contacto">Cuéntenos su aplicación</a>
   </div>
-</section>
 
-<section class="categories">
-  <div class="section-heading">
-    <div class="eyebrow" style="text-align:center;">Nuestras soluciones</div>
-    <h2>Cuatro líneas de producto para condiciones extremas</h2>
-    <p>Diseñadas para operar donde los productos convencionales fallan.</p>
-  </div>
-  <div class="category-grid">
-    <a class="category-card" href="sensores.html">
-      <div class="category-photo"><img src="cat-sensores.jpg" alt="Sensores NSD Absocoder en ambiente de acería"></div>
-      <div class="category-body">
-        <h3>Sensores</h3>
-        <p>Posición, velocidad y proximidad para procesos siderúrgicos.</p>
-        <span class="category-link">Ver más →</span>
-      </div>
+  <div class="category-strip">
+    <a class="category-tile" href="sensores.html">
+      <img src="cat-sensores.jpg" alt="Sensores NSD Absocoder en ambiente de acería">
+      <div class="tile-overlay"></div>
+      <div class="tile-sub">Posición, velocidad y proximidad</div>
+      <div class="tile-label">Sensores</div>
     </a>
-    <a class="category-card" href="cables.html">
-      <div class="category-photo"><img src="cat-cables.jpg" alt="Cable blindado para alta temperatura"></div>
-      <div class="category-body">
-        <h3>Cables</h3>
-        <p>Cables para alta temperatura, potencia, control e instrumentación.</p>
-        <span class="category-link">Ver más →</span>
-      </div>
+    <a class="category-tile" href="cables.html">
+      <img src="cat-cables.jpg" alt="Cable blindado para alta temperatura">
+      <div class="tile-overlay"></div>
+      <div class="tile-sub">Potencia, control e instrumentación</div>
+      <div class="tile-label">Cables</div>
     </a>
-    <a class="category-card" href="ensambles.html">
-      <div class="category-photo"><img src="cat-ensambles.jpg" alt="Ensambles de conectores industriales"></div>
-      <div class="category-body">
-        <h3>Ensambles</h3>
-        <p>Ensambles prefabricados y configurables para sensores y control.</p>
-        <span class="category-link">Ver más →</span>
-      </div>
+    <a class="category-tile" href="ensambles.html">
+      <img src="cat-ensambles.jpg" alt="Ensambles de conectores industriales">
+      <div class="tile-overlay"></div>
+      <div class="tile-sub">Prefabricados y configurables</div>
+      <div class="tile-label">Ensambles</div>
     </a>
-    <a class="category-card" href="protecciones.html">
-      <div class="category-photo"><img src="cat-protecciones.jpg" alt="Manguera con protección térmica Pyrojacket"></div>
-      <div class="category-body">
-        <h3>Protecciones</h3>
-        <p>Protección térmica, aislamiento y conducción para ambientes severos.</p>
-        <span class="category-link">Ver más →</span>
-      </div>
+    <a class="category-tile" href="protecciones.html">
+      <img src="cat-protecciones.jpg" alt="Manguera con protección térmica Pyrojacket">
+      <div class="tile-overlay"></div>
+      <div class="tile-sub">Térmica, aislamiento y conducción</div>
+      <div class="tile-label">Protecciones</div>
     </a>
   </div>
 </section>
@@ -154,7 +159,7 @@
   <div class="closing-cta-inner">
     <h2>¿Listo para encontrar su solución?</h2>
     <p>Cuéntenos el reto de su aplicación y le ayudamos a identificar la tecnología adecuada para su ambiente.</p>
-    <a class="btn-primary" href="#contacto">Cuéntenos su aplicación</a>
+    <button class="btn-primary" id="openModalClosing">Cuéntenos su aplicación</button>
   </div>
 </section>
 
@@ -201,7 +206,81 @@
   </div>
 </footer>
 
+<!-- ===== Modal "Cuéntenos su aplicación" ===== -->
+<div class="modal-overlay" id="appModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalCloseBtn">✕</button>
+    <h3>Cuéntenos su aplicación</h3>
+    <p class="modal-sub">Describa lo que necesita y le contactamos lo antes posible.</p>
+    <div class="modal-msg" id="modalMsg"></div>
+    <form id="appForm">
+      <div class="modal-field">
+        <label>Nombre</label>
+        <input type="text" id="leadName" required>
+      </div>
+      <div class="modal-field">
+        <label>Correo o teléfono</label>
+        <input type="text" id="leadContact" required placeholder="correo@empresa.com o teléfono">
+      </div>
+      <div class="modal-field">
+        <label>Cuéntenos su aplicación</label>
+        <textarea id="leadMessage" required placeholder="Ej. Necesito un sensor de posición para un cilindro hidráulico expuesto a alta temperatura..."></textarea>
+      </div>
+      <button type="submit" class="btn-primary modal-submit" id="leadSubmitBtn">Enviar</button>
+    </form>
+  </div>
+</div>
+
+<script src="portal-config.js"></script>
 <script src="app.js"></script>
+<script>
+  const appModal = document.getElementById('appModal');
+  const appForm = document.getElementById('appForm');
+  const modalMsg = document.getElementById('modalMsg');
+  const leadSubmitBtn = document.getElementById('leadSubmitBtn');
+
+  function openModal() {
+    appModal.classList.add('open');
+    modalMsg.style.display = 'none';
+  }
+  function closeModal() {
+    appModal.classList.remove('open');
+  }
+
+  document.getElementById('openModalHero').addEventListener('click', openModal);
+  document.getElementById('openModalClosing').addEventListener('click', openModal);
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  appModal.addEventListener('click', (e) => { if (e.target === appModal) closeModal(); });
+
+  appForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    leadSubmitBtn.disabled = true;
+    leadSubmitBtn.textContent = 'Enviando...';
+
+    const { error } = await supabaseClient.from('site_leads').insert({
+      name: document.getElementById('leadName').value,
+      contact: document.getElementById('leadContact').value,
+      message: document.getElementById('leadMessage').value,
+    });
+
+    if (error) {
+      modalMsg.className = 'modal-msg error';
+      modalMsg.textContent = 'No se pudo enviar. Intente de nuevo o escríbanos directo a contacto@ambientesextremos.com';
+      modalMsg.style.display = 'block';
+      leadSubmitBtn.disabled = false;
+      leadSubmitBtn.textContent = 'Enviar';
+      return;
+    }
+
+    modalMsg.className = 'modal-msg success';
+    modalMsg.textContent = '¡Gracias! Recibimos su mensaje y le contactaremos lo antes posible.';
+    modalMsg.style.display = 'block';
+    appForm.reset();
+    leadSubmitBtn.disabled = false;
+    leadSubmitBtn.textContent = 'Enviar';
+    setTimeout(closeModal, 2200);
+  });
+</script>
 
 </body>
 </html>

@@ -15,9 +15,28 @@
   .group-header { margin-bottom: 20px; }
   .group-header h2 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
   .group-header p { color: var(--steel-300); font-size: 14px; max-width: 620px; }
+
+  .type-nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 48px 40px; }
+  .type-nav a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 11px 20px;
+    background: var(--gunmetal-800);
+    border: 1px solid var(--gunmetal-700);
+    border-radius: 999px;
+    color: var(--steel-100);
+    font-size: 13.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+  .type-nav a svg { flex-shrink: 0; color: var(--orange); }
+  .type-nav a:hover { border-color: var(--orange); color: var(--orange); }
+  .type-nav a.active { border-color: var(--orange); background: rgba(232, 94, 28, 0.09); color: var(--orange); }
+
   @media (max-width: 600px) {
     .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
     .intro h1 { font-size: 30px; }
+    .type-nav { padding: 0 24px 28px; }
   }
 </style>
 </head>
@@ -46,6 +65,25 @@
   <h1>Sensores por tipo de sensor</h1>
   <p>Explore directamente por el tipo de sensor que necesita, agrupados por principio de funcionamiento.</p>
 </section>
+
+<nav class="type-nav" aria-label="Ir directo a un tipo de sensor">
+  <a href="#giro">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 2.5V6h-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Sensores de giro
+  </a>
+  <a href="#ezabso">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8h3l1.5-4L8 12l1.5-6L11 8h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    ezABSO
+  </a>
+  <a href="#lineales">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M2 8l2.5-2.5M2 8l2.5 2.5M14 8l-2.5-2.5M14 8l-2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Sensores lineales
+  </a>
+  <a href="#proximidad">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="0.9" fill="currentColor"/></svg>
+    Proximidad
+  </a>
+</nav>
 
 <section class="grid-section">
 
@@ -211,6 +249,27 @@
 </footer>
 
 <script src="app.js"></script>
+<script>
+(function () {
+  var links = document.querySelectorAll('.type-nav a[href^="#"]');
+  var sections = document.querySelectorAll('.group-block[id]');
+  if (!links.length || !sections.length) return;
+
+  var linkByTarget = {};
+  links.forEach(function (a) { linkByTarget[a.getAttribute('href').slice(1)] = a; });
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      var link = linkByTarget[entry.target.id];
+      if (!link || !entry.isIntersecting) return;
+      links.forEach(function (a) { a.classList.remove('active'); });
+      link.classList.add('active');
+    });
+  }, { rootMargin: '-96px 0px -60% 0px', threshold: 0 });
+
+  sections.forEach(function (s) { observer.observe(s); });
+})();
+</script>
 
 </body>
 </html>

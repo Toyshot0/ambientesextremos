@@ -12,29 +12,31 @@
   .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
   .grid-section { padding: 48px; }
 
-  .app-section { margin-bottom: 56px; scroll-margin-top: 90px; }
-  .app-section-header { margin-bottom: 20px; }
+  .app-section { margin-bottom: 64px; scroll-margin-top: 90px; }
+  .app-section-header { margin-bottom: 24px; }
   .app-section-header .step-num { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
   .app-section-header h2 { font-size: 26px; font-weight: 600; margin-bottom: 6px; }
   .app-section-header p { color: var(--steel-300); font-size: 14px; max-width: 640px; }
 
-  .app-subsection { margin: 24px 0 14px; }
+  .overview-img-wrap { background: var(--white); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 12px; margin-bottom: 28px; max-width: 900px; }
+  .overview-img-wrap img { width: 100%; height: auto; display: block; border-radius: 2px; }
+
+  .app-subsection { margin: 28px 0 16px; }
   .app-subsection h3 { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steel-100); }
 
-  .app-list { display: flex; flex-direction: column; gap: 10px; max-width: 780px; }
-  .app-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 14px 18px; text-decoration: none; color: inherit; transition: border-color 0.2s; }
-  a.app-item:hover { border-color: var(--orange); }
-  .app-item .aname { font-size: 14px; color: var(--steel-100); }
-  .app-item .asensor { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--orange); white-space: nowrap; }
-  .app-item.pending { opacity: 0.65; }
-  .app-item.pending .asensor { color: var(--steel-300); }
+  .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; max-width: 1000px; }
+  .app-img-btn { display: block; border: 2px solid var(--gunmetal-700); border-radius: 6px; overflow: hidden; background: var(--white); text-decoration: none; transition: border-color 0.2s, transform 0.2s; cursor: pointer; }
+  .app-img-btn:hover { border-color: var(--orange); transform: translateY(-3px); }
+  .app-img-btn img { width: 100%; height: auto; display: block; }
+  .app-img-btn.pending { cursor: default; opacity: 0.55; }
+  .app-img-btn.pending:hover { border-color: var(--gunmetal-700); transform: none; }
 
   .pending-note { font-size: 13px; color: var(--steel-300); margin-top: 16px; max-width: 640px; }
 
   @media (max-width: 600px) {
     .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
     .intro h1 { font-size: 30px; }
-    .app-item { flex-direction: column; align-items: flex-start; gap: 4px; }
+    .img-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
   }
 </style>
 </head>
@@ -61,7 +63,7 @@
 <section class="intro">
   <div class="eyebrow">Sensores · Aplicaciones</div>
   <h1>Aplicaciones en la industria siderúrgica</h1>
-  <p>Todo el proceso de fabricación de acero, de arriba a abajo — cada aplicación enlaza directo al sensor NSD que le corresponde.</p>
+  <p>Todo el proceso de fabricación de acero, de arriba a abajo. Haga clic en cualquier imagen para ver el sensor NSD que le corresponde.</p>
 </section>
 
 <section class="grid-section">
@@ -73,31 +75,18 @@
       <h2>Coquización</h2>
       <p>Preparación del coque a partir de carbón mineral para el proceso de reducción del mineral de hierro.</p>
     </div>
-    <div class="app-list">
-      <a class="app-item" href="sensor-mre.html">
-        <span class="aname">Coal Charging Car</span>
-        <span class="asensor">MRE</span>
-      </a>
-      <a class="app-item" href="sensor-mre.html">
-        <span class="aname">Coke Pusher / Extrusion Amount</span>
-        <span class="asensor">MRE</span>
-      </a>
-      <a class="app-item" href="sensor-mre.html">
-        <span class="aname">Furnace Cover Cleaner</span>
-        <span class="asensor">MRE</span>
-      </a>
-      <a class="app-item" href="absopx.html">
-        <span class="aname">Furnace Cover Lifter</span>
-        <span class="asensor">AbsoPX</span>
-      </a>
-      <a class="app-item" href="absopx.html">
-        <span class="aname">CDQ Bucket Presence Position</span>
-        <span class="asensor">AbsoPX</span>
-      </a>
-      <div class="app-item pending">
-        <span class="aname">Motor Shaft Thrust Direction Pull Detection</span>
-        <span class="asensor">EZGAP (próximamente)</span>
-      </div>
+
+    <div class="overview-img-wrap">
+      <img src="overview-coquizacion.png" alt="Diagrama general del proceso de Coquización">
+    </div>
+
+    <div class="img-grid">
+      <a class="app-img-btn" href="sensor-mre.html"><img src="app-coal-charging-car.png" alt="Coal Charging Car - MRE"></a>
+      <a class="app-img-btn" href="sensor-mre.html"><img src="app-coke-pusher.png" alt="Coke Pusher / Extrusion Amount - MRE"></a>
+      <a class="app-img-btn" href="sensor-mre.html"><img src="app-furnace-cover-cleaner.png" alt="Furnace Cover Cleaner - MRE"></a>
+      <a class="app-img-btn" href="absopx.html"><img src="app-furnace-cover-lifter.png" alt="Furnace Cover Lifter - AbsoPX"></a>
+      <a class="app-img-btn" href="absopx.html"><img src="app-cdq-bucket.png" alt="CDQ Bucket Presence Position - AbsoPX"></a>
+      <span class="app-img-btn pending"><img src="app-motor-shaft-thrust.png" alt="Motor Shaft Thrust Direction Pull Detection - EZGAP (próximamente)"></span>
     </div>
   </div>
 
@@ -108,27 +97,17 @@
       <h2>Convertidor</h2>
       <p>Conversión del arrabio en acero mediante inyección de oxígeno.</p>
     </div>
-    <div class="app-list">
-      <a class="app-item" href="sensor-mre.html">
-        <span class="aname">Ladle Crane Running / Traversing Position</span>
-        <span class="asensor">MRE</span>
-      </a>
-      <a class="app-item" href="sensor-mre.html">
-        <span class="aname">Ladle Crane Winding Lifting Position</span>
-        <span class="asensor">MRE</span>
-      </a>
-      <a class="app-item" href="sensor-mre.html">
-        <span class="aname">Lance / Sub-lance Lifting Position</span>
-        <span class="asensor">MRE</span>
-      </a>
-      <a class="app-item" href="sensor-mre.html">
-        <span class="aname">Converter Tilt Angle</span>
-        <span class="asensor">MRE</span>
-      </a>
-      <a class="app-item" href="absopx.html">
-        <span class="aname">Steel Receiving Cart Stop Position</span>
-        <span class="asensor">AbsoPX</span>
-      </a>
+
+    <div class="overview-img-wrap">
+      <img src="overview-conversion.png" alt="Diagrama general del proceso de Convertidor">
+    </div>
+
+    <div class="img-grid">
+      <a class="app-img-btn" href="sensor-mre.html"><img src="app-ladle-crane-running.png" alt="Ladle Crane Running / Traversing Position - MRE"></a>
+      <a class="app-img-btn" href="sensor-mre.html"><img src="app-ladle-crane-winding.png" alt="Ladle Crane Winding Lifting Position - MRE"></a>
+      <a class="app-img-btn" href="sensor-mre.html"><img src="app-lance-sublance.png" alt="Lance / Sub-lance Lifting Position - MRE"></a>
+      <a class="app-img-btn" href="sensor-mre.html"><img src="app-converter-tilt.png" alt="Converter Tilt Angle - MRE"></a>
+      <a class="app-img-btn" href="absopx.html"><img src="app-steel-receiving-cart.png" alt="Steel Receiving Cart Stop Position - AbsoPX"></a>
     </div>
   </div>
 
@@ -139,51 +118,23 @@
       <h2>Colada Continua</h2>
       <p>Solidificación continua del acero líquido en planchones o palanquillas.</p>
     </div>
-    <div class="app-list">
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Ladle Turret</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Dummy Bar Car</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
-      <a class="app-item" href="cylnuc.html">
-        <span class="aname">Tundish Car</span>
-        <span class="asensor">CYLNUC</span>
-      </a>
-      <a class="app-item" href="cylnuc.html">
-        <span class="aname">Mold Width Variable</span>
-        <span class="asensor">CYLNUC</span>
-      </a>
-      <a class="app-item" href="cylnuc.html">
-        <span class="aname">Sliding Nozzle</span>
-        <span class="asensor">CYLNUC</span>
-      </a>
-      <a class="app-item" href="inrodsensor.html">
-        <span class="aname">Segment-Soft Reduction / Inside</span>
-        <span class="asensor">Inrodsensor</span>
-      </a>
-      <a class="app-item" href="inrodsensor.html">
-        <span class="aname">Segment-Soft Reduction / Outside</span>
-        <span class="asensor">Inrodsensor</span>
-      </a>
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Measuring Roll</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Torch Cutter</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
-      <div class="app-item pending">
-        <span class="aname">Roll Gap Sensor</span>
-        <span class="asensor">RGS (próximamente)</span>
-      </div>
-      <div class="app-item pending">
-        <span class="aname">Slipring</span>
-        <span class="asensor">Baumcoupler (próximamente)</span>
-      </div>
+
+    <div class="overview-img-wrap">
+      <img src="overview-colada-continua.png" alt="Diagrama general del proceso de Colada Continua">
+    </div>
+
+    <div class="img-grid">
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-ladle-turret.png" alt="Ladle Turret - Absocoder VRE o MRE"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-dummy-bar-car.png" alt="Dummy Bar Car - Absocoder VRE o MRE"></a>
+      <a class="app-img-btn" href="cylnuc.html"><img src="app-tundish-car.png" alt="Tundish Car - CYLNUC"></a>
+      <a class="app-img-btn" href="cylnuc.html"><img src="app-mold-width-variable.png" alt="Mold Width Variable - CYLNUC"></a>
+      <a class="app-img-btn" href="cylnuc.html"><img src="app-sliding-nozzle.png" alt="Sliding Nozzle - CYLNUC Mark II"></a>
+      <a class="app-img-btn" href="inrodsensor.html"><img src="app-segment-inside.png" alt="Segment-Soft Reduction Inside - Inrodsensor"></a>
+      <a class="app-img-btn" href="inrodsensor.html"><img src="app-segment-outside.png" alt="Segment-Soft Reduction Outside - Inrodsensor"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-measuring-roll.png" alt="Measuring Roll - Absocoder VRE o MRE"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-torch-cutter.png" alt="Torch Cutter - Absocoder VRE o MRE"></a>
+      <span class="app-img-btn pending"><img src="app-roll-gap-sensor.png" alt="Roll Gap Sensor - RGS (próximamente)"></span>
+      <span class="app-img-btn pending"><img src="app-slipring.png" alt="Slipring - Baumcoupler (próximamente)"></span>
     </div>
   </div>
 
@@ -195,55 +146,45 @@
       <p>Horno de recalentamiento, prensa de dimensionamiento, molino de laminación y bobinadora.</p>
     </div>
 
-    <div class="app-subsection">
-      <h3>Horno de Recalentamiento</h3>
+    <div class="app-subsection"><h3>Horno de Recalentamiento</h3></div>
+    <div class="overview-img-wrap">
+      <img src="overview-hsm.png" alt="Diagrama general del Horno de Recalentamiento">
     </div>
-    <div class="app-list">
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Insertion Door / Extraction Door Lifting</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Slab Extraction Equipment</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
-      <a class="app-item" href="productos.html#lineales">
-        <span class="aname">Walking Beam (Straight)</span>
-        <span class="asensor">Inrodsensor o CYLNUC</span>
-      </a>
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Walking Beam (Rotation)</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
+    <div class="img-grid">
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-insertion-door.png" alt="Insertion Door / Extraction Door Lifting - Absocoder VRE o MRE"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-slab-extraction.png" alt="Slab Extraction Equipment - Absocoder VRE o MRE"></a>
+      <a class="app-img-btn" href="productos.html#lineales"><img src="app-walking-beam-straight.png" alt="Walking Beam Straight - Inrodsensor o CYLNUC"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-walking-beam-rotation.png" alt="Walking Beam Rotation - Absocoder VRE o MRE"></a>
     </div>
 
-    <div class="app-subsection">
-      <h3>Prensa de Dimensionamiento</h3>
+    <div class="app-subsection"><h3>Prensa de Dimensionamiento</h3></div>
+    <div class="overview-img-wrap">
+      <img src="overview-prensa.png" alt="Diagrama general de la Prensa de Dimensionamiento">
     </div>
-    <div class="app-list">
-      <a class="app-item" href="productos.html#lineales">
-        <span class="aname">Anti-buckling Presser Roll</span>
-        <span class="asensor">Inrodsensor o CYLNUC</span>
-      </a>
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Mold Synchronization Mechanism</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
-      <a class="app-item" href="productos.html#giro">
-        <span class="aname">Width Adjustment Equipment</span>
-        <span class="asensor">Absocoder (VRE o MRE)</span>
-      </a>
+    <div class="img-grid">
+      <a class="app-img-btn" href="productos.html#lineales"><img src="app-anti-buckling.png" alt="Anti-buckling Presser Roll - Inrodsensor o CYLNUC"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-mold-sync.png" alt="Mold Synchronization Mechanism - Absocoder VRE o MRE"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-width-adjustment.png" alt="Width Adjustment Equipment - Absocoder VRE o MRE"></a>
     </div>
 
-    <div class="app-subsection">
-      <h3>Molino de Laminación</h3>
+    <div class="app-subsection"><h3>Molino de Laminación</h3></div>
+    <div class="img-grid">
+      <a class="app-img-btn" href="absopx.html"><img src="app-chock-clamp.png" alt="Chock Clamp - AbsoPX"></a>
+      <a class="app-img-btn" href="absopx.html"><img src="app-roll-recomb-cart.png" alt="Roll Recombination Cart - AbsoPX"></a>
+      <a class="app-img-btn" href="productos.html#lineales"><img src="app-work-roll-shift.png" alt="Work Roll Shift - Inrodsensor o CYLNUC Mark II"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-electric-pressure-screw.png" alt="Electric Pressure Screw - Absocoder"></a>
+      <a class="app-img-btn" href="productos.html#giro"><img src="app-looper-equipment.png" alt="Looper Equipment - Absocoder"></a>
+      <span class="app-img-btn pending"><img src="app-roll-drive-motor.png" alt="Roll Drive Motor Rotation Speed - ABSO PULPUL (próximamente)"></span>
+      <a class="app-img-btn" href="sensor-vls.html"><img src="app-agc-external.png" alt="AGC/AWC Hydraulic Pressure Lifting External - VLS"></a>
+      <a class="app-img-btn" href="sensor-vls.html"><img src="app-agc-builtin.png" alt="AGC/AWC Hydraulic Pressure Lifting Built-in - VLS"></a>
+      <a class="app-img-btn" href="productos.html#lineales"><img src="app-stripper-guide.png" alt="Stripper Guide Lifting - Inrodsensor o CYLNUC Mark II"></a>
     </div>
-    <p class="pending-note">Pendiente — 9 aplicaciones por documentar.</p>
 
-    <div class="app-subsection">
-      <h3>Bobinadora</h3>
+    <div class="app-subsection"><h3>Bobinadora</h3></div>
+    <div class="img-grid">
+      <a class="app-img-btn" href="productos.html#lineales"><img src="app-wrapper-roll.png" alt="Wrapper Roll - Inrodsensor o CYLNUC Mark II"></a>
     </div>
-    <p class="pending-note">Pendiente — 4 aplicaciones por documentar.</p>
+    <p class="pending-note">Pendientes de esta sub-etapa: diagrama general, Mandrel Expansion/Contraction, Coil Car Running, y Coil Car Lifting.</p>
   </div>
 
 </section>

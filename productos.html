@@ -15,17 +15,6 @@
   .group-header { margin-bottom: 20px; }
   .group-header h2 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
   .group-header p { color: var(--steel-300); font-size: 14px; max-width: 620px; }
-
-  .speed-explainer { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; }
-  .speed-explainer p { color: var(--steel-100); font-size: 14px; margin-bottom: 20px; max-width: 720px; }
-  .speed-links { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .speed-link-card { display: block; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 18px 20px; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; }
-  .speed-link-card:hover { border-color: var(--orange); transform: translateY(-2px); }
-  .speed-link-card .sname { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
-  .speed-link-card .sdesc { font-size: 12px; color: var(--steel-300); }
-  @media (max-width: 600px) {
-    .speed-links { grid-template-columns: 1fr; }
-  }
   @media (max-width: 600px) {
     .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
     .intro h1 { font-size: 30px; }
@@ -59,26 +48,6 @@
 </section>
 
 <section class="grid-section">
-
-  <div class="group-block" id="velocidad">
-    <div class="group-header">
-      <h2>Sensores de velocidad</h2>
-      <p>NSD no maneja un sensor físico dedicado solo a velocidad — se mide con los mismos sensores de posición, de dos formas distintas.</p>
-    </div>
-    <div class="speed-explainer">
-      <p>Un sensor de posición absoluta permite calcular velocidad derivando la posición en el tiempo — es la práctica estándar en motores y husillos. NSD lo respalda directamente: su línea Absocoder está diseñada como solución de posición, ángulo, longitud <strong>y velocidad</strong>. Por otro lado, ezABSO va un paso más allá y reporta la velocidad directamente como uno de sus parámetros de salida, junto con posición, vibración y temperatura.</p>
-      <div class="speed-links">
-        <a class="speed-link-card" href="#giro">
-          <div class="sname">VRE / MRE — Absocoder</div>
-          <div class="sdesc">Velocidad derivada de la posición absoluta en el tiempo.</div>
-        </a>
-        <a class="speed-link-card" href="#ezabso">
-          <div class="sname">ezABSO</div>
-          <div class="sdesc">Reporta velocidad directamente, junto con posición, vibración y temperatura.</div>
-        </a>
-      </div>
-    </div>
-  </div>
 
   <div class="group-block" id="giro">
     <div class="group-header">

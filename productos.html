@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sensores por tipo de producto — AMBIENTES EXTREMOS</title>
+<title>Sensores por tipo de sensor — AMBIENTES EXTREMOS</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css">
 <style>
@@ -11,7 +11,7 @@
   .intro h1 { font-size: 40px; font-weight: 600; margin-bottom: 16px; }
   .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
   .grid-section { padding: 48px; }
-  .group-block { margin-bottom: 48px; }
+  .group-block { margin-bottom: 48px; scroll-margin-top: 90px; }
   .group-header { margin-bottom: 20px; }
   .group-header h2 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
   .group-header p { color: var(--steel-300); font-size: 14px; max-width: 620px; }
@@ -38,18 +38,18 @@
 </header>
 
 <div class="breadcrumb">
-  <a href="index.html">Inicio</a> / <a href="sensores.html">Sensores</a> / <span>Por tipo de producto</span>
+  <a href="index.html">Inicio</a> / <a href="sensores.html">Sensores</a> / <span>Por tipo de sensor</span>
 </div>
 
 <section class="intro">
   <div class="eyebrow">Sensores · NSD</div>
-  <h1>Sensores por tipo de producto</h1>
+  <h1>Sensores por tipo de sensor</h1>
   <p>Explore directamente por el tipo de sensor que necesita, agrupados por principio de funcionamiento.</p>
 </section>
 
 <section class="grid-section">
 
-  <div class="group-block">
+  <div class="group-block" id="giro">
     <div class="group-header">
       <h2>Sensores de giro (Absocoder)</h2>
       <p>Sensores electromecánicos puros — sin componentes electrónicos ni ópticos internos, miden posición absoluta por reluctancia magnética.</p>
@@ -82,7 +82,7 @@
     </div>
   </div>
 
-  <div class="group-block">
+  <div class="group-block" id="ezabso">
     <div class="group-header">
       <h2>Encoders inteligentes (ezABSO)</h2>
       <p>Encoder rotativo de inducción electromagnética con convertidor integrado — mide posición absoluta, velocidad, vibración y temperatura.</p>
@@ -107,7 +107,7 @@
     </div>
   </div>
 
-  <div class="group-block">
+  <div class="group-block" id="lineales">
     <div class="group-header">
       <h2>Sensores lineales</h2>
       <p>Medición de desplazamiento lineal absoluto — de montaje externo, integrado dentro de cilindro, o como cilindro completo ya sensado de fábrica.</p>
@@ -140,7 +140,7 @@
     </div>
   </div>
 
-  <div class="group-block">
+  <div class="group-block" id="proximidad">
     <div class="group-header">
       <h2>Sensores de proximidad</h2>
       <p>Detección de proximidad magnética de alta resistencia para servicio pesado.</p>

@@ -11,26 +11,44 @@
   .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; }
   .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
 
-  .fork { display: grid; grid-template-columns: 1fr 1fr; min-height: 460px; }
-  .fork-path { padding: 56px 48px; display: flex; flex-direction: column; justify-content: center; position: relative; text-decoration: none; color: inherit; transition: background 0.25s; }
-  .fork-path:first-child { border-right: 1px solid var(--gunmetal-700); }
-  .fork-path:hover { background: var(--gunmetal-800); }
+  .fork { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 40px 48px; }
+  .fork-path {
+    padding: 44px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--gunmetal-800);
+    border: 1px solid var(--gunmetal-700);
+    border-radius: 6px;
+    transition: border-color 0.25s, transform 0.25s;
+    text-decoration: none;
+    color: inherit;
+  }
+  a.fork-path:hover { border-color: var(--orange); transform: translateY(-3px); }
   .fork-eyebrow { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
-  .fork-path h2 { font-size: 28px; font-weight: 600; margin-bottom: 14px; max-width: 380px; }
+  .fork-title-link { text-decoration: none; color: inherit; display: block; }
+  .fork-title-link:hover h2 { color: var(--orange); }
+  .fork-path h2 { font-size: 26px; font-weight: 600; margin-bottom: 14px; max-width: 380px; transition: color 0.2s; }
   .fork-path p { color: var(--steel-300); font-size: 15px; max-width: 400px; margin-bottom: 20px; }
+
   .fork-list { list-style: none; margin-bottom: 24px; }
-  .fork-list li { font-size: 13px; color: var(--steel-100); padding: 6px 0; border-bottom: 1px solid var(--gunmetal-700); }
-  .fork-cta { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
-  .fork-divider { display: flex; align-items: center; justify-content: center; }
+  .fork-list li { border-bottom: 1px solid var(--gunmetal-700); }
+  .fork-list li span { display: block; font-size: 13px; color: var(--steel-100); padding: 10px 0; }
+  .fork-list a { display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: var(--steel-100); text-decoration: none; padding: 12px 2px; transition: color 0.2s; }
+  .fork-list a:hover { color: var(--orange); }
+  .fork-list a .arrow { color: var(--orange); font-size: 13px; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform: translateX(-4px); }
+  .fork-list a:hover .arrow { opacity: 1; transform: translateX(0); }
+
+  .fork-cta-btn { width: fit-content; }
 
   @media (max-width: 800px) {
     .fork { grid-template-columns: 1fr; }
-    .fork-path:first-child { border-right: none; border-bottom: 1px solid var(--gunmetal-700); }
   }
   @media (max-width: 600px) {
     .intro { padding-left: 24px; padding-right: 24px; }
     .intro h1 { font-size: 32px; }
-    .fork-path { padding: 40px 24px; }
+    .fork { padding: 24px; }
+    .fork-path { padding: 32px 24px; }
   }
 </style>
 </head>
@@ -61,35 +79,38 @@
 </section>
 
 <div class="fork">
+
+  <!-- TIPO DE SENSOR: ahora primero. Es un div (no un solo link gigante) porque
+       cada renglón de la lista salta a un ancla distinta dentro de productos.html -->
+  <div class="fork-path">
+    <a class="fork-title-link" href="productos.html">
+      <span class="fork-eyebrow">Explorar por</span>
+      <h2>Tipo de sensor</h2>
+    </a>
+    <ul class="fork-list">
+      <li><a href="productos.html#giro">Sensores de giro (Absocoder) <span class="arrow">→</span></a></li>
+      <li><a href="productos.html#ezabso">Encoders inteligentes (ezABSO) <span class="arrow">→</span></a></li>
+      <li><a href="productos.html#lineales">Sensores lineales <span class="arrow">→</span></a></li>
+      <li><a href="productos.html#proximidad">Sensores de proximidad <span class="arrow">→</span></a></li>
+    </ul>
+    <a class="btn-secondary fork-cta-btn" href="productos.html">Ver todos los tipos</a>
+  </div>
+
+  <!-- APLICACIÓN SIDERÚRGICA: ahora segundo. Sigue siendo una sola tarjeta-link,
+       pendiente de rediseño con las imágenes que se van a agregar. -->
   <a class="fork-path" href="aplicaciones-siderurgicas.html">
     <span class="fork-eyebrow">Explorar por</span>
     <h2>Aplicación siderúrgica</h2>
     <p>Encuentre el sensor adecuado según el proceso en el que se instalará.</p>
     <ul class="fork-list">
-      <li>Coquización</li>
-      <li>Convertidor</li>
-      <li>Colada Continua</li>
-      <li>Laminación en Caliente</li>
+      <li><span>Coquización</span></li>
+      <li><span>Convertidor</span></li>
+      <li><span>Colada Continua</span></li>
+      <li><span>Laminación en Caliente</span></li>
     </ul>
-    <span class="fork-cta">Ver aplicaciones
-      <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
-    </span>
+    <span class="btn-secondary fork-cta-btn">Ver aplicaciones</span>
   </a>
 
-  <a class="fork-path" href="productos.html">
-    <span class="fork-eyebrow">Explorar por</span>
-    <h2>Tipo de producto</h2>
-    <p>Vaya directo al tipo de sensor que necesita, sin pasar por la aplicación.</p>
-    <ul class="fork-list">
-      <li>Sensores de giro (Absocoder)</li>
-      <li>Encoders inteligentes (ezABSO)</li>
-      <li>Sensores lineales</li>
-      <li>Sensores de proximidad</li>
-    </ul>
-    <span class="fork-cta">Ver productos
-      <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
-    </span>
-  </a>
 </div>
 
 <div class="cta-final">

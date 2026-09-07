@@ -1,0 +1,33 @@
+FOTOS DE PRODUCTO — recorte corregido (productos.html)
+=======================================================
+
+QUÉ PASABA: no era un bug de código, era el recorte de las fotos. Casi
+todas (ezabso-pulse, ezabso-network, sensor-vls, inrodsensor, cylnuc,
+absopx, sensor-mre) tenían el mismo problema — venían con MUCHO espacio
+en blanco alrededor del producto (por eso se veían chiquitas y flotando
+dentro del cuadro), y dos de ellas (ezabso-network, absopx) además
+traían una franja oscura pegada a una orilla, seguramente arrastrada de
+donde se recortaron originalmente.
+
+QUÉ HICE: recorté cada foto de nuevo, ajustada al producto real (detecté
+el borde real del objeto vs. el fondo/franja vacíos y quité el sobrante).
+Las 3 de "Sensores lineales" (las que dijiste que se veían peor) quedaron
+las que más cambiaron.
+
+QUÉ SUBIR (reemplazan a las que ya tienes en la raíz del repo, mismo
+nombre, mismo lugar):
+  sensor-vls.jpg, inrodsensor.jpg, cylnuc.jpg, ezabso-pulse.jpg,
+  ezabso-network.jpg, absopx.jpg, sensor-mre.jpg, sensor-built-in.jpg
+
+NO INCLUIDA: sensor-vre.jpg — su encuadre ya estaba bien, no la toqué.
+
+PENDIENTE QUE SÍ ES UN PROBLEMA DE LA FOTO ORIGINAL (no de recorte):
+sensor-vre.jpg y sensor-built-in.jpg tienen de fondo un patrón de
+cuadros blanco/azul claro (el típico "checkerboard" de transparencia)
+en vez de fondo blanco liso — parece que en algún momento se exportó un
+PNG con transparencia como JPG sin aplanar el fondo a blanco primero.
+No lo corregí porque hacerlo bien requeriría separar el producto del
+fondo a mano (con solo recortar no se quita el patrón). Si tienes las
+fotos originales de esas dos (o de más resolución en general — estas
+son bastante chicas, entre 200 y 350px de ancho), mándamelas y las
+proceso bien.

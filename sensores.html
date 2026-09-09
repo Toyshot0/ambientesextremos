@@ -8,12 +8,22 @@
 <link rel="stylesheet" href="main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .hero-strip { width: 100%; height: 360px; overflow: hidden; border-bottom: 1px solid var(--paper-border); }
-  .hero-strip img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-  .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--paper-border); }
-  .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; color: var(--ink-900); }
-  .intro p { color: var(--ink-600); font-size: 17px; max-width: 640px; }
+  /* Hero de fondo: la foto va detrás, el texto arranca de una vez encima (mismo
+     patrón que el hero de Home), no una franja de imagen separada arriba del texto. */
+  .sensores-hero {
+    position: relative;
+    padding: 72px 48px 64px;
+    background-image:
+      linear-gradient(90deg, rgba(10,12,14,0.8) 0%, rgba(10,12,14,0.58) 45%, rgba(10,12,14,0.22) 100%),
+      linear-gradient(0deg, rgba(10,12,14,0.35) 0%, transparent 30%),
+      url('hero-sensores-colada.jpg');
+    background-size: cover;
+    background-position: center 40%;
+    border-bottom: 1px solid var(--paper-border);
+  }
+  .sensores-hero-inner { max-width: 720px; }
+  .sensores-hero h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; color: var(--white); text-shadow: 0 2px 20px rgba(0,0,0,0.7); }
+  .sensores-hero p { color: var(--steel-100); font-size: 17px; max-width: 640px; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
 
   .fork { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 40px 48px; }
   .fork-path {
@@ -49,9 +59,8 @@
     .fork { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
-    .hero-strip { height: 220px; }
-    .intro { padding-left: 24px; padding-right: 24px; }
-    .intro h1 { font-size: 32px; }
+    .sensores-hero { padding: 40px 24px 36px; }
+    .sensores-hero h1 { font-size: 30px; }
     .fork { padding: 24px; }
     .fork-path { padding: 32px 24px; }
   }
@@ -78,15 +87,14 @@
 </div>
 
 <!-- NOTA PARA RIC: falta subir a GitHub la foto de colada/EAF con el nombre
-     hero-sensores-colada.jpg (formato hero, 1920x1080 / 16:9) -->
-<div class="hero-strip">
-  <img src="hero-sensores-colada.jpg" alt="Colada de acero en horno de arco eléctrico">
-</div>
-
-<section class="intro">
-  <div class="eyebrow">Sensores</div>
-  <h1>Sensores confiables para los ambientes más extremos</h1>
-  <p>Tecnología japonesa NSD para medición absoluta en temperaturas extremas, inmersión, vibración e impacto mecánico.</p>
+     hero-sensores-colada.jpg (formato hero, 1920x1080 / 16:9). Mientras no esté
+     subida, este bloque se ve con el degradado oscuro pero sin foto de fondo. -->
+<section class="sensores-hero">
+  <div class="sensores-hero-inner">
+    <div class="eyebrow">Sensores</div>
+    <h1>Sensores confiables para los ambientes más extremos</h1>
+    <p>Tecnología japonesa NSD para medición absoluta en temperaturas extremas, inmersión, vibración e impacto mecánico.</p>
+  </div>
 </section>
 
 <div class="fork">

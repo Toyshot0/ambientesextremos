@@ -69,23 +69,7 @@
   .closing-cta h2 { font-size: 34px; font-weight: 600; margin-bottom: 14px; text-shadow: 0 2px 20px rgba(0,0,0,0.5); }
   .closing-cta p { font-size: 16px; color: var(--steel-100); margin-bottom: 28px; }
 
-  /* ===== Modal "Cuéntenos su aplicación" ===== */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,12,14,0.75); z-index: 200; align-items: center; justify-content: center; padding: 24px; }
-  .modal-overlay.open { display: flex; }
-  .modal-box { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; width: 100%; max-width: 460px; padding: 32px 30px; position: relative; }
-  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--steel-300); font-size: 20px; cursor: pointer; line-height: 1; }
-  .modal-close:hover { color: var(--orange); }
-  .modal-box h3 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
-  .modal-box .modal-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 22px; }
-  .modal-field { margin-bottom: 14px; }
-  .modal-field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
-  .modal-field input, .modal-field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 11px 13px; border-radius: 3px; }
-  .modal-field textarea { min-height: 90px; resize: vertical; }
-  .modal-field input:focus, .modal-field textarea:focus { outline: none; border-color: var(--orange); }
-  .modal-submit { width: 100%; margin-top: 6px; }
-  .modal-msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
-  .modal-msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
-  .modal-msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
+  /* Modal "Cuéntenos su aplicación" — CSS compartida ahora en main.css */
 
   @media (max-width: 900px) {
     .hero-text h1 { font-size: 34px; }
@@ -114,7 +98,7 @@
       <li><a href="ensambles.html">Ensambles</a></li>
       <li><a href="protecciones.html">Protecciones</a></li>
       <li><a href="portal.html" class="nav-cta-btn">Portal de Clientes</a></li>
-      <li><a href="#contacto">Contacto</a></li>
+      <li><a href="#" class="js-open-modal">Contacto</a></li>
     </ul>
   </nav>
 </header>
@@ -125,7 +109,7 @@
       <h1>AMBIENTES EXTREMOS</h1>
       <p class="subtitle">Tecnologías para aplicaciones industriales severas.</p>
       <p class="hero-tags-plain">Temperaturas extremas <span class="dot-sep">•</span> Polvos finos <span class="dot-sep">•</span> Vapor y agua <span class="dot-sep">•</span> Vibración e impacto mecánico <span class="dot-sep">•</span> Químicos corrosivos</p>
-      <button class="btn-primary" id="openModalHero">Cuéntenos su aplicación</button>
+      <button class="btn-primary js-open-modal">Cuéntenos su aplicación</button>
     </div>
   </div>
 
@@ -161,7 +145,7 @@
   <div class="closing-cta-inner">
     <h2>¿Listo para encontrar su solución?</h2>
     <p>Cuéntenos el reto de su aplicación y le ayudamos a identificar la tecnología adecuada para su ambiente.</p>
-    <button class="btn-primary" id="openModalClosing">Cuéntenos su aplicación</button>
+    <button class="btn-primary js-open-modal">Cuéntenos su aplicación</button>
   </div>
 </section>
 
@@ -172,11 +156,11 @@
       <p>Tecnologías para aplicaciones industriales severas.</p>
       <div class="footer-contact-item">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 3L7 8L13 3M2 2H12C12.55 2 13 2.45 13 3V11C13 11.55 12.55 12 12 12H2C1.45 12 1 11.55 1 11V3C1 2.45 1.45 2 2 2Z" stroke="currentColor" stroke-width="1.2"/></svg>
-        contacto@ambientesextremos.com
+        ricardogarcia@avantatech.com.mx
       </div>
       <div class="footer-contact-item">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 1.5H4.5L5.5 4L4 5C4.5 6.5 5.5 7.5 7 8L8 6.5L10.5 7.5V9.5C10.5 10.05 10.05 10.5 9.5 10.5C5.5 10.5 2.5 7.5 2.5 3.5C2.5 2.95 2.5 1.5 2.5 1.5Z" stroke="currentColor" stroke-width="1.2"/></svg>
-        (81) 0000 0000
+        (81) 1216 0561
       </div>
     </div>
     <div class="footer-col">
@@ -195,9 +179,9 @@
     </div>
     <div class="footer-col">
       <h4>Contacto</h4>
-      <a href="#">Solicitar cotización</a>
-      <a href="#">Cuéntenos su aplicación</a>
-      <a href="#">Asesoría técnica</a>
+      <a href="#" class="js-open-modal">Solicitar cotización</a>
+      <a href="#" class="js-open-modal">Cuéntenos su aplicación</a>
+      <a href="#" class="js-open-modal">Asesoría técnica</a>
     </div>
   </div>
   <div class="footer-bottom">
@@ -208,7 +192,7 @@
   </div>
 </footer>
 
-<!-- ===== Modal "Cuéntenos su aplicación" ===== -->
+<!-- ===== Modal "Cuéntenos su aplicación" (componente compartido) ===== -->
 <div class="modal-overlay" id="appModal">
   <div class="modal-box">
     <button class="modal-close" id="modalCloseBtn">✕</button>
@@ -249,8 +233,12 @@
     appModal.classList.remove('open');
   }
 
-  document.getElementById('openModalHero').addEventListener('click', openModal);
-  document.getElementById('openModalClosing').addEventListener('click', openModal);
+  document.querySelectorAll('.js-open-modal').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      openModal();
+    });
+  });
   document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
   appModal.addEventListener('click', (e) => { if (e.target === appModal) closeModal(); });
 
@@ -267,7 +255,7 @@
 
     if (error) {
       modalMsg.className = 'modal-msg error';
-      modalMsg.textContent = 'No se pudo enviar. Intente de nuevo o escríbanos directo a contacto@ambientesextremos.com';
+      modalMsg.textContent = 'No se pudo enviar. Intente de nuevo o escríbanos directo a ricardogarcia@avantatech.com.mx';
       modalMsg.style.display = 'block';
       leadSubmitBtn.disabled = false;
       leadSubmitBtn.textContent = 'Enviar';

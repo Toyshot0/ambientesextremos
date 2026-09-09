@@ -12,8 +12,11 @@
      patrón que el hero de Home), no una franja de imagen separada arriba del texto. */
   .sensores-hero {
     position: relative;
-    padding: 72px 48px 64px;
+    padding: 48px 48px 40px;
     background-image:
+      /* Fundido superior: la foto "emerge" del gris del breadcrumb en vez de
+         cortar de golpe con una línea dura. */
+      linear-gradient(to bottom, var(--paper-900) 0px, rgba(227,230,232,0) 72px),
       linear-gradient(90deg, rgba(10,12,14,0.8) 0%, rgba(10,12,14,0.58) 45%, rgba(10,12,14,0.22) 100%),
       linear-gradient(0deg, rgba(10,12,14,0.35) 0%, transparent 30%),
       url('hero-sensores-colada.jpg');
@@ -26,12 +29,12 @@
   .sensores-hero p { color: var(--steel-100); font-size: 17px; max-width: 640px; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
 
   /* ===== Bloque "elige tu punto de partida" ===== */
-  .fork-intro { padding: 52px 48px 4px; text-align: center; }
+  .fork-intro { padding: 28px 48px 4px; text-align: center; }
   .fork-intro .eyebrow { justify-content: center; display: flex; }
-  .fork-intro h2 { font-size: 30px; font-weight: 600; color: var(--ink-900); margin-bottom: 10px; }
-  .fork-intro p { color: var(--ink-600); font-size: 15px; max-width: 560px; margin: 0 auto; }
+  .fork-intro h2 { font-size: 28px; font-weight: 600; color: var(--ink-900); margin-bottom: 8px; }
+  .fork-intro p { color: var(--ink-600); font-size: 16px; max-width: 560px; margin: 0 auto; }
 
-  .fork { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 28px 48px 56px; align-items: stretch; }
+  .fork { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 20px 48px 56px; align-items: stretch; }
 
   /* Divisor "O" entre las dos tarjetas: refuerza que es una decisión de una u otra vía */
   .fork-divider {
@@ -64,6 +67,7 @@
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(20,24,27,0.05);
     transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    cursor: pointer;
   }
   .fork-path:hover { border-color: var(--orange); transform: translateY(-5px); box-shadow: 0 16px 34px rgba(20,24,27,0.14); }
 
@@ -84,16 +88,16 @@
   .fork-path h2 { font-size: 23px; font-weight: 600; margin-bottom: 14px; transition: color 0.2s; color: var(--ink-900); }
   .fork-path h2 .fork-title-arrow { display: inline-block; margin-left: 8px; color: var(--orange); font-size: 18px; opacity: 0.55; transition: opacity 0.2s, transform 0.2s; }
   .fork-title-link:hover .fork-title-arrow { opacity: 1; transform: translateX(4px); }
-  .fork-path > p { color: var(--ink-600); font-size: 15px; max-width: 400px; margin-bottom: 22px; }
+  .fork-path > p { color: var(--ink-600); font-size: 16px; max-width: 400px; margin-bottom: 22px; }
 
   .fork-list { list-style: none; margin-bottom: 26px; }
   .fork-list li { border-bottom: 1px solid var(--paper-border); }
-  .fork-list li span { display: block; font-size: 13px; color: var(--ink-600); padding: 10px 0; }
+  .fork-list li span { display: block; font-size: 14px; color: var(--ink-600); padding: 10px 0; }
   .fork-list a {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 500;
     color: var(--ink-900);
     text-decoration: none;
@@ -101,6 +105,8 @@
     margin: 0 -12px;
     border-radius: 4px;
     transition: color 0.2s, background 0.2s;
+    position: relative;
+    z-index: 1;
   }
   .fork-list a:hover { color: var(--orange); background: rgba(232,94,28,0.08); }
   .fork-list a .arrow { color: var(--orange); font-size: 14px; opacity: 0.45; transition: opacity 0.2s, transform 0.2s; }
@@ -164,9 +170,10 @@
 
   <div class="fork-divider">O</div>
 
-  <!-- TIPO DE SENSOR: ahora primero. Es un div (no un solo link gigante) porque
-       cada renglón de la lista salta a un ancla distinta dentro de productos.html -->
-  <div class="fork-path">
+  <!-- TIPO DE SENSOR: ahora primero. Es un div con data-href (no un solo <a> gigante,
+       porque adentro hay links a anclas distintas dentro de productos.html) — el JS al
+       final hace que toda la tarjeta sea clickeable, respetando los links internos. -->
+  <div class="fork-path" data-href="productos.html">
     <div class="fork-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5V5.5M12 18.5V21.5M21.5 12H18.5M5.5 12H2.5M18.36 5.64L16.24 7.76M7.76 16.24L5.64 18.36M18.36 18.36L16.24 16.24M7.76 7.76L5.64 5.64" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
     </div>
@@ -186,7 +193,7 @@
   </div>
 
   <!-- APLICACIÓN SIDERÚRGICA: mismo patrón que "Tipo de sensor" -->
-  <div class="fork-path">
+  <div class="fork-path" data-href="aplicaciones-siderurgicas.html">
     <div class="fork-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 20V10L8 13.5V10L13 13.5V10L18 13.5V6L21 8V20H3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 20H21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
     </div>
@@ -302,6 +309,17 @@
     el.addEventListener('click', function (e) {
       e.preventDefault();
       openModal();
+    });
+  });
+
+  // Tarjetas "Tipo de sensor" / "Aplicación siderúrgica": toda la tarjeta es
+  // clickeable, pero si el clic fue sobre un link interno (un renglón de la
+  // lista, o el título), dejamos que ese link haga lo suyo (va a un ancla
+  // específica) en vez de mandar a la tarjeta completa a su href genérico.
+  document.querySelectorAll('.fork-path[data-href]').forEach(function (card) {
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      window.location.href = card.getAttribute('data-href');
     });
   });
   document.getElementById('modalCloseBtn').addEventListener('click', closeModal);

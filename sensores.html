@@ -25,44 +25,101 @@
   .sensores-hero h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; color: var(--white); text-shadow: 0 2px 20px rgba(0,0,0,0.7); }
   .sensores-hero p { color: var(--steel-100); font-size: 17px; max-width: 640px; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
 
-  .fork { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 40px 48px; }
+  /* ===== Bloque "elige tu punto de partida" ===== */
+  .fork-intro { padding: 52px 48px 4px; text-align: center; }
+  .fork-intro .eyebrow { justify-content: center; display: flex; }
+  .fork-intro h2 { font-size: 30px; font-weight: 600; color: var(--ink-900); margin-bottom: 10px; }
+  .fork-intro p { color: var(--ink-600); font-size: 15px; max-width: 560px; margin: 0 auto; }
+
+  .fork { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 28px 48px 56px; align-items: stretch; }
+
+  /* Divisor "O" entre las dos tarjetas: refuerza que es una decisión de una u otra vía */
+  .fork-divider {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--paper-900);
+    border: 1px solid var(--paper-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--ink-600);
+    z-index: 2;
+  }
+
   .fork-path {
-    padding: 44px 40px;
+    position: relative;
+    padding: 40px 36px 36px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     background: var(--paper-800);
     border: 1px solid var(--paper-border);
-    border-radius: 6px;
-    transition: border-color 0.25s, transform 0.25s;
-    text-decoration: none;
-    color: inherit;
+    border-top: 4px solid var(--orange);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(20,24,27,0.05);
+    transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
   }
-  a.fork-path:hover { border-color: var(--orange); transform: translateY(-3px); }
+  .fork-path:hover { border-color: var(--orange); transform: translateY(-5px); box-shadow: 0 16px 34px rgba(20,24,27,0.14); }
+
+  .fork-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: rgba(232,94,28,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--orange);
+    margin-bottom: 22px;
+  }
+
   .fork-eyebrow { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 14px; }
   .fork-title-link { text-decoration: none; color: inherit; display: block; }
   .fork-title-link:hover h2 { color: var(--orange); }
-  .fork-path h2 { font-size: 26px; font-weight: 600; margin-bottom: 14px; max-width: 380px; transition: color 0.2s; color: var(--ink-900); }
-  .fork-path p { color: var(--ink-600); font-size: 15px; max-width: 400px; margin-bottom: 20px; }
+  .fork-path h2 { font-size: 23px; font-weight: 600; margin-bottom: 14px; transition: color 0.2s; color: var(--ink-900); }
+  .fork-path h2 .fork-title-arrow { display: inline-block; margin-left: 8px; color: var(--orange); font-size: 18px; opacity: 0.55; transition: opacity 0.2s, transform 0.2s; }
+  .fork-title-link:hover .fork-title-arrow { opacity: 1; transform: translateX(4px); }
+  .fork-path > p { color: var(--ink-600); font-size: 15px; max-width: 400px; margin-bottom: 22px; }
 
-  .fork-list { list-style: none; margin-bottom: 24px; }
+  .fork-list { list-style: none; margin-bottom: 26px; }
   .fork-list li { border-bottom: 1px solid var(--paper-border); }
   .fork-list li span { display: block; font-size: 13px; color: var(--ink-600); padding: 10px 0; }
-  .fork-list a { display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: var(--ink-900); text-decoration: none; padding: 12px 2px; transition: color 0.2s; }
-  .fork-list a:hover { color: var(--orange); }
-  .fork-list a .arrow { color: var(--orange); font-size: 13px; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform: translateX(-4px); }
-  .fork-list a:hover .arrow { opacity: 1; transform: translateX(0); }
+  .fork-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-900);
+    text-decoration: none;
+    padding: 13px 12px;
+    margin: 0 -12px;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .fork-list a:hover { color: var(--orange); background: rgba(232,94,28,0.08); }
+  .fork-list a .arrow { color: var(--orange); font-size: 14px; opacity: 0.45; transition: opacity 0.2s, transform 0.2s; }
+  .fork-list a:hover .arrow { opacity: 1; transform: translateX(3px); }
 
-  .fork-cta-btn { width: fit-content; }
+  .fork-cta-btn { width: fit-content; margin-top: auto; background: var(--orange); color: var(--white); border-color: var(--orange); }
+  .fork-cta-btn:hover { background: #d0531a; border-color: #d0531a; }
 
   @media (max-width: 800px) {
     .fork { grid-template-columns: 1fr; }
+    .fork-divider { display: none; }
   }
   @media (max-width: 600px) {
     .sensores-hero { padding: 40px 24px 36px; }
     .sensores-hero h1 { font-size: 30px; }
-    .fork { padding: 24px; }
+    .fork-intro { padding: 40px 24px 4px; }
+    .fork { padding: 20px 24px 40px; }
     .fork-path { padding: 32px 24px; }
+    .fork-path h2 { font-size: 20px; }
   }
 </style>
 </head>
@@ -97,15 +154,27 @@
   </div>
 </section>
 
+<div class="fork-intro">
+  <div class="eyebrow">Cómo buscar</div>
+  <h2>Elige tu punto de partida</h2>
+  <p>Puede explorar por el tipo de sensor que necesita, o por la etapa del proceso siderúrgico donde lo va a instalar.</p>
+</div>
+
 <div class="fork">
+
+  <div class="fork-divider">O</div>
 
   <!-- TIPO DE SENSOR: ahora primero. Es un div (no un solo link gigante) porque
        cada renglón de la lista salta a un ancla distinta dentro de productos.html -->
   <div class="fork-path">
+    <div class="fork-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5V5.5M12 18.5V21.5M21.5 12H18.5M5.5 12H2.5M18.36 5.64L16.24 7.76M7.76 16.24L5.64 18.36M18.36 18.36L16.24 16.24M7.76 7.76L5.64 5.64" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
     <a class="fork-title-link" href="productos.html">
       <span class="fork-eyebrow">Explorar por</span>
-      <h2>Tipo de sensor</h2>
+      <h2>Tipo de sensor <span class="fork-title-arrow">→</span></h2>
     </a>
+    <p>Encoders, sensores lineales, de proximidad y de velocidad — filtre directo por familia de producto.</p>
     <ul class="fork-list">
       <li><a href="productos.html#giro">Sensores de giro (Absocoder) <span class="arrow">→</span></a></li>
       <li><a href="productos.html#ezabso">Encoders inteligentes (ezABSO) <span class="arrow">→</span></a></li>
@@ -113,22 +182,26 @@
       <li><a href="productos.html#proximidad">Sensores de proximidad <span class="arrow">→</span></a></li>
       <li><a href="productos.html#ezabso">Sensores de velocidad <span class="arrow">→</span></a></li>
     </ul>
-    <a class="btn-secondary fork-cta-btn" href="productos.html">Ver todos los tipos</a>
+    <a class="btn-primary fork-cta-btn" href="productos.html">Ver todos los tipos</a>
   </div>
 
   <!-- APLICACIÓN SIDERÚRGICA: mismo patrón que "Tipo de sensor" -->
   <div class="fork-path">
+    <div class="fork-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 20V10L8 13.5V10L13 13.5V10L18 13.5V6L21 8V20H3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 20H21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
     <a class="fork-title-link" href="aplicaciones-siderurgicas.html">
       <span class="fork-eyebrow">Explorar por</span>
-      <h2>Aplicación siderúrgica</h2>
+      <h2>Aplicación siderúrgica <span class="fork-title-arrow">→</span></h2>
     </a>
+    <p>Coquización, convertidor, colada continua y laminación en caliente — filtre por etapa del proceso.</p>
     <ul class="fork-list">
       <li><a href="aplicaciones-siderurgicas.html#coquizacion">Coquización <span class="arrow">→</span></a></li>
       <li><a href="aplicaciones-siderurgicas.html#conversion">Convertidor <span class="arrow">→</span></a></li>
       <li><a href="aplicaciones-siderurgicas.html#colada-continua">Colada Continua <span class="arrow">→</span></a></li>
       <li><a href="aplicaciones-siderurgicas.html#laminacion-caliente">Laminación en Caliente <span class="arrow">→</span></a></li>
     </ul>
-    <a class="btn-secondary fork-cta-btn" href="aplicaciones-siderurgicas.html">Ver todo el proceso</a>
+    <a class="btn-primary fork-cta-btn" href="aplicaciones-siderurgicas.html">Ver todo el proceso</a>
   </div>
 
 </div>

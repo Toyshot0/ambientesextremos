@@ -11,12 +11,14 @@
   --orange: #E85E1C;
   --orange-dim: #b8481296;
 
-  /* Paleta clara — contenido de páginas interiores (header/nav/footer se quedan oscuros) */
-  --paper-900: #eef0f2;
-  --paper-800: #ffffff;
-  --paper-border: #dde3e7;
+  /* Paleta clara — contenido de páginas interiores (header/nav/footer se quedan oscuros).
+     Gris limpio, no blanco: --paper-900 es el fondo de página, --paper-800 el de tarjetas
+     (un tono más claro que el fondo, pero sigue siendo gris, no blanco puro). */
+  --paper-900: #e3e6e8;
+  --paper-800: #eef0f1;
+  --paper-border: #cfd5d9;
   --ink-900: #1a2024;
-  --ink-600: #5c6770;
+  --ink-600: #56616b;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }

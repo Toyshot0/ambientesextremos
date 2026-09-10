@@ -156,6 +156,49 @@ body.content-light .product-body { border-top-color: var(--orange); }
 body.content-light .product-body h3 { color: var(--ink-900); }
 body.content-light .product-body p { color: var(--ink-600); }
 
+/* ===== Tema claro — páginas de detalle de producto de Sensores =====
+   Mismas clases compartidas entre las 9 páginas (sensor-vre, sensor-mre,
+   sensor-built-in, ezabso-pulse, ezabso-network, sensor-vls, inrodsensor,
+   cylnuc, absopx). Un solo bloque aquí las cubre todas. */
+body.content-light .hero h1 { color: var(--ink-900); }
+body.content-light .hero .subtitle { color: var(--ink-600); }
+body.content-light .main-image { border-color: var(--paper-border); }
+body.content-light .section { border-top-color: var(--paper-border); }
+body.content-light .section-title { color: var(--ink-900); }
+body.content-light .desc p { color: var(--ink-600); }
+
+body.content-light .specs-table tr { border-bottom-color: var(--paper-border); }
+body.content-light .specs-table td:first-child { color: var(--ink-600); }
+body.content-light .specs-table td:last-child { color: var(--ink-900); }
+body.content-light .specs-table tr:hover { background: var(--paper-800); }
+body.content-light .specs-note { color: var(--ink-600); }
+
+body.content-light .variant-item { background: var(--paper-800); border-color: var(--paper-border); }
+body.content-light .variant-radio { border-color: var(--ink-600); }
+body.content-light .variant-text .vname { color: var(--ink-900); }
+body.content-light .variant-text .vdesc { color: var(--ink-600); }
+
+body.content-light .download-item { background: var(--paper-800); border-color: var(--paper-border); }
+body.content-light .download-text .title { color: var(--ink-900); }
+body.content-light .download-text .sub { color: var(--ink-600); }
+
+body.content-light .cq-field label { color: var(--ink-600); }
+body.content-light .cq-field select { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-900); }
+
+body.content-light .honest-note { background: var(--paper-800); border-color: var(--paper-border); }
+body.content-light .honest-note p { color: var(--ink-600); }
+body.content-light .honest-note strong { color: var(--ink-900); }
+
+body.content-light .feature-box { background: var(--paper-800); border-color: var(--paper-border); }
+body.content-light .feature-box .ftitle { color: var(--ink-900); }
+body.content-light .feature-box p { color: var(--ink-600); }
+
+body.content-light .protocol-note { color: var(--ink-600); }
+
+body.content-light .type-card { background: var(--paper-800); border-color: var(--paper-border); }
+body.content-light .type-card .tname { color: var(--ink-900); }
+body.content-light .type-card .tdesc { color: var(--ink-600); }
+
 /* El bloque de CTA final se queda oscuro a propósito (acento antes del footer),
    incluso en páginas con contenido claro. */
 

@@ -11,7 +11,11 @@
   .intro { padding: 48px 48px 40px; max-width: 900px; }
   .intro h1 { font-size: 40px; font-weight: 600; margin-bottom: 16px; color: var(--ink-900); }
   .intro p { color: var(--ink-600); font-size: 17px; max-width: 640px; }
-  .grid-section { padding: 48px; }
+  /* Tope de ancho: sin esto, en pantallas anchas las 3 columnas se estiran y,
+     como la foto es cuadrada, las tarjetas se ponen enormes (mucho scroll para
+     poco contenido). Con el tope, en una laptop normal las tarjetas bajan de
+     ~430px a ~300px de lado — sigue siendo cuadrada, solo más chica. */
+  .grid-section { padding: 48px; max-width: 1050px; margin: 0 auto; }
   .group-block { margin-bottom: 48px; scroll-margin-top: 90px; }
   .group-header { margin-bottom: 20px; }
   .group-header h2 { font-size: 24px; font-weight: 600; margin-bottom: 6px; color: var(--ink-900); }

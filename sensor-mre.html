@@ -8,17 +8,18 @@
 <link rel="stylesheet" href="main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .hero { padding: 32px 48px 40px; max-width: 760px; }
+  .hero { padding: 32px 48px 40px; max-width: 1000px; margin: 0 auto; }
   .eyebrow { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
   .hero h1 { font-size: 38px; font-weight: 600; margin-bottom: 14px; }
   .hero .subtitle { color: var(--steel-100); font-size: 16px; margin-bottom: 16px; max-width: 620px; }
-  .badge-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 7px 14px; border-radius: 20px; margin-bottom: 24px; }
+  .badge-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--orange-dim); border: none; color: var(--orange); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 4px; margin-bottom: 24px; }
+  .badge-pill .blabel { color: var(--steel-300); font-weight: 500; margin-right: 2px; }
 
-  .main-image-wrap { padding: 0 48px 48px; max-width: 1000px; }
-  .main-image { aspect-ratio: 16/9; background: var(--white); border: 1px solid var(--gunmetal-700); border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .main-image-wrap { padding: 0 48px 48px; max-width: 1000px; margin: 0 auto; }
+  .main-image { aspect-ratio: 16/9; background: var(--white); border: 1px solid var(--gunmetal-700); border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: zoom-in; }
   .main-image img { max-height: 100%; max-width: 60%; object-fit: contain; }
 
-  .content { padding: 0 48px 48px; max-width: 1000px; }
+  .content { padding: 0 48px 48px; max-width: 1000px; margin: 0 auto; }
   .section { padding-top: 40px; border-top: 1px solid var(--gunmetal-700); margin-top: 40px; }
   .section:first-child { border-top: none; margin-top: 0; padding-top: 0; }
   .section-title { font-size: 22px; font-weight: 600; margin-bottom: 18px; }
@@ -34,11 +35,11 @@
   .specs-note { font-size: 12px; color: var(--steel-300); margin-top: 12px; max-width: 620px; }
 
   .variant-list { display: flex; flex-direction: column; gap: 12px; max-width: 720px; }
-  .variant-item { display: flex; align-items: center; gap: 14px; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 16px 18px; }
-  .variant-item.default { border-color: var(--orange); }
+  .variant-item { display: flex; align-items: center; gap: 14px; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 16px 18px; cursor: pointer; }
+  .variant-item.selected { border-color: var(--orange); }
   .variant-radio { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--steel-300); flex-shrink: 0; position: relative; }
-  .variant-item.default .variant-radio { border-color: var(--orange); }
-  .variant-item.default .variant-radio::after { content: ""; position: absolute; inset: 3px; background: var(--orange); border-radius: 50%; }
+  .variant-item.selected .variant-radio { border-color: var(--orange); }
+  .variant-item.selected .variant-radio::after { content: ""; position: absolute; inset: 3px; background: var(--orange); border-radius: 50%; }
   .variant-text { flex: 1; }
   .variant-text .vname { font-size: 14px; font-weight: 600; color: var(--white); }
   .variant-text .vdesc { font-size: 12px; color: var(--steel-300); margin-top: 2px; }
@@ -84,10 +85,10 @@
   <p class="subtitle">Sensor electromecánico absoluto multivuelta, capaz de detectar hasta miles de vueltas sin batería ni memoria.</p>
   <div class="badge-pill">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 4V7C1 10 3.5 12.5 7 13C10.5 12.5 13 10 13 7V4L7 1Z" stroke="#E85E1C" stroke-width="1.3"/></svg>
-    Heavy Duty
+    <span class="blabel">Especificación:</span> Heavy Duty
   </div>
   <div>
-    <button class="btn-primary js-open-modal">Solicitar cotización</button>
+    <button class="btn-primary js-open-modal" data-quote-cta="true">Solicitar cotización</button>
   </div>
 </section>
 
@@ -122,7 +123,7 @@
   <div class="section">
     <h2 class="section-title">Variantes disponibles</h2>
     <div class="variant-list">
-      <div class="variant-item default">
+      <div class="variant-item selected">
         <span class="variant-radio"></span>
         <div class="variant-text">
           <div class="vname">Heavy Duty</div>
@@ -175,7 +176,7 @@
     <h2>¿Necesita otra variante o configuración?</h2>
     <p>Cuéntenos su aplicación y le ayudamos a definir la especificación exacta.</p>
   </div>
-  <a class="btn-primary js-open-modal" href="#">Solicitar asesoría técnica</a>
+  <a class="btn-primary js-open-modal" href="#" data-quote-cta="true">Solicitar asesoría técnica</a>
 </div>
 
 <footer id="contacto">
@@ -208,7 +209,7 @@
     </div>
     <div class="footer-col">
       <h4>Contacto</h4>
-      <a href="#" class="js-open-modal">Solicitar cotización</a>
+      <a href="#" class="js-open-modal" data-quote-cta="true">Solicitar cotización</a>
       <a href="#" class="js-open-modal">Cuéntenos su aplicación</a>
       <a href="#" class="js-open-modal">Asesoría técnica</a>
     </div>
@@ -221,6 +222,11 @@
   </div>
 </footer>
 
+
+<!-- ===== Lightbox de imagen principal (clic para agrandar) ===== -->
+<div class="img-lightbox" id="imgLightbox">
+  <img id="imgLightboxImg" src="" alt="">
+</div>
 
 <!-- ===== Modal "Cuéntenos su aplicación" (componente compartido) ===== -->
 <div class="modal-overlay" id="appModal">
@@ -254,10 +260,65 @@
   const appForm = document.getElementById('appForm');
   const modalMsg = document.getElementById('modalMsg');
   const leadSubmitBtn = document.getElementById('leadSubmitBtn');
+  const leadMessage = document.getElementById('leadMessage');
 
-  function openModal() {
+  let selectedVariant = null;
+  let selectedType = null;
+
+  // Variantes disponibles: una sola seleccionada a la vez, se guarda para
+  // precargar el formulario de cotización.
+  document.querySelectorAll('.variant-list').forEach(function (list) {
+    const items = list.querySelectorAll('.variant-item');
+    items.forEach(function (item) {
+      if (item.classList.contains('selected')) {
+        selectedVariant = item.querySelector('.vname').textContent.trim();
+      }
+      item.addEventListener('click', function () {
+        items.forEach(function (i) { i.classList.remove('selected'); });
+        item.classList.add('selected');
+        selectedVariant = item.querySelector('.vname').textContent.trim();
+      });
+    });
+  });
+
+  // Tipos disponibles (ej. tipos de cilindro): mismo patrón de selección.
+  document.querySelectorAll('.type-grid').forEach(function (grid) {
+    const cards = grid.querySelectorAll('.type-card');
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        cards.forEach(function (c) { c.classList.remove('selected'); });
+        card.classList.add('selected');
+        selectedType = card.querySelector('.tname').textContent.trim();
+      });
+    });
+  });
+
+  // Imagen principal: clic para ver en grande.
+  const mainImg = document.querySelector('.main-image img');
+  const imgLightbox = document.getElementById('imgLightbox');
+  const imgLightboxImg = document.getElementById('imgLightboxImg');
+  if (mainImg && imgLightbox) {
+    mainImg.addEventListener('click', function () {
+      imgLightboxImg.src = mainImg.src;
+      imgLightboxImg.alt = mainImg.alt;
+      imgLightbox.classList.add('open');
+    });
+    imgLightbox.addEventListener('click', function () {
+      imgLightbox.classList.remove('open');
+    });
+  }
+
+  function openModal(prefill) {
     appModal.classList.add('open');
     modalMsg.style.display = 'none';
+    if (prefill && !leadMessage.value) {
+      const h1 = document.querySelector('.hero h1');
+      const productName = h1 ? h1.textContent.split('—')[0].trim() : '';
+      let msg = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
+      if (selectedVariant) msg += ' Variante: ' + selectedVariant + '.';
+      if (selectedType) msg += ' Tipo: ' + selectedType + '.';
+      if (msg) leadMessage.value = msg;
+    }
   }
   function closeModal() {
     appModal.classList.remove('open');
@@ -266,7 +327,7 @@
   document.querySelectorAll('.js-open-modal').forEach(function (el) {
     el.addEventListener('click', function (e) {
       e.preventDefault();
-      openModal();
+      openModal(el.hasAttribute('data-quote-cta'));
     });
   });
 

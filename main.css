@@ -89,7 +89,11 @@ nav a.nav-cta-btn:hover { background: #d0531a; color: var(--white); }
 
 /* ===== CTA block ===== */
 .cta-final { margin: 24px 48px 64px; background: linear-gradient(120deg, var(--gunmetal-800), var(--gunmetal-700)); border: 1px solid var(--gunmetal-600); border-radius: 4px; padding: 48px; display: flex; align-items: center; justify-content: space-between; gap: 32px; position: relative; overflow: hidden; }
-.cta-final::before { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; background: radial-gradient(circle, var(--orange-dim), transparent 70%); opacity: 0.5; }
+/* pointer-events: none — sin esto, este adorno (posicionado, position:absolute)
+   pinta por encima del botón real y le roba el hover/clic de forma intermitente
+   (había que pasar el mouse varias veces para que "prendiera" el botón). */
+.cta-final::before { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; background: radial-gradient(circle, var(--orange-dim), transparent 70%); opacity: 0.5; pointer-events: none; }
+.cta-final[data-href], .cta-final.js-open-modal { cursor: pointer; }
 .cta-text h2 { font-size: 26px; font-weight: 600; margin-bottom: 8px; position: relative; }
 .cta-text p { color: var(--steel-300); font-size: 15px; position: relative; }
 

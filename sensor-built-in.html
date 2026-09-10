@@ -146,23 +146,13 @@
     </div>
   </div>
 
-  <div class="section">
-    <h2 class="section-title">Descargas</h2>
-    <div class="downloads-list">
-      <div class="download-item">
-        <div class="pdf-icon">📄</div>
-        <div class="download-text">
-          <div class="title">Ficha técnica Rack-and-Pinion</div>
-          <div class="sub">Especificaciones completas y dimensiones</div>
-        </div>
-        <button class="pdf-btn">Descargar PDF</button>
-      </div>
-    </div>
+  <div class="section bottom-quote">
+    <button class="btn-primary js-open-modal" data-quote-cta="true">Solicitar cotización</button>
   </div>
 
 </div>
 
-<div class="cta-final">
+<div class="cta-final js-open-modal" data-quote-cta="true">
   <div class="cta-text">
     <h2>¿Necesita mayor resistencia ambiental?</h2>
     <p>Cuéntenos su aplicación y le ayudamos a definir la mejor solución para su entorno.</p>
@@ -256,31 +246,49 @@
   let selectedVariant = null;
   let selectedType = null;
 
-  // Variantes disponibles: una sola seleccionada a la vez, se guarda para
-  // precargar el formulario de cotización.
+  // Variantes disponibles: se puede seleccionar una, o volver a dar clic
+  // sobre la ya seleccionada para quitarla (nada seleccionado por default,
+  // así no se fuerza ningún precargado en la cotización).
   document.querySelectorAll('.variant-list').forEach(function (list) {
     const items = list.querySelectorAll('.variant-item');
     items.forEach(function (item) {
-      if (item.classList.contains('selected')) {
-        selectedVariant = item.querySelector('.vname').textContent.trim();
-      }
       item.addEventListener('click', function () {
+        const wasSelected = item.classList.contains('selected');
         items.forEach(function (i) { i.classList.remove('selected'); });
-        item.classList.add('selected');
-        selectedVariant = item.querySelector('.vname').textContent.trim();
+        if (wasSelected) {
+          selectedVariant = null;
+        } else {
+          item.classList.add('selected');
+          selectedVariant = item.querySelector('.vname').textContent.trim();
+        }
       });
     });
   });
 
-  // Tipos disponibles (ej. tipos de cilindro): mismo patrón de selección.
+  // Tipos disponibles (ej. tipos de cilindro): mismo patrón, deseleccionable.
   document.querySelectorAll('.type-grid').forEach(function (grid) {
     const cards = grid.querySelectorAll('.type-card');
     cards.forEach(function (card) {
       card.addEventListener('click', function () {
+        const wasSelected = card.classList.contains('selected');
         cards.forEach(function (c) { c.classList.remove('selected'); });
-        card.classList.add('selected');
-        selectedType = card.querySelector('.tname').textContent.trim();
+        if (wasSelected) {
+          selectedType = null;
+        } else {
+          card.classList.add('selected');
+          selectedType = card.querySelector('.tname').textContent.trim();
+        }
       });
+    });
+  });
+
+  // Bloque final de venta cruzada (ej. "Ver CYLNUC"): toda la tarjeta es
+  // clickeable y navega al otro producto, salvo que el clic haya sido sobre
+  // el link interno (que ya navega por su cuenta).
+  document.querySelectorAll('.cta-final[data-href]').forEach(function (card) {
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      window.location.href = card.getAttribute('data-href');
     });
   });
 
@@ -302,13 +310,13 @@
   function openModal(prefill) {
     appModal.classList.add('open');
     modalMsg.style.display = 'none';
-    if (prefill && !leadMessage.value) {
+    if (prefill) {
       const h1 = document.querySelector('.hero h1');
       const productName = h1 ? h1.textContent.split('—')[0].trim() : '';
       let msg = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
       if (selectedVariant) msg += ' Variante: ' + selectedVariant + '.';
       if (selectedType) msg += ' Tipo: ' + selectedType + '.';
-      if (msg) leadMessage.value = msg;
+      leadMessage.value = msg;
     }
   }
   function closeModal() {

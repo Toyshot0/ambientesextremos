@@ -94,10 +94,6 @@
   <div class="eyebrow">Sensores lineales</div>
   <h1>CYLNUC — Cilindro Inteligente con Sensor de Posición Integrado</h1>
   <p class="subtitle">Cilindro hidráulico o neumático completo, con sensor de posición absoluta NSD integrado de fábrica — no se instala un sensor en un cilindro existente, se reemplaza el cilindro entero por uno que ya lo trae.</p>
-  <div class="badge-pill">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 4V7C1 10 3.5 12.5 7 13C10.5 12.5 13 10 13 7V4L7 1Z" stroke="#E85E1C" stroke-width="1.3"/></svg>
-    <span class="blabel">Especificación:</span> Heavy Duty
-  </div>
   <div>
     <button class="btn-primary js-open-modal" data-quote-cta="true">Solicitar cotización</button>
   </div>
@@ -135,7 +131,7 @@
   <div class="section">
     <h2 class="section-title">Variantes disponibles</h2>
     <div class="variant-list">
-      <div class="variant-item selected">
+      <div class="variant-item">
         <span class="variant-radio"></span>
         <div class="variant-text">
           <div class="vname">Heavy Duty</div>
@@ -187,23 +183,13 @@
     </div>
   </div>
 
-  <div class="section">
-    <h2 class="section-title">Descargas</h2>
-    <div class="downloads-list">
-      <div class="download-item">
-        <div class="pdf-icon">📄</div>
-        <div class="download-text">
-          <div class="title">Ficha técnica CYLNUC</div>
-          <div class="sub">Especificaciones completas por serie y dimensiones</div>
-        </div>
-        <button class="pdf-btn">Descargar PDF</button>
-      </div>
-    </div>
+  <div class="section bottom-quote">
+    <button class="btn-primary js-open-modal" data-quote-cta="true">Solicitar cotización</button>
   </div>
 
 </div>
 
-<div class="cta-final">
+<div class="cta-final" data-href="inrodsensor.html">
   <div class="cta-text">
     <h2>¿Ya tiene un cilindro instalado?</h2>
     <p>Conozca Inrodsensor, para agregar sensado de posición a un cilindro que usted ya tiene.</p>
@@ -297,31 +283,49 @@
   let selectedVariant = null;
   let selectedType = null;
 
-  // Variantes disponibles: una sola seleccionada a la vez, se guarda para
-  // precargar el formulario de cotización.
+  // Variantes disponibles: se puede seleccionar una, o volver a dar clic
+  // sobre la ya seleccionada para quitarla (nada seleccionado por default,
+  // así no se fuerza ningún precargado en la cotización).
   document.querySelectorAll('.variant-list').forEach(function (list) {
     const items = list.querySelectorAll('.variant-item');
     items.forEach(function (item) {
-      if (item.classList.contains('selected')) {
-        selectedVariant = item.querySelector('.vname').textContent.trim();
-      }
       item.addEventListener('click', function () {
+        const wasSelected = item.classList.contains('selected');
         items.forEach(function (i) { i.classList.remove('selected'); });
-        item.classList.add('selected');
-        selectedVariant = item.querySelector('.vname').textContent.trim();
+        if (wasSelected) {
+          selectedVariant = null;
+        } else {
+          item.classList.add('selected');
+          selectedVariant = item.querySelector('.vname').textContent.trim();
+        }
       });
     });
   });
 
-  // Tipos disponibles (ej. tipos de cilindro): mismo patrón de selección.
+  // Tipos disponibles (ej. tipos de cilindro): mismo patrón, deseleccionable.
   document.querySelectorAll('.type-grid').forEach(function (grid) {
     const cards = grid.querySelectorAll('.type-card');
     cards.forEach(function (card) {
       card.addEventListener('click', function () {
+        const wasSelected = card.classList.contains('selected');
         cards.forEach(function (c) { c.classList.remove('selected'); });
-        card.classList.add('selected');
-        selectedType = card.querySelector('.tname').textContent.trim();
+        if (wasSelected) {
+          selectedType = null;
+        } else {
+          card.classList.add('selected');
+          selectedType = card.querySelector('.tname').textContent.trim();
+        }
       });
+    });
+  });
+
+  // Bloque final de venta cruzada (ej. "Ver CYLNUC"): toda la tarjeta es
+  // clickeable y navega al otro producto, salvo que el clic haya sido sobre
+  // el link interno (que ya navega por su cuenta).
+  document.querySelectorAll('.cta-final[data-href]').forEach(function (card) {
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      window.location.href = card.getAttribute('data-href');
     });
   });
 
@@ -343,13 +347,13 @@
   function openModal(prefill) {
     appModal.classList.add('open');
     modalMsg.style.display = 'none';
-    if (prefill && !leadMessage.value) {
+    if (prefill) {
       const h1 = document.querySelector('.hero h1');
       const productName = h1 ? h1.textContent.split('—')[0].trim() : '';
       let msg = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
       if (selectedVariant) msg += ' Variante: ' + selectedVariant + '.';
       if (selectedType) msg += ' Tipo: ' + selectedType + '.';
-      if (msg) leadMessage.value = msg;
+      leadMessage.value = msg;
     }
   }
   function closeModal() {

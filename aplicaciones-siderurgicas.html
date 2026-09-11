@@ -67,7 +67,7 @@
   }
 </style>
 </head>
-<body class="content-light">
+<body class="content-light" id="pageTop">
 
 <header>
   <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
@@ -231,6 +231,11 @@
 
 </section>
 
+<div class="page-end-nav">
+  <a href="productos.html" class="btn-secondary">Ver sensores por tipo de producto →</a>
+  <a href="#pageTop" class="subtle-link">↑ Volver arriba</a>
+</div>
+
 <div class="cta-final">
   <div class="cta-text">
     <h2>¿No encuentra su aplicación exacta?</h2>
@@ -323,45 +328,10 @@
 <script src="portal-config.js"></script>
 <script src="app.js"></script>
 <script>
-(function () {
-  var links = document.querySelectorAll('.stage-nav a[href^="#"]');
-  var sections = document.querySelectorAll('.app-section[id]');
-  if (!links.length || !sections.length) return;
-
-  var linkByTarget = {};
-  links.forEach(function (a) { linkByTarget[a.getAttribute('href').slice(1)] = a; });
-
-  function setActive(link) {
-    links.forEach(function (a) { a.classList.remove('active'); });
-    link.classList.add('active');
-  }
-
-  // Mientras esto sea mayor que Date.now(), el observador no toca el
-  // resaltado. Necesario porque las imágenes de abajo (sin alto fijo)
-  // siguen cargando y corriendo el layout después del salto a la ancla,
-  // y eso a veces disparaba el observador de nuevo y le quitaba lo
-  // marcado a la etapa en la que se acababa de dar clic (o dejaba
-  // marcada una distinta).
-  var ignoreObserverUntil = 0;
-
-  var observer = new IntersectionObserver(function (entries) {
-    if (Date.now() < ignoreObserverUntil) return;
-    entries.forEach(function (entry) {
-      var link = linkByTarget[entry.target.id];
-      if (!link || !entry.isIntersecting) return;
-      setActive(link);
-    });
-  }, { rootMargin: '-96px 0px -60% 0px', threshold: 0 });
-
-  sections.forEach(function (s) { observer.observe(s); });
-
-  links.forEach(function (a) {
-    a.addEventListener('click', function () {
-      setActive(a);
-      ignoreObserverUntil = Date.now() + 1200;
-    });
-  });
-})();
+// Los botones de .stage-nav ya no marcan cuál está "activo" — Ric pidió
+// quitarlo (se seguía quedando pegado en el botón equivocado pase lo que
+// pase). Ahora son simples anclas: llevan a la etapa correspondiente y ya,
+// sin ningún estado de seleccionado.
 
 // Modal de desambiguación para las imágenes que solo dicen "Absocoder"
 // (pueden ser VRE o MRE según cómo esté armado en campo) — antes mandaban

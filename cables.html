@@ -18,10 +18,11 @@
   .config-badge { display: inline-block; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; margin-bottom: 14px; width: fit-content; }
   .config-card-text h2 { font-size: 26px; font-weight: 600; margin-bottom: 10px; }
   .config-card-text p { color: var(--steel-300); font-size: 14px; margin-bottom: 20px; max-width: 400px; }
-  .config-card-visual { background: linear-gradient(145deg, var(--gunmetal-700), var(--gunmetal-900)); display: flex; align-items: center; justify-content: center; color: var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; min-height: 220px; }
+  .config-card-visual { background: var(--gunmetal-900); display: flex; align-items: center; justify-content: center; min-height: 260px; padding: 18px; }
+  .config-card-visual img { width: 100%; height: 100%; object-fit: contain; }
 
   .filter-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
-  .pill { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-size: 13px; padding: 9px 16px; border-radius: 20px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+  .pill { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Inter', sans-serif; font-size: 13px; padding: 9px 16px; border-radius: 20px; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
   .pill.active, .pill:hover { border-color: var(--orange); color: var(--orange); }
 
   .type-badge-sm { display: inline-block; background: var(--gunmetal-700); color: var(--steel-100); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 9px; border-radius: 3px; margin-bottom: 10px; }
@@ -68,20 +69,19 @@
       <p>Seleccione calibre, número de conductores, blindaje y temperatura de operación para encontrar el cable adecuado.</p>
       <a class="btn-primary" href="https://arneses-app.vercel.app/" target="_blank" rel="noopener" style="width:fit-content;">Abrir configurador</a>
     </div>
-    <div class="config-card-visual">Vista previa del configurador</div>
+    <div class="config-card-visual"><img src="cable-configurator-preview.jpg" alt="Corte transversal de dos construcciones de cable: instrumentación blindada y potencia de media tensión"></div>
   </div>
 
-  <div class="filter-pills">
-    <span class="pill active">Los más confiables</span>
-    <span class="pill">Potencia</span>
-    <span class="pill">Control</span>
-    <span class="pill">Instrumentación</span>
-    <span class="pill">Termopar</span>
+  <div class="filter-pills" id="filterPills">
+    <button type="button" class="pill" data-category="Potencia">Potencia</button>
+    <button type="button" class="pill" data-category="Control">Control</button>
+    <button type="button" class="pill" data-category="Instrumentación">Instrumentación</button>
+    <button type="button" class="pill" data-category="Termopar">Termopar</button>
   </div>
 
   <div class="product-grid">
 
-    <a class="product-card" href="thermal-3x18.html">
+    <a class="product-card" href="thermal-3x18.html" data-category="Instrumentación">
       <div class="product-photo"><img src="thermal-3x18.jpg" alt="Cable Thermal 3x18" style="width:100%;height:100%;object-fit:cover;"></div>
       <div class="product-body">
         <span class="type-badge-sm">Instrumentación</span>
@@ -93,7 +93,7 @@
       </div>
     </a>
 
-    <a class="product-card" href="thermal-7x20.html">
+    <a class="product-card" href="thermal-7x20.html" data-category="Control">
       <div class="product-photo"><img src="thermal-7x20.jpg" alt="Cable Thermal 7x20" style="width:100%;height:100%;object-fit:cover;"></div>
       <div class="product-body">
         <span class="type-badge-sm">Control</span>
@@ -105,7 +105,7 @@
       </div>
     </a>
 
-    <a class="product-card" href="thermal-16-tr.html">
+    <a class="product-card" href="thermal-16-tr.html" data-category="Control">
       <div class="product-photo"><img src="thermal-16-tr.jpg" alt="Cable Thermal 16 TR" style="width:100%;height:100%;object-fit:cover;"></div>
       <div class="product-body">
         <span class="type-badge-sm">Control</span>
@@ -117,7 +117,7 @@
       </div>
     </a>
 
-    <a class="product-card" href="thermal-super-cable.html">
+    <a class="product-card" href="thermal-super-cable.html" data-category="Potencia">
       <div class="product-photo"><span class="photo-placeholder">Foto Thermal Super Cable</span></div>
       <div class="product-body">
         <span class="type-badge-sm">Potencia</span>
@@ -129,7 +129,7 @@
       </div>
     </a>
 
-    <a class="product-card" href="thermal-termopar-tipo-k.html">
+    <a class="product-card" href="thermal-termopar-tipo-k.html" data-category="Termopar">
       <div class="product-photo"><img src="thermal-termopar-tipo-k.jpg" alt="Cable Termopar Tipo K" style="width:100%;height:100%;object-fit:cover;"></div>
       <div class="product-body">
         <span class="type-badge-sm">Termopar</span>
@@ -141,7 +141,7 @@
       </div>
     </a>
 
-    <a class="product-card" href="draka-marino-7x18.html">
+    <a class="product-card" href="draka-marino-7x18.html" data-category="Control">
       <div class="product-photo"><img src="draka-marino-7x18.jpg" alt="Cable Draka Marino 7x18" style="width:100%;height:100%;object-fit:cover;"></div>
       <div class="product-body">
         <span class="type-badge-sm">Control</span>
@@ -153,7 +153,7 @@
       </div>
     </a>
 
-    <a class="product-card" href="draka-4x8.html">
+    <a class="product-card" href="draka-4x8.html" data-category="Potencia">
       <div class="product-photo"><img src="draka-4x8.jpg" alt="Cable Draka 4x8" style="width:100%;height:100%;object-fit:cover;"></div>
       <div class="product-body">
         <span class="type-badge-sm">Potencia</span>
@@ -165,7 +165,7 @@
       </div>
     </a>
 
-    <a class="product-card" href="draka-4-0.html">
+    <a class="product-card" href="draka-4-0.html" data-category="Potencia">
       <div class="product-photo"><span class="photo-placeholder">Foto Draka 4/0</span></div>
       <div class="product-body">
         <span class="type-badge-sm">Potencia</span>
@@ -259,6 +259,30 @@
 <script src="portal-config.js"></script>
 <script src="app.js"></script>
 <script>
+  // Filtro de categoría: multi-selección. Sin ninguna píldora activa se ven
+  // todas las tarjetas; con una o más activas, solo las que coincidan.
+  (function () {
+    var pills = document.querySelectorAll('#filterPills .pill');
+    var cards = document.querySelectorAll('.product-card[data-category]');
+    if (!pills.length || !cards.length) return;
+
+    function applyFilter() {
+      var active = Array.prototype.filter.call(pills, function (p) { return p.classList.contains('active'); })
+        .map(function (p) { return p.getAttribute('data-category'); });
+      cards.forEach(function (card) {
+        var show = active.length === 0 || active.indexOf(card.getAttribute('data-category')) !== -1;
+        card.style.display = show ? '' : 'none';
+      });
+    }
+
+    pills.forEach(function (p) {
+      p.addEventListener('click', function () {
+        p.classList.toggle('active');
+        applyFilter();
+      });
+    });
+  })();
+
   const appModal = document.getElementById('appModal');
   const appForm = document.getElementById('appForm');
   const modalMsg = document.getElementById('modalMsg');

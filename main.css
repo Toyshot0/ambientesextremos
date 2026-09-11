@@ -71,6 +71,15 @@ nav a.nav-cta-btn:hover { background: #d0531a; color: var(--white); }
 .back-to-apps a { display: inline-flex; align-items: center; gap: 4px; color: var(--orange); font-size: 13px; font-weight: 500; text-decoration: none; }
 .back-to-apps a:hover { text-decoration: underline; }
 
+/* Barra al final de una pantalla de catálogo: link cruzado a la otra
+   forma de navegar (por tipo / por aplicación) + volver arriba. */
+.page-end-nav { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 32px 48px 8px; max-width: 1050px; margin: 0 auto; border-top: 1px solid var(--paper-border); }
+.subtle-link { color: var(--steel-300); font-size: 13px; text-decoration: none; }
+.subtle-link:hover { color: var(--orange); text-decoration: underline; }
+@media (max-width: 600px) {
+  .page-end-nav { padding: 24px 24px 8px; flex-direction: column; align-items: stretch; text-align: center; }
+}
+
 /* ===== Eyebrow / section intro ===== */
 .eyebrow { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
 

@@ -79,6 +79,10 @@
   <a href="index.html">Inicio</a> / <a href="sensores.html">Sensores</a> / <a href="productos.html">Por tipo de producto</a> / <span>Inrodsensor</span>
 </div>
 
+<div class="back-to-apps" id="backToApps" hidden>
+  <a href="aplicaciones-siderurgicas.html" id="backToAppsLink">‹ Volver a Aplicaciones Siderúrgicas</a>
+</div>
+
 <section class="hero">
   <div class="eyebrow">Sensores lineales</div>
   <h1>Inrodsensor — Sensor Lineal Integrado en Cilindro</h1>
@@ -244,6 +248,26 @@
 
   let selectedVariant = null;
   let selectedType = null;
+  let selectedApplication = null;
+  let selectedStageName = null;
+
+  // Si llegamos desde Aplicaciones Siderúrgicas (clic en la imagen de una
+  // aplicación), mostramos el link para volver a esa etapa exacta y
+  // guardamos la aplicación para precargarla en la cotización.
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var app = params.get('app');
+    var stage = params.get('stage');
+    var stageName = params.get('stageName');
+    if (stage) {
+      var backLink = document.getElementById('backToAppsLink');
+      var backWrap = document.getElementById('backToApps');
+      backLink.setAttribute('href', 'aplicaciones-siderurgicas.html#' + stage);
+      backWrap.hidden = false;
+    }
+    if (app) selectedApplication = app;
+    if (stageName) selectedStageName = stageName;
+  })();
 
   // Variantes disponibles: se puede seleccionar una, o volver a dar clic
   // sobre la ya seleccionada para quitarla (nada seleccionado por default,
@@ -315,6 +339,7 @@
       let msg = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
       if (selectedVariant) msg += ' Variante: ' + selectedVariant + '.';
       if (selectedType) msg += ' Tipo: ' + selectedType + '.';
+      if (selectedApplication) msg += ' Aplicación: ' + selectedApplication + (selectedStageName ? ' (' + selectedStageName + ').' : '.');
       leadMessage.value = msg;
     }
   }

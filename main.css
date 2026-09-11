@@ -65,6 +65,12 @@ nav a.nav-cta-btn:hover { background: #d0531a; color: var(--white); }
 .breadcrumb a:hover { color: var(--orange); }
 .breadcrumb span { color: var(--white); }
 
+/* Link para volver a Aplicaciones Siderúrgicas a la etapa exacta de la que
+   se vino (solo aparece si se llegó con ?stage= en la URL). */
+.back-to-apps { padding: 8px 48px 0; }
+.back-to-apps a { display: inline-flex; align-items: center; gap: 4px; color: var(--orange); font-size: 13px; font-weight: 500; text-decoration: none; }
+.back-to-apps a:hover { text-decoration: underline; }
+
 /* ===== Eyebrow / section intro ===== */
 .eyebrow { color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; }
 
@@ -137,7 +143,7 @@ footer { border-top: 1px solid var(--gunmetal-700); padding: 56px 48px 0; margin
   .cta-final { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 600px) {
-  header, .breadcrumb { padding-left: 24px; padding-right: 24px; }
+  header, .breadcrumb, .back-to-apps { padding-left: 24px; padding-right: 24px; }
   .product-grid { grid-template-columns: 1fr; }
   .cta-final { margin-left: 24px; margin-right: 24px; padding: 32px 24px; }
 }

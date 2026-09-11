@@ -11,10 +11,10 @@
   .intro { padding: 48px 48px 40px; max-width: 900px; }
   .intro h1 { font-size: 40px; font-weight: 600; margin-bottom: 16px; color: var(--ink-900); }
   .intro p { color: var(--ink-600); font-size: 17px; max-width: 640px; }
-  .grid-section { padding: 48px; }
+  .grid-section { padding: 48px; max-width: 1050px; margin: 0 auto; }
 
   /* Fila de accesos rápidos por etapa (mismo patrón que .type-nav en productos.html) */
-  .stage-nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 48px 40px; border-bottom: 1px solid var(--paper-border); }
+  .stage-nav { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 48px 40px; max-width: 1050px; margin: 0 auto; border-bottom: 1px solid var(--paper-border); }
   .stage-nav a {
     display: flex; align-items: center; gap: 8px;
     padding: 11px 20px;
@@ -311,17 +311,56 @@
   var linkByTarget = {};
   links.forEach(function (a) { linkByTarget[a.getAttribute('href').slice(1)] = a; });
 
+  function setActive(link) {
+    links.forEach(function (a) { a.classList.remove('active'); });
+    link.classList.add('active');
+  }
+
   var observer = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
       var link = linkByTarget[entry.target.id];
       if (!link || !entry.isIntersecting) return;
-      links.forEach(function (a) { a.classList.remove('active'); });
-      link.classList.add('active');
+      setActive(link);
     });
   }, { rootMargin: '-96px 0px -60% 0px', threshold: 0 });
 
   sections.forEach(function (s) { observer.observe(s); });
+
+  // Clic directo en un botón de etapa: la marca de inmediato en vez de
+  // esperar a que el scroll "llegue" y el observador de arriba decida —
+  // antes se quedaba marcada la etapa vieja (Coquización) hasta terminar
+  // el scroll, o a veces ni se actualizaba.
+  links.forEach(function (a) {
+    a.addEventListener('click', function () { setActive(a); });
+  });
 })();
+
+// Al dar clic en la imagen de una aplicación (las que van directo a la
+// página de un sensor, no las que van a productos.html#ancla), se manda
+// con un registro de qué aplicación y etapa era — para poder regresar
+// exactamente ahí desde la página del sensor, y para precargar el
+// formulario de cotización con esa aplicación.
+document.querySelectorAll('.app-img-btn').forEach(function (btn) {
+  var href = btn.getAttribute('href');
+  if (!href || href.indexOf('#') !== -1) return;
+  btn.addEventListener('click', function (e) {
+    var section = btn.closest('.app-section[id]');
+    var img = btn.querySelector('img');
+    var appName = img ? img.getAttribute('alt').split(' - ')[0].trim() : '';
+    var stageId = section ? section.id : '';
+    var stageHeader = section ? section.querySelector('.app-section-header h2') : null;
+    var stageName = stageHeader ? stageHeader.textContent.trim() : '';
+    var params = new URLSearchParams();
+    if (appName) params.set('app', appName);
+    if (stageId) params.set('stage', stageId);
+    if (stageName) params.set('stageName', stageName);
+    var qs = params.toString();
+    if (qs) {
+      e.preventDefault();
+      window.location.href = href + '?' + qs;
+    }
+  });
+});
 
 const appModal = document.getElementById('appModal');
 const appForm = document.getElementById('appForm');

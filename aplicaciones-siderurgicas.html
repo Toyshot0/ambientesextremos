@@ -58,6 +58,13 @@
     .stage-nav { padding: 0 24px 28px; }
     .img-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
   }
+.giro-choice-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .giro-choice-row button { flex: 1; }
+  .giro-choice-link { display: block; text-align: center; font-size: 13px; color: var(--steel-300); text-decoration: none; }
+  .giro-choice-link:hover { color: var(--orange); text-decoration: underline; }
+  @media (max-width: 600px) {
+    .giro-choice-row { flex-direction: column; }
+  }
 </style>
 </head>
 <body class="content-light">
@@ -300,6 +307,19 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="giroChoiceModal">
+  <div class="modal-box">
+    <button class="modal-close" id="giroModalClose">✕</button>
+    <h3>¿Multivuelta o de una sola vuelta?</h3>
+    <p class="modal-sub">Esta aplicación puede usar cualquiera de los dos sensores Absocoder, según cómo esté configurada en campo.</p>
+    <div class="giro-choice-row">
+      <button type="button" class="btn-primary" id="giroChoiceMRE">Multivuelta (MRE)</button>
+      <button type="button" class="btn-secondary" id="giroChoiceVRE">De una sola vuelta (VRE)</button>
+    </div>
+    <a href="productos.html#giro" class="giro-choice-link">No estoy seguro — ver ambos tipos</a>
+  </div>
+</div>
+
 <script src="portal-config.js"></script>
 <script src="app.js"></script>
 <script>
@@ -316,7 +336,16 @@
     link.classList.add('active');
   }
 
+  // Mientras esto sea mayor que Date.now(), el observador no toca el
+  // resaltado. Necesario porque las imágenes de abajo (sin alto fijo)
+  // siguen cargando y corriendo el layout después del salto a la ancla,
+  // y eso a veces disparaba el observador de nuevo y le quitaba lo
+  // marcado a la etapa en la que se acababa de dar clic (o dejaba
+  // marcada una distinta).
+  var ignoreObserverUntil = 0;
+
   var observer = new IntersectionObserver(function (entries) {
+    if (Date.now() < ignoreObserverUntil) return;
     entries.forEach(function (entry) {
       var link = linkByTarget[entry.target.id];
       if (!link || !entry.isIntersecting) return;
@@ -326,30 +355,72 @@
 
   sections.forEach(function (s) { observer.observe(s); });
 
-  // Clic directo en un botón de etapa: la marca de inmediato en vez de
-  // esperar a que el scroll "llegue" y el observador de arriba decida —
-  // antes se quedaba marcada la etapa vieja (Coquización) hasta terminar
-  // el scroll, o a veces ni se actualizaba.
   links.forEach(function (a) {
-    a.addEventListener('click', function () { setActive(a); });
+    a.addEventListener('click', function () {
+      setActive(a);
+      ignoreObserverUntil = Date.now() + 1200;
+    });
   });
 })();
 
-// Al dar clic en la imagen de una aplicación (las que van directo a la
-// página de un sensor, no las que van a productos.html#ancla), se manda
-// con un registro de qué aplicación y etapa era — para poder regresar
-// exactamente ahí desde la página del sensor, y para precargar el
-// formulario de cotización con esa aplicación.
+// Modal de desambiguación para las imágenes que solo dicen "Absocoder"
+// (pueden ser VRE o MRE según cómo esté armado en campo) — antes mandaban
+// directo a la lista de "Por tipo de sensor"; ahora primero se pregunta.
+var giroChoiceModal = document.getElementById('giroChoiceModal');
+var giroContext = {};
+
+function buildGiroQS() {
+  var params = new URLSearchParams();
+  if (giroContext.app) params.set('app', giroContext.app);
+  if (giroContext.stage) params.set('stage', giroContext.stage);
+  if (giroContext.stageName) params.set('stageName', giroContext.stageName);
+  return params.toString();
+}
+function openGiroModal(ctx) {
+  giroContext = ctx;
+  giroChoiceModal.classList.add('open');
+}
+function closeGiroModal() {
+  giroChoiceModal.classList.remove('open');
+}
+document.getElementById('giroModalClose').addEventListener('click', closeGiroModal);
+giroChoiceModal.addEventListener('click', function (e) { if (e.target === giroChoiceModal) closeGiroModal(); });
+document.getElementById('giroChoiceMRE').addEventListener('click', function () {
+  var qs = buildGiroQS();
+  window.location.href = 'sensor-mre.html' + (qs ? '?' + qs : '');
+});
+document.getElementById('giroChoiceVRE').addEventListener('click', function () {
+  var qs = buildGiroQS();
+  window.location.href = 'sensor-vre.html' + (qs ? '?' + qs : '');
+});
+
+// Al dar clic en la imagen de una aplicación: si va directo a la página de
+// un sensor, se manda con un registro de qué aplicación/etapa era (para
+// poder regresar exactamente ahí y precargar la cotización). Si es una de
+// las que solo dicen "Absocoder" (van a productos.html#giro), en vez de
+// navegar se abre la pregunta de multivuelta/una vuelta.
 document.querySelectorAll('.app-img-btn').forEach(function (btn) {
   var href = btn.getAttribute('href');
-  if (!href || href.indexOf('#') !== -1) return;
+  if (!href) return;
+
+  var section = btn.closest('.app-section[id]');
+  var img = btn.querySelector('img');
+  var appName = img ? img.getAttribute('alt').split(' - ')[0].trim() : '';
+  var stageId = section ? section.id : '';
+  var stageHeader = section ? section.querySelector('.app-section-header h2') : null;
+  var stageName = stageHeader ? stageHeader.textContent.trim() : '';
+
+  if (href === 'productos.html#giro') {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      openGiroModal({ app: appName, stage: stageId, stageName: stageName });
+    });
+    return;
+  }
+
+  if (href.indexOf('#') !== -1) return;
+
   btn.addEventListener('click', function (e) {
-    var section = btn.closest('.app-section[id]');
-    var img = btn.querySelector('img');
-    var appName = img ? img.getAttribute('alt').split(' - ')[0].trim() : '';
-    var stageId = section ? section.id : '';
-    var stageHeader = section ? section.querySelector('.app-section-header h2') : null;
-    var stageName = stageHeader ? stageHeader.textContent.trim() : '';
     var params = new URLSearchParams();
     if (appName) params.set('app', appName);
     if (stageId) params.set('stage', stageId);

@@ -8,10 +8,26 @@
 <link rel="stylesheet" href="main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--gunmetal-700); }
-  .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; }
-  .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
-  .grid-section { padding: 48px; max-width: 1050px; margin: 0 auto; }
+  .cables-hero {
+    position: relative;
+    padding: 48px 48px 40px;
+    background-image:
+      linear-gradient(90deg, rgba(10,12,14,0.82) 0%, rgba(10,12,14,0.6) 45%, rgba(10,12,14,0.25) 100%),
+      linear-gradient(0deg, rgba(10,12,14,0.35) 0%, transparent 30%),
+      url('hero-cables.jpg');
+    background-size: cover;
+    background-position: center 45%;
+    border-bottom: 1px solid var(--paper-border);
+  }
+  .cables-hero-inner { max-width: 720px; }
+  .cables-hero h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; color: var(--white); text-shadow: 0 2px 20px rgba(0,0,0,0.7); }
+  .cables-hero p { color: var(--steel-100); font-size: 17px; max-width: 640px; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
+  .grid-section { padding: 48px; max-width: 1500px; margin: 0 auto; }
+  /* Grid de productos: se aprovecha el ancho disponible con columnas que se
+     acomodan solas (auto-fill) en vez del tope fijo de 3 que usa el resto del
+     sitio — con pocos cables, así se reparten en más columnas en vez de
+     quedar apretados en una caja angosta centrada. */
+  .grid-section .product-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 
   .config-card { display: grid; grid-template-columns: 1fr 1fr; background: linear-gradient(120deg, var(--gunmetal-800), var(--gunmetal-700)); border: 1px solid var(--orange); border-radius: 4px; overflow: hidden; margin-bottom: 32px; cursor: pointer; }
   .config-card-text { padding: 30px 40px; display: flex; flex-direction: column; justify-content: center; }
@@ -28,8 +44,8 @@
 
   @media (max-width: 800px) { .config-card { grid-template-columns: 1fr; } }
   @media (max-width: 600px) {
-    .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
-    .intro h1 { font-size: 32px; }
+    .cables-hero, .grid-section { padding-left: 24px; padding-right: 24px; }
+    .cables-hero h1 { font-size: 32px; }
   }
 </style>
 </head>
@@ -53,10 +69,12 @@
   <a href="index.html">Inicio</a> / <span>Cables</span>
 </div>
 
-<section class="intro">
-  <div class="eyebrow">Cables</div>
-  <h1>Cables para alta temperatura y ambientes severos</h1>
-  <p>Cables de potencia, control, instrumentación y termopar diseñados para operar bajo calor, vibración y ambientes corrosivos.</p>
+<section class="cables-hero">
+  <div class="cables-hero-inner">
+    <div class="eyebrow">Cables</div>
+    <h1>Cables para alta temperatura y ambientes severos</h1>
+    <p>Cables de potencia, control, instrumentación y termopar diseñados para operar bajo calor, vibración y ambientes corrosivos.</p>
+  </div>
 </section>
 
 <section class="grid-section">
@@ -301,7 +319,7 @@
     appModal.classList.add('open');
     modalMsg.style.display = 'none';
     if (prefill) {
-      const h1 = document.querySelector('.hero h1, .intro h1');
+      const h1 = document.querySelector('.hero h1, .cables-hero h1');
       const productName = h1 ? h1.textContent.split('—')[0].trim() : '';
       leadMessage.value = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
     }

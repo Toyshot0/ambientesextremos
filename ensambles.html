@@ -7,9 +7,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css">
 <style>
-  .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--gunmetal-700); }
-  .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; }
-  .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
+  .ensambles-hero {
+    position: relative;
+    padding: 48px 48px 40px;
+    background-image:
+      linear-gradient(90deg, rgba(10,12,14,0.82) 0%, rgba(10,12,14,0.6) 45%, rgba(10,12,14,0.25) 100%),
+      linear-gradient(0deg, rgba(10,12,14,0.35) 0%, transparent 30%),
+      url('hero-ensambles.jpg');
+    background-size: cover;
+    background-position: center 45%;
+    border-bottom: 1px solid var(--gunmetal-700);
+  }
+  .ensambles-hero-inner { max-width: 720px; }
+  .ensambles-hero h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; color: var(--white); text-shadow: 0 2px 20px rgba(0,0,0,0.7); }
+  .ensambles-hero p { color: var(--steel-100); font-size: 17px; max-width: 640px; text-shadow: 0 1px 12px rgba(0,0,0,0.6); }
   .grid-section { padding: 48px; }
 
   .config-card { display: grid; grid-template-columns: 1fr 1fr; background: linear-gradient(120deg, var(--gunmetal-800), var(--gunmetal-700)); border: 1px solid var(--orange); border-radius: 4px; overflow: hidden; margin-bottom: 32px; }
@@ -25,8 +36,8 @@
     .config-card { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
-    .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
-    .intro h1 { font-size: 32px; }
+    .ensambles-hero, .grid-section { padding-left: 24px; padding-right: 24px; }
+    .ensambles-hero h1 { font-size: 32px; }
   }
 </style>
 </head>
@@ -50,10 +61,12 @@
   <a href="index.html">Inicio</a> / <span>Ensambles</span>
 </div>
 
-<section class="intro">
-  <div class="eyebrow">Ensambles</div>
-  <h1>Ensambles eléctricos prefabricados y a medida</h1>
-  <p>Cable y conectores preconfigurados para sensores y control, listos para instalar o adaptados a su aplicación.</p>
+<section class="ensambles-hero">
+  <div class="ensambles-hero-inner">
+    <div class="eyebrow">Ensambles</div>
+    <h1>Ensambles eléctricos prefabricados y a medida</h1>
+    <p>Cable y conectores preconfigurados para sensores y control, listos para instalar o adaptados a su aplicación.</p>
+  </div>
 </section>
 
 <section class="grid-section">

@@ -13,12 +13,11 @@
   .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
   .grid-section { padding: 48px; max-width: 1050px; margin: 0 auto; }
 
-  .config-card { display: grid; grid-template-columns: 1fr 1fr; background: linear-gradient(120deg, var(--gunmetal-800), var(--gunmetal-700)); border: 1px solid var(--orange); border-radius: 4px; overflow: hidden; margin-bottom: 32px; }
-  .config-card-text { padding: 36px 40px; display: flex; flex-direction: column; justify-content: center; }
-  .config-badge { display: inline-block; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 3px; margin-bottom: 14px; width: fit-content; }
+  .config-card { display: grid; grid-template-columns: 1fr 1fr; background: linear-gradient(120deg, var(--gunmetal-800), var(--gunmetal-700)); border: 1px solid var(--orange); border-radius: 4px; overflow: hidden; margin-bottom: 32px; cursor: pointer; }
+  .config-card-text { padding: 30px 40px; display: flex; flex-direction: column; justify-content: center; }
   .config-card-text h2 { font-size: 26px; font-weight: 600; margin-bottom: 10px; }
   .config-card-text p { color: var(--steel-300); font-size: 14px; margin-bottom: 20px; max-width: 400px; }
-  .config-card-visual { background: var(--gunmetal-900); display: flex; align-items: center; justify-content: center; min-height: 260px; padding: 18px; }
+  .config-card-visual { background: var(--gunmetal-900); display: flex; align-items: center; justify-content: center; padding: 16px; }
   .config-card-visual img { width: 100%; height: 100%; object-fit: contain; }
 
   .filter-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
@@ -62,14 +61,13 @@
 
 <section class="grid-section">
 
-  <div class="config-card">
+  <div class="config-card" data-href="https://arneses-app.vercel.app/">
     <div class="config-card-text">
-      <span class="config-badge">Configurador</span>
       <h2>Configurador de Cable</h2>
       <p>Seleccione calibre, número de conductores, blindaje y temperatura de operación para encontrar el cable adecuado.</p>
       <a class="btn-primary" href="https://arneses-app.vercel.app/" target="_blank" rel="noopener" style="width:fit-content;">Abrir configurador</a>
     </div>
-    <div class="config-card-visual"><img src="cable-configurator-preview.jpg" alt="Corte transversal de dos construcciones de cable: instrumentación blindada y potencia de media tensión"></div>
+    <div class="config-card-visual"><img src="cable-configurator-preview.jpg" alt="Corte transversal de dos construcciones de cable: instrumentación blindada (izquierda) y de potencia (derecha)"></div>
   </div>
 
   <div class="filter-pills" id="filterPills">
@@ -282,6 +280,16 @@
       });
     });
   })();
+
+  // Tarjeta del configurador: toda la tarjeta es clickeable y abre el
+  // configurador en una pestaña nueva, salvo que el clic haya sido sobre el
+  // link interno "Abrir configurador" (que ya navega por su cuenta).
+  document.querySelectorAll('.config-card[data-href]').forEach(function (card) {
+    card.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      window.open(card.getAttribute('data-href'), '_blank', 'noopener');
+    });
+  });
 
   const appModal = document.getElementById('appModal');
   const appForm = document.getElementById('appForm');

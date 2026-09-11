@@ -206,8 +206,28 @@ body.content-light .type-radio { border-color: var(--ink-600); }
 
 body.content-light .badge-pill .blabel { color: var(--ink-600); }
 
-/* El bloque de CTA final se queda oscuro a propósito (acento antes del footer),
-   incluso en páginas con contenido claro. */
+body.content-light .photo-placeholder { color: var(--ink-600); }
+body.content-light .main-image { background: var(--paper-800); color: var(--ink-600); }
+
+/* ===== Tema claro — Cables (hub + 8 páginas de producto), 2026-09-11 ===== */
+body.content-light .intro { border-bottom-color: var(--paper-border); }
+body.content-light .intro h1 { color: var(--ink-900); }
+body.content-light .intro p { color: var(--ink-600); }
+
+body.content-light .color-item { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+body.content-light .color-note { color: var(--ink-600); }
+body.content-light .tag { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+body.content-light .pair-item { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+body.content-light .pair-item strong { color: var(--ink-900); }
+body.content-light .polarity-item { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+body.content-light .polarity-item strong { color: var(--ink-900); }
+body.content-light .type-badge-sm { background: var(--paper-border); color: var(--ink-600); }
+body.content-light .pill { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+body.content-light .pill.active, body.content-light .pill:hover { border-color: var(--orange); color: var(--orange); }
+
+/* El bloque de CTA final (y la tarjeta de Configurador de Cable en el hub de
+   Cables) se quedan oscuros a propósito, como acento, incluso en páginas con
+   contenido claro. */
 
 /* ===== Lightbox de imagen de producto (páginas de producto de Sensores) ===== */
 .img-lightbox { display: none; position: fixed; inset: 0; background: rgba(10,12,14,0.9); z-index: 250; align-items: center; justify-content: center; padding: 40px; cursor: zoom-out; }

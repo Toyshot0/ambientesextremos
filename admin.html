@@ -241,14 +241,14 @@
           </div>
           <div class="form-row">
             <div class="field"><label>Nombre completo</label><input type="text" id="userFullName" required></div>
-            <div class="field"><label>Jefe (opcional)</label><select id="userManager"><option value="">Sin jefe (nivel más alto)</option></select></div>
+            <div class="field"><label>Jefe (opcional)</label><select id="userManager"><option value="">Sin jefe (nivel más alto)</option></select><p class="field-note" id="userManagerNote"></p></div>
           </div>
           <div class="form-row triple">
             <div class="field"><label>Puesto (opcional)</label><input type="text" id="userPuesto" placeholder="Ej. Jefe de Compras"></div>
             <div class="field"><label>Área (opcional)</label><input type="text" id="userArea" placeholder="Ej. Mantenimiento"></div>
-            <div class="field"><label>Cumpleaños (opcional)</label><input type="date" id="userBirthday"></div>
+            <div class="field"><label>Cumpleaños (opcional)</label><input type="text" id="userBirthday" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10"></div>
           </div>
-          <p class="field-note">El cumpleaños es solo para felicitarlo(a) — nunca se usa como contraseña.</p>
+          <p class="field-note">El cumpleaños es solo para felicitarlo(a) — nunca se usa como contraseña. Escríbelo como día/mes/año, ej. 12/04/1965.</p>
           <button type="submit" class="submit-btn" id="userSubmitBtn">Crear usuario</button>
         </form>
       </div>
@@ -321,6 +321,7 @@
     document.getElementById('clientForm').addEventListener('submit', submitClient);
     document.getElementById('userForm').addEventListener('submit', submitUser);
     document.getElementById('userClient').addEventListener('change', refreshUserManagerOptions);
+    document.getElementById('userBirthday').addEventListener('input', (e) => formatBirthdayInput(e.target));
     document.getElementById('projectForm').addEventListener('submit', submitProject);
     document.getElementById('projectClient').addEventListener('change', refreshProjectOwnerOptions);
     document.getElementById('projectCancelBtn').addEventListener('click', cancelProjectEdit);
@@ -378,9 +379,33 @@
   function refreshUserManagerOptions() {
     const clientId = document.getElementById('userClient').value;
     const sel = document.getElementById('userManager');
+    const note = document.getElementById('userManagerNote');
     const candidates = usersCache.filter(u => u.client_id === clientId);
     sel.innerHTML = '<option value="">Sin jefe (nivel más alto)</option>' +
       candidates.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}${u.puesto ? ' — ' + escapeHtml(u.puesto) : ''}</option>`).join('');
+    if (note) {
+      note.textContent = (clientId && candidates.length === 0)
+        ? 'Todavía no hay otros usuarios de esta empresa — normal si este es el primero. Podrás elegir jefe al crear los siguientes.'
+        : '';
+    }
+  }
+
+  // ---- Cumpleaños: DD/MM/AAAA (texto) <-> AAAA-MM-DD (base de datos) ----
+  function formatBirthdayInput(el) {
+    let digits = el.value.replace(/\D/g, '').slice(0, 8);
+    let out = digits.slice(0, 2);
+    if (digits.length > 2) out += '/' + digits.slice(2, 4);
+    if (digits.length > 4) out += '/' + digits.slice(4, 8);
+    el.value = out;
+  }
+  function parseBirthdayToIso(value) {
+    const v = (value || '').trim();
+    if (!v) return { ok: true, iso: null };
+    const m = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return { ok: false, iso: null };
+    const day = parseInt(m[1], 10), month = parseInt(m[2], 10), year = parseInt(m[3], 10);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return { ok: false, iso: null };
+    return { ok: true, iso: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` };
   }
 
   function refreshProjectOwnerOptions() {
@@ -425,6 +450,14 @@
     const credBox = document.getElementById('credentialBox');
     const btn = document.getElementById('userSubmitBtn');
     credBox.innerHTML = '';
+
+    const birthdayParsed = parseBirthdayToIso(document.getElementById('userBirthday').value);
+    if (!birthdayParsed.ok) {
+      msg.className = 'msg error';
+      msg.textContent = 'El cumpleaños debe tener el formato DD/MM/AAAA (ej. 12/04/1965), o déjalo vacío.';
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Creando...';
 
@@ -435,7 +468,7 @@
       puesto: document.getElementById('userPuesto').value.trim(),
       area: document.getElementById('userArea').value.trim(),
       manager_id: document.getElementById('userManager').value || null,
-      birthday: document.getElementById('userBirthday').value || null,
+      birthday: birthdayParsed.iso,
     };
 
     const { data, error } = await supabaseClient.functions.invoke('create-portal-user', { body: payload });

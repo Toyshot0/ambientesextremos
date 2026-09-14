@@ -17,12 +17,23 @@
   .field input { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 12px 14px; border-radius: 3px; }
   .field input:focus { outline: none; border-color: var(--orange); }
   .login-btn { width: 100%; margin-top: 8px; }
-  .error-msg { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 18px; display: none; }
+  .error-msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 18px; display: none; }
+  .error-msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
+  .error-msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
   .forgot-link { display: block; text-align: center; margin-top: 18px; font-size: 13px; color: var(--steel-300); text-decoration: none; }
   .forgot-link:hover { color: var(--orange); }
+
+  body.content-light .login-card { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .login-card h1 { color: var(--ink-900); }
+  body.content-light .login-card .sub { color: var(--ink-600); }
+  body.content-light .field label { color: var(--ink-600); }
+  body.content-light .field input { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .forgot-link { color: var(--ink-600); }
+  body.content-light .error-msg.success { color: #1f7a45; }
+  body.content-light .error-msg.error { color: #a63232; }
 </style>
 </head>
-<body>
+<body class="content-light">
 
 <header>
   <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
@@ -33,7 +44,7 @@
       <li><a href="cables.html">Cables</a></li>
       <li><a href="protecciones.html">Protecciones</a></li>
       <li><a href="portal.html" class="nav-cta-btn">Portal de Clientes</a></li>
-      <li><a href="index.html#contacto">Contacto</a></li>
+      <li><a href="#" class="js-open-modal">Contacto</a></li>
     </ul>
   </nav>
 </header>
@@ -61,7 +72,76 @@
   </div>
 </div>
 
+<footer id="contacto">
+  <div class="footer-inner">
+    <div class="footer-col footer-brand">
+      <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+      <p>Tecnologías para aplicaciones industriales severas.</p>
+      <div class="footer-contact-item">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 3L7 8L13 3M2 2H12C12.55 2 13 2.45 13 3V11C13 11.55 12.55 12 12 12H2C1.45 12 1 11.55 1 11V3C1 2.45 1.45 2 2 2Z" stroke="currentColor" stroke-width="1.2"/></svg>
+        ricardogarcia@avantatech.com.mx
+      </div>
+      <div class="footer-contact-item">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 1.5H4.5L5.5 4L4 5C4.5 6.5 5.5 7.5 7 8L8 6.5L10.5 7.5V9.5C10.5 10.05 10.05 10.5 9.5 10.5C5.5 10.5 2.5 7.5 2.5 3.5C2.5 2.95 2.5 1.5 2.5 1.5Z" stroke="currentColor" stroke-width="1.2"/></svg>
+        (81) 1216 0561
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Productos</h4>
+      <a href="sensores.html">Sensores</a>
+      <a href="ensambles.html">Ensambles</a>
+      <a href="cables.html">Cables</a>
+      <a href="protecciones.html">Protecciones</a>
+    </div>
+    <div class="footer-col">
+      <h4>Recursos</h4>
+      <a href="https://arneses-app.vercel.app/" target="_blank" rel="noopener">Configurador de Ensambles</a>
+      <a href="https://arneses-app.vercel.app/" target="_blank" rel="noopener">Configurador de Cable</a>
+      <a href="aplicaciones-siderurgicas.html">Aplicaciones Siderúrgicas</a>
+      <a href="portal.html">Portal de Clientes</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <a href="#" class="js-open-modal" data-quote-cta="true">Solicitar cotización</a>
+      <a href="#" class="js-open-modal">Cuéntenos su aplicación</a>
+      <a href="#" class="js-open-modal">Asesoría técnica</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 AMBIENTES EXTREMOS. Todos los derechos reservados.</span>
+    <div class="footer-legal-links">
+      <a href="#">Aviso de privacidad</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== Modal "Cuéntenos su aplicación" (componente compartido) ===== -->
+<div class="modal-overlay" id="appModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalCloseBtn">✕</button>
+    <h3>Cuéntenos su aplicación</h3>
+    <p class="modal-sub">Describa lo que necesita y le contactamos lo antes posible.</p>
+    <div class="modal-msg" id="modalMsg"></div>
+    <form id="appForm">
+      <div class="modal-field">
+        <label>Nombre</label>
+        <input type="text" id="leadName" required>
+      </div>
+      <div class="modal-field">
+        <label>Correo o teléfono</label>
+        <input type="text" id="leadContact" required placeholder="correo@empresa.com o teléfono">
+      </div>
+      <div class="modal-field">
+        <label>Cuéntenos su aplicación</label>
+        <textarea id="leadMessage" required placeholder="Ej. Necesito un sensor de posición para un cilindro hidráulico expuesto a alta temperatura..."></textarea>
+      </div>
+      <button type="submit" class="btn-primary modal-submit" id="leadSubmitBtn">Enviar</button>
+    </form>
+  </div>
+</div>
+
 <script src="portal-config.js"></script>
+<script src="app.js"></script>
 <script>
   const form = document.getElementById('loginForm');
   const errorMsg = document.getElementById('errorMsg');
@@ -74,7 +154,7 @@
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    errorMsg.style.display = 'none';
+    errorMsg.className = 'error-msg';
     loginBtn.disabled = true;
     loginBtn.textContent = 'Ingresando...';
 
@@ -85,7 +165,7 @@
 
     if (error) {
       errorMsg.textContent = 'Correo o contraseña incorrectos.';
-      errorMsg.style.display = 'block';
+      errorMsg.className = 'error-msg error';
       loginBtn.disabled = false;
       loginBtn.textContent = 'Iniciar sesión';
       return;
@@ -99,15 +179,70 @@
     const email = document.getElementById('email').value;
     if (!email) {
       errorMsg.textContent = 'Escriba su correo arriba y presione "¿Olvidó su contraseña?" de nuevo.';
-      errorMsg.style.display = 'block';
+      errorMsg.className = 'error-msg error';
       return;
     }
     const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-    errorMsg.style.display = 'block';
-    errorMsg.style.background = 'rgba(60,180,100,0.12)';
-    errorMsg.style.borderColor = '#2ecc71';
-    errorMsg.style.color = '#7fe0a5';
+    errorMsg.className = error ? 'error-msg error' : 'error-msg success';
     errorMsg.textContent = error ? 'No se pudo enviar el correo de recuperación.' : 'Le enviamos un correo con instrucciones para restablecer su contraseña.';
+  });
+
+  const appModal = document.getElementById('appModal');
+  const appForm = document.getElementById('appForm');
+  const modalMsg = document.getElementById('modalMsg');
+  const leadSubmitBtn = document.getElementById('leadSubmitBtn');
+  const leadMessage = document.getElementById('leadMessage');
+
+  function openModal(prefill) {
+    appModal.classList.add('open');
+    modalMsg.style.display = 'none';
+    if (prefill) {
+      const h1 = document.querySelector('.hero h1');
+      const productName = h1 ? h1.textContent.split('—')[0].trim() : '';
+      leadMessage.value = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
+    }
+  }
+  function closeModal() {
+    appModal.classList.remove('open');
+  }
+
+  document.querySelectorAll('.js-open-modal').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      openModal(el.hasAttribute('data-quote-cta'));
+    });
+  });
+
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  appModal.addEventListener('click', (e) => { if (e.target === appModal) closeModal(); });
+
+  appForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    leadSubmitBtn.disabled = true;
+    leadSubmitBtn.textContent = 'Enviando...';
+
+    const { error: leadError } = await supabaseClient.from('site_leads').insert({
+      name: document.getElementById('leadName').value,
+      contact: document.getElementById('leadContact').value,
+      message: document.getElementById('leadMessage').value,
+    });
+
+    if (leadError) {
+      modalMsg.className = 'modal-msg error';
+      modalMsg.textContent = 'No se pudo enviar. Intente de nuevo o escríbanos directo a ricardogarcia@avantatech.com.mx';
+      modalMsg.style.display = 'block';
+      leadSubmitBtn.disabled = false;
+      leadSubmitBtn.textContent = 'Enviar';
+      return;
+    }
+
+    modalMsg.className = 'modal-msg success';
+    modalMsg.textContent = '¡Gracias! Recibimos su mensaje y le contactaremos lo antes posible.';
+    modalMsg.style.display = 'block';
+    appForm.reset();
+    leadSubmitBtn.disabled = false;
+    leadSubmitBtn.textContent = 'Enviar';
+    setTimeout(closeModal, 2200);
   });
 </script>
 

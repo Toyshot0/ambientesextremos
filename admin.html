@@ -13,31 +13,52 @@
   .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
   .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
 
-  .admin-content { padding: 32px 48px 64px; max-width: 1000px; }
+  .admin-content { padding: 32px 48px 64px; max-width: 1080px; }
   .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
 
   .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; }
-  .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+  .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .panel .panel-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 18px; }
 
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   .form-row.single { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
   .field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
   .field input, .field select, .field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
   .field textarea { resize: vertical; min-height: 60px; }
   .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--orange); }
+  .field-note { font-size: 11px; color: var(--steel-300); margin-top: 5px; }
 
   .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
   .submit-btn:hover { background: #d0531a; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 14px; }
-  .list-item:last-child { border-bottom: none; }
-  .list-item .meta { font-size: 12px; color: var(--steel-300); }
+  .cancel-btn { background: transparent; color: var(--steel-300); border: 1px solid var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; margin-left: 10px; }
 
   .msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
   .msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
   .msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
 
+  .credential-box { background: rgba(232,94,28,0.1); border: 1px solid var(--orange); border-radius: 4px; padding: 14px 16px; margin-bottom: 14px; }
+  .credential-box .cred-line { font-size: 13px; margin-bottom: 4px; }
+  .credential-box .cred-pass { font-family: 'Courier New', monospace; font-size: 16px; font-weight: 700; letter-spacing: 0.04em; background: var(--gunmetal-900); padding: 3px 8px; border-radius: 3px; }
+  .credential-box .cred-note { font-size: 12px; color: var(--steel-300); margin-top: 8px; }
+
+  .row-item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 14px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 14px; }
+  .row-item:last-child { border-bottom: none; }
+  .row-item .r-main { font-weight: 600; min-width: 160px; }
+  .row-item .r-meta { font-size: 12px; color: var(--steel-300); }
+  .row-item .r-actions { margin-left: auto; display: flex; gap: 14px; flex-shrink: 0; }
+  .row-item .r-actions a { font-size: 12px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; color: var(--orange); cursor: pointer; text-decoration: none; }
+  .row-item .r-actions a.danger { color: #e05a5a; }
+  .row-item .r-wrap { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+
+  .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 14px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); white-space: nowrap; }
+
+  .inline-edit { display: none; width: 100%; padding: 14px 0 6px; border-top: 1px dashed var(--gunmetal-600); margin-top: 10px; }
+  .inline-edit.open { display: block; }
+
+  .empty-note { font-size: 13px; color: var(--steel-300); padding: 8px 0; }
+  .hidden { display: none !important; }
   .verifying-note { color: var(--steel-300); }
   .admin-note { font-size: 13px; color: var(--steel-300); margin-bottom: 16px; }
 
@@ -47,12 +68,21 @@
   body.content-light .denied { color: var(--ink-600); }
   body.content-light .panel { background: var(--paper-800); border-color: var(--paper-border); }
   body.content-light .panel h2 { color: var(--ink-900); }
+  body.content-light .panel .panel-sub { color: var(--ink-600); }
   body.content-light .field label { color: var(--ink-600); }
   body.content-light .field input, body.content-light .field select, body.content-light .field textarea { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
-  body.content-light .list-item { border-color: var(--paper-border); }
-  body.content-light .list-item .meta { color: var(--ink-600); }
+  body.content-light .field-note { color: var(--ink-600); }
+  body.content-light .cancel-btn { border-color: var(--paper-border); color: var(--ink-600); }
   body.content-light .msg.success { color: #1f7a45; }
   body.content-light .msg.error { color: #a63232; }
+  body.content-light .credential-box { background: #fff4ec; }
+  body.content-light .credential-box .cred-pass { background: var(--white); border: 1px solid var(--paper-border); color: var(--ink-900); }
+  body.content-light .credential-box .cred-note { color: var(--ink-600); }
+  body.content-light .row-item { border-color: var(--paper-border); }
+  body.content-light .row-item .r-main { color: var(--ink-900); }
+  body.content-light .row-item .r-meta { color: var(--ink-600); }
+  body.content-light .inline-edit { border-color: var(--paper-border); }
+  body.content-light .empty-note { color: var(--ink-600); }
   body.content-light .verifying-note { color: var(--ink-600); }
   body.content-light .admin-note { color: var(--ink-600); }
 </style>
@@ -154,7 +184,22 @@
 <script src="app.js"></script>
 <script>
   const adminContent = document.getElementById('adminContent');
+
+  const STATUS_ORDER = ['espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
+  const STATUS_LABELS = {
+    espera_pedido: 'Espera de pedido',
+    en_fabricacion: 'En fabricación',
+    entrega_programada: 'Entrega programada',
+    entregado: 'Entregado',
+  };
+  function statusOptionsHtml(selected) {
+    return STATUS_ORDER.map(s => `<option value="${s}"${s === selected ? ' selected' : ''}>${STATUS_LABELS[s]}</option>`).join('');
+  }
+
   let clientsCache = [];
+  let usersCache = [];
+  let projectsCache = [];
+  let editingProjectId = null;
 
   async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -167,56 +212,103 @@
     }
 
     renderAdmin();
+    await refreshAll();
   }
 
   function renderAdmin() {
     adminContent.innerHTML = `
       <div class="panel">
-        <h2>Registrar cliente</h2>
-        <p class="admin-note">
-          Primero cree el login del cliente en Supabase → Authentication → Users → Add user, copie su UUID, y péguelo aquí junto con sus datos.
-        </p>
+        <h2>Registrar empresa cliente</h2>
+        <p class="panel-sub">El primer paso — cada usuario que crees abajo pertenece a una de estas empresas.</p>
         <div id="clientMsg" class="msg"></div>
         <form id="clientForm">
-          <div class="form-row">
-            <div class="field"><label>UUID del usuario (de Supabase Auth)</label><input type="text" id="clientUuid" required placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
-            <div class="field"><label>Correo del cliente</label><input type="email" id="clientEmail" required></div>
+          <div class="form-row single">
+            <div class="field"><label>Nombre de la empresa</label><input type="text" id="clientCompany" required placeholder="Ej. Ternium"></div>
           </div>
-          <div class="form-row">
-            <div class="field"><label>Empresa</label><input type="text" id="clientCompany" required></div>
-            <div class="field"><label>Nombre de contacto</label><input type="text" id="clientContact"></div>
-          </div>
-          <button type="submit" class="submit-btn">Guardar cliente</button>
+          <button type="submit" class="submit-btn">Guardar empresa</button>
         </form>
       </div>
 
       <div class="panel">
-        <h2>Crear proyecto</h2>
-        <div id="projectMsg" class="msg"></div>
-        <form id="projectForm">
-          <div class="form-row single">
-            <div class="field"><label>Cliente</label><select id="projectClient" required><option value="">Seleccione...</option></select></div>
+        <h2>Crear usuario</h2>
+        <p class="panel-sub">Crea el acceso de una persona dentro de una empresa cliente. Se genera una contraseña temporal que la persona debe cambiar en su primer ingreso.</p>
+        <div id="userMsg" class="msg"></div>
+        <div id="credentialBox"></div>
+        <form id="userForm">
+          <div class="form-row">
+            <div class="field"><label>Empresa</label><select id="userClient" required><option value="">Seleccione...</option></select></div>
+            <div class="field"><label>Correo electrónico</label><input type="email" id="userEmail" required></div>
           </div>
           <div class="form-row">
+            <div class="field"><label>Nombre completo</label><input type="text" id="userFullName" required></div>
+            <div class="field"><label>Jefe (opcional)</label><select id="userManager"><option value="">Sin jefe (nivel más alto)</option></select></div>
+          </div>
+          <div class="form-row triple">
+            <div class="field"><label>Puesto (opcional)</label><input type="text" id="userPuesto" placeholder="Ej. Jefe de Compras"></div>
+            <div class="field"><label>Área (opcional)</label><input type="text" id="userArea" placeholder="Ej. Mantenimiento"></div>
+            <div class="field"><label>Cumpleaños (opcional)</label><input type="date" id="userBirthday"></div>
+          </div>
+          <p class="field-note">El cumpleaños es solo para felicitarlo(a) — nunca se usa como contraseña.</p>
+          <button type="submit" class="submit-btn" id="userSubmitBtn">Crear usuario</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2>Usuarios registrados</h2>
+        <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien.</p>
+        <div id="usersList"></div>
+      </div>
+
+      <div class="panel">
+        <h2 id="projectFormTitle">Crear proyecto</h2>
+        <p class="panel-sub" id="projectFormSub">Registra un pedido o proyecto para un usuario específico.</p>
+        <div id="projectMsg" class="msg"></div>
+        <form id="projectForm">
+          <div class="form-row">
+            <div class="field"><label>Empresa</label><select id="projectClient" required><option value="">Seleccione...</option></select></div>
+            <div class="field"><label>Usuario (dueño del proyecto)</label><select id="projectOwner" required><option value="">Seleccione una empresa primero...</option></select></div>
+          </div>
+          <div class="form-row single">
             <div class="field"><label>Nombre del proyecto</label><input type="text" id="projectName" required></div>
-            <div class="field"><label>Estatus inicial</label><input type="text" id="projectStatus" value="Pendiente" required></div>
           </div>
           <div class="form-row single">
             <div class="field"><label>Descripción</label><textarea id="projectDesc"></textarea></div>
           </div>
-          <button type="submit" class="submit-btn">Crear proyecto</button>
+          <div class="form-row">
+            <div class="field"><label>Producto o servicio</label><input type="text" id="projectProduct" placeholder="Ej. Cable Draka 4x6"></div>
+            <div class="field"><label>Cantidad</label><input type="text" id="projectQty" placeholder="Ej. 200 metros"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>N° de cotización</label><input type="text" id="projectQuote"></div>
+            <div class="field"><label>N° de orden de compra (OC)</label><input type="text" id="projectPO"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Estatus</label><select id="projectStatus">${statusOptionsHtml('espera_pedido')}</select></div>
+            <div class="field"><label>Entrega estimada (opcional)</label><input type="date" id="projectDate"></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Notas (opcional)</label><textarea id="projectNotes"></textarea></div>
+          </div>
+          <button type="submit" class="submit-btn" id="projectSubmitBtn">Crear proyecto</button>
+          <button type="button" class="cancel-btn hidden" id="projectCancelBtn">Cancelar edición</button>
         </form>
       </div>
 
       <div class="panel">
+        <h2>Todos los proyectos</h2>
+        <div id="projectsList"></div>
+      </div>
+
+      <div class="panel">
         <h2>Agregar actualización de estatus</h2>
+        <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
         <div id="updateMsg" class="msg"></div>
         <form id="updateForm">
           <div class="form-row single">
             <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
           </div>
-          <div class="form-row">
-            <div class="field"><label>Nuevo estatus</label><input type="text" id="updateStatus" required placeholder="Ej. En fabricación, Listo para envío..."></div>
+          <div class="form-row single">
+            <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
           </div>
           <div class="form-row single">
             <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
@@ -226,74 +318,344 @@
       </div>
     `;
 
-    loadClientsIntoSelects();
-    loadProjectsIntoSelect();
-
     document.getElementById('clientForm').addEventListener('submit', submitClient);
+    document.getElementById('userForm').addEventListener('submit', submitUser);
+    document.getElementById('userClient').addEventListener('change', refreshUserManagerOptions);
     document.getElementById('projectForm').addEventListener('submit', submitProject);
+    document.getElementById('projectClient').addEventListener('change', refreshProjectOwnerOptions);
+    document.getElementById('projectCancelBtn').addEventListener('click', cancelProjectEdit);
     document.getElementById('updateForm').addEventListener('submit', submitUpdate);
   }
 
-  async function loadClientsIntoSelects() {
+  async function refreshAll() {
+    await loadClients();
+    await loadUsers();
+    await loadProjects();
+    refreshClientSelects();
+    refreshUserManagerOptions();
+    refreshProjectOwnerOptions();
+    renderUsersList();
+    renderProjectsList();
+    refreshUpdateProjectSelect();
+  }
+
+  async function loadClients() {
     const { data } = await supabaseClient.from('portal_clients').select('id, company_name').order('company_name');
     clientsCache = data || [];
-    const sel = document.getElementById('projectClient');
-    sel.innerHTML = '<option value="">Seleccione...</option>' + clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('');
   }
 
-  async function loadProjectsIntoSelect() {
-    const { data } = await supabaseClient.from('portal_projects').select('id, name, portal_clients(company_name)').order('created_at', { ascending: false });
+  async function loadUsers() {
+    const { data } = await supabaseClient
+      .from('portal_users')
+      .select('id, full_name, email, puesto, area, manager_id, client_id')
+      .order('full_name');
+    usersCache = data || [];
+  }
+
+  async function loadProjects() {
+    const { data } = await supabaseClient
+      .from('portal_projects')
+      .select('id, client_id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes')
+      .order('created_at', { ascending: false });
+    projectsCache = data || [];
+  }
+
+  function clientName(id) {
+    const c = clientsCache.find(c => c.id === id);
+    return c ? c.company_name : '—';
+  }
+  function userName(id) {
+    const u = usersCache.find(u => u.id === id);
+    return u ? u.full_name : '—';
+  }
+
+  function refreshClientSelects() {
+    const opts = '<option value="">Seleccione...</option>' + clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('');
+    document.getElementById('userClient').innerHTML = opts;
+    document.getElementById('projectClient').innerHTML = opts;
+  }
+
+  function refreshUserManagerOptions() {
+    const clientId = document.getElementById('userClient').value;
+    const sel = document.getElementById('userManager');
+    const candidates = usersCache.filter(u => u.client_id === clientId);
+    sel.innerHTML = '<option value="">Sin jefe (nivel más alto)</option>' +
+      candidates.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}${u.puesto ? ' — ' + escapeHtml(u.puesto) : ''}</option>`).join('');
+  }
+
+  function refreshProjectOwnerOptions() {
+    const clientId = document.getElementById('projectClient').value;
+    const sel = document.getElementById('projectOwner');
+    if (!clientId) {
+      sel.innerHTML = '<option value="">Seleccione una empresa primero...</option>';
+      return;
+    }
+    const candidates = usersCache.filter(u => u.client_id === clientId);
+    sel.innerHTML = '<option value="">Seleccione...</option>' +
+      candidates.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}${u.puesto ? ' — ' + escapeHtml(u.puesto) : ''}</option>`).join('');
+  }
+
+  function refreshUpdateProjectSelect() {
     const sel = document.getElementById('updateProject');
-    sel.innerHTML = '<option value="">Seleccione...</option>' + (data || []).map(p => `<option value="${p.id}">${escapeHtml(p.portal_clients ? p.portal_clients.company_name + ' — ' : '')}${escapeHtml(p.name)}</option>`).join('');
+    sel.innerHTML = '<option value="">Seleccione...</option>' + projectsCache.map(p =>
+      `<option value="${p.id}">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))} — ${escapeHtml(p.name)}</option>`
+    ).join('');
   }
 
+  // ---- Registrar empresa cliente ----
   async function submitClient(e) {
     e.preventDefault();
     const msg = document.getElementById('clientMsg');
     const { error } = await supabaseClient.from('portal_clients').insert({
-      id: document.getElementById('clientUuid').value.trim(),
-      email: document.getElementById('clientEmail').value,
       company_name: document.getElementById('clientCompany').value,
-      contact_name: document.getElementById('clientContact').value,
     });
     msg.className = error ? 'msg error' : 'msg success';
-    msg.textContent = error ? 'Error: ' + error.message : 'Cliente guardado correctamente.';
-    if (!error) { document.getElementById('clientForm').reset(); loadClientsIntoSelects(); }
+    msg.textContent = error ? 'Error: ' + error.message : 'Empresa guardada correctamente.';
+    if (!error) {
+      document.getElementById('clientForm').reset();
+      await loadClients();
+      refreshClientSelects();
+    }
   }
 
+  // ---- Crear usuario (vía Edge Function, no toca la sesión del admin) ----
+  async function submitUser(e) {
+    e.preventDefault();
+    const msg = document.getElementById('userMsg');
+    const credBox = document.getElementById('credentialBox');
+    const btn = document.getElementById('userSubmitBtn');
+    credBox.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+
+    const payload = {
+      email: document.getElementById('userEmail').value.trim(),
+      full_name: document.getElementById('userFullName').value.trim(),
+      client_id: document.getElementById('userClient').value,
+      puesto: document.getElementById('userPuesto').value.trim(),
+      area: document.getElementById('userArea').value.trim(),
+      manager_id: document.getElementById('userManager').value || null,
+      birthday: document.getElementById('userBirthday').value || null,
+    };
+
+    const { data, error } = await supabaseClient.functions.invoke('create-portal-user', { body: payload });
+
+    btn.disabled = false;
+    btn.textContent = 'Crear usuario';
+
+    if (error || !data || data.error) {
+      msg.className = 'msg error';
+      msg.textContent = 'Error: ' + (data && data.error ? data.error : (error ? error.message : 'no se pudo crear el usuario'));
+      return;
+    }
+
+    msg.className = 'msg success';
+    msg.textContent = 'Usuario creado correctamente.';
+    credBox.innerHTML = `
+      <div class="credential-box">
+        <div class="cred-line">Correo: <strong>${escapeHtml(payload.email)}</strong></div>
+        <div class="cred-line">Contraseña temporal: <span class="cred-pass">${escapeHtml(data.tempPassword)}</span></div>
+        <div class="cred-note">Cópiela y compártasela ahora — no se volverá a mostrar. Se le pedirá cambiarla en su primer ingreso.</div>
+      </div>
+    `;
+    document.getElementById('userForm').reset();
+    await loadUsers();
+    refreshUserManagerOptions();
+    refreshProjectOwnerOptions();
+    renderUsersList();
+  }
+
+  // ---- Usuarios registrados: lista + edición inline ----
+  function renderUsersList() {
+    const wrap = document.getElementById('usersList');
+    if (usersCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay usuarios registrados.</p>';
+      return;
+    }
+    wrap.innerHTML = usersCache.map(u => {
+      const rolePart = [u.puesto, u.area].filter(Boolean).join(' · ');
+      const managerName = u.manager_id ? userName(u.manager_id) : 'Sin jefe';
+      return `
+        <div class="row-item" data-user-row="${u.id}">
+          <div class="r-wrap">
+            <span class="r-main">${escapeHtml(u.full_name)}</span>
+            <span class="r-meta">${escapeHtml(clientName(u.client_id))}${rolePart ? ' — ' + escapeHtml(rolePart) : ''} — Jefe: ${escapeHtml(managerName)}</span>
+            <span class="r-actions"><a data-edit-user="${u.id}">Editar</a></span>
+          </div>
+          <div class="inline-edit" id="edit-user-${u.id}">
+            <div class="form-row triple">
+              <div class="field"><label>Puesto</label><input type="text" id="edit-puesto-${u.id}" value="${escapeHtml(u.puesto || '')}"></div>
+              <div class="field"><label>Área</label><input type="text" id="edit-area-${u.id}" value="${escapeHtml(u.area || '')}"></div>
+              <div class="field"><label>Jefe</label><select id="edit-manager-${u.id}"></select></div>
+            </div>
+            <button type="button" class="submit-btn" data-save-user="${u.id}">Guardar</button>
+            <button type="button" class="cancel-btn" data-cancel-user="${u.id}">Cancelar</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    usersCache.forEach(u => {
+      document.querySelector(`[data-edit-user="${u.id}"]`).addEventListener('click', () => openUserEdit(u.id));
+      document.querySelector(`[data-cancel-user="${u.id}"]`).addEventListener('click', () => closeUserEdit(u.id));
+      document.querySelector(`[data-save-user="${u.id}"]`).addEventListener('click', () => saveUserEdit(u.id));
+    });
+  }
+
+  function openUserEdit(userId) {
+    const user = usersCache.find(u => u.id === userId);
+    const sel = document.getElementById(`edit-manager-${userId}`);
+    const candidates = usersCache.filter(u => u.client_id === user.client_id && u.id !== userId);
+    sel.innerHTML = '<option value="">Sin jefe (nivel más alto)</option>' +
+      candidates.map(u => `<option value="${u.id}"${u.id === user.manager_id ? ' selected' : ''}>${escapeHtml(u.full_name)}</option>`).join('');
+    document.getElementById(`edit-user-${userId}`).classList.add('open');
+  }
+  function closeUserEdit(userId) {
+    document.getElementById(`edit-user-${userId}`).classList.remove('open');
+  }
+  async function saveUserEdit(userId) {
+    const puesto = document.getElementById(`edit-puesto-${userId}`).value.trim() || null;
+    const area = document.getElementById(`edit-area-${userId}`).value.trim() || null;
+    const manager_id = document.getElementById(`edit-manager-${userId}`).value || null;
+    const { error } = await supabaseClient.from('portal_users').update({ puesto, area, manager_id }).eq('id', userId);
+    if (!error) {
+      await loadUsers();
+      refreshUserManagerOptions();
+      refreshProjectOwnerOptions();
+      renderUsersList();
+    }
+  }
+
+  // ---- Crear / editar proyecto ----
   async function submitProject(e) {
     e.preventDefault();
     const msg = document.getElementById('projectMsg');
-    const { error } = await supabaseClient.from('portal_projects').insert({
+    const payload = {
       client_id: document.getElementById('projectClient').value,
+      owner_user_id: document.getElementById('projectOwner').value,
       name: document.getElementById('projectName').value,
-      description: document.getElementById('projectDesc').value,
-      current_status: document.getElementById('projectStatus').value,
-    });
+      description: document.getElementById('projectDesc').value || null,
+      product_service: document.getElementById('projectProduct').value || null,
+      quantity: document.getElementById('projectQty').value || null,
+      quote_number: document.getElementById('projectQuote').value || null,
+      po_number: document.getElementById('projectPO').value || null,
+      status: document.getElementById('projectStatus').value,
+      estimated_delivery_date: document.getElementById('projectDate').value || null,
+      notes: document.getElementById('projectNotes').value || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    let error;
+    if (editingProjectId) {
+      ({ error } = await supabaseClient.from('portal_projects').update(payload).eq('id', editingProjectId));
+    } else {
+      ({ error } = await supabaseClient.from('portal_projects').insert(payload));
+    }
+
     msg.className = error ? 'msg error' : 'msg success';
-    msg.textContent = error ? 'Error: ' + error.message : 'Proyecto creado correctamente.';
-    if (!error) { document.getElementById('projectForm').reset(); document.getElementById('projectStatus').value = 'Pendiente'; loadProjectsIntoSelect(); }
+    msg.textContent = error ? 'Error: ' + error.message : (editingProjectId ? 'Proyecto actualizado correctamente.' : 'Proyecto creado correctamente.');
+
+    if (!error) {
+      cancelProjectEdit();
+      await loadProjects();
+      renderProjectsList();
+      refreshUpdateProjectSelect();
+    }
   }
 
+  function startProjectEdit(projectId) {
+    const p = projectsCache.find(p => p.id === projectId);
+    if (!p) return;
+    editingProjectId = projectId;
+    document.getElementById('projectFormTitle').textContent = 'Editar proyecto';
+    document.getElementById('projectFormSub').textContent = 'Estás editando un proyecto existente.';
+    document.getElementById('projectClient').value = p.client_id;
+    refreshProjectOwnerOptions();
+    document.getElementById('projectOwner').value = p.owner_user_id;
+    document.getElementById('projectName').value = p.name || '';
+    document.getElementById('projectDesc').value = p.description || '';
+    document.getElementById('projectProduct').value = p.product_service || '';
+    document.getElementById('projectQty').value = p.quantity || '';
+    document.getElementById('projectQuote').value = p.quote_number || '';
+    document.getElementById('projectPO').value = p.po_number || '';
+    document.getElementById('projectStatus').value = p.status;
+    document.getElementById('projectDate').value = p.estimated_delivery_date || '';
+    document.getElementById('projectNotes').value = p.notes || '';
+    document.getElementById('projectSubmitBtn').textContent = 'Guardar cambios';
+    document.getElementById('projectCancelBtn').classList.remove('hidden');
+    document.getElementById('projectForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function cancelProjectEdit() {
+    editingProjectId = null;
+    document.getElementById('projectForm').reset();
+    document.getElementById('projectFormTitle').textContent = 'Crear proyecto';
+    document.getElementById('projectFormSub').textContent = 'Registra un pedido o proyecto para un usuario específico.';
+    document.getElementById('projectOwner').innerHTML = '<option value="">Seleccione una empresa primero...</option>';
+    document.getElementById('projectStatus').value = 'espera_pedido';
+    document.getElementById('projectSubmitBtn').textContent = 'Crear proyecto';
+    document.getElementById('projectCancelBtn').classList.add('hidden');
+  }
+
+  async function deleteProject(projectId) {
+    if (!confirm('¿Eliminar este proyecto? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabaseClient.from('portal_projects').delete().eq('id', projectId);
+    if (!error) {
+      if (editingProjectId === projectId) cancelProjectEdit();
+      await loadProjects();
+      renderProjectsList();
+      refreshUpdateProjectSelect();
+    }
+  }
+
+  function renderProjectsList() {
+    const wrap = document.getElementById('projectsList');
+    if (projectsCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay proyectos registrados.</p>';
+      return;
+    }
+    wrap.innerHTML = projectsCache.map(p => `
+      <div class="row-item">
+        <span class="r-main">${escapeHtml(p.name)}</span>
+        <span class="r-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC ' + escapeHtml(p.po_number) : ''}</span>
+        <span class="status-pill-sm">${STATUS_LABELS[p.status] || p.status}</span>
+        <span class="r-actions">
+          <a data-edit-project="${p.id}">Editar</a>
+          <a class="danger" data-delete-project="${p.id}">Eliminar</a>
+        </span>
+      </div>
+    `).join('');
+
+    projectsCache.forEach(p => {
+      document.querySelector(`[data-edit-project="${p.id}"]`).addEventListener('click', () => startProjectEdit(p.id));
+      document.querySelector(`[data-delete-project="${p.id}"]`).addEventListener('click', () => deleteProject(p.id));
+    });
+  }
+
+  // ---- Agregar actualización de estatus ----
   async function submitUpdate(e) {
     e.preventDefault();
     const msg = document.getElementById('updateMsg');
     const projectId = document.getElementById('updateProject').value;
-    const statusLabel = document.getElementById('updateStatus').value;
+    const status = document.getElementById('updateStatus').value;
 
     const { error: updateError } = await supabaseClient.from('portal_project_updates').insert({
       project_id: projectId,
-      status_label: statusLabel,
-      note: document.getElementById('updateNote').value,
+      status: status,
+      note: document.getElementById('updateNote').value || null,
     });
 
     if (!updateError) {
-      await supabaseClient.from('portal_projects').update({ current_status: statusLabel, updated_at: new Date().toISOString() }).eq('id', projectId);
+      await supabaseClient.from('portal_projects').update({ status: status, updated_at: new Date().toISOString() }).eq('id', projectId);
     }
 
     msg.className = updateError ? 'msg error' : 'msg success';
-    msg.textContent = updateError ? 'Error: ' + updateError.message : 'Actualización publicada — ya la puede ver el cliente.';
-    if (!updateError) document.getElementById('updateForm').reset();
+    msg.textContent = updateError ? 'Error: ' + updateError.message : 'Actualización publicada — ya la puede ver el usuario y su jefe.';
+    if (!updateError) {
+      document.getElementById('updateForm').reset();
+      await loadProjects();
+      renderProjectsList();
+    }
   }
 
   function escapeHtml(str) {

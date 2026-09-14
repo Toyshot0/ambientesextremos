@@ -14,14 +14,46 @@
   .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
   .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
 
-  .dash-content { padding: 32px 48px 64px; max-width: 900px; }
+  .dash-content { padding: 32px 48px 64px; max-width: 980px; }
   .empty-state { text-align: center; padding: 80px 24px; color: var(--steel-300); }
 
+  .section-label { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange); margin: 36px 0 14px; }
+  .section-label:first-child { margin-top: 0; }
+
+  .team-member { margin-bottom: 28px; }
+  .team-member-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gunmetal-700); }
+  .team-member-head .tm-name { font-size: 15px; font-weight: 600; }
+  .team-member-head .tm-role { font-size: 13px; color: var(--steel-300); }
+  .team-empty { font-size: 13px; color: var(--steel-300); padding: 4px 0 4px; }
+
   .project-card { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; margin-bottom: 20px; overflow: hidden; }
-  .project-head { padding: 22px 26px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; cursor: pointer; }
+  .project-head { padding: 22px 26px; cursor: pointer; }
   .project-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
-  .project-desc { font-size: 13px; color: var(--steel-300); }
-  .status-badge { font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 6px 14px; border-radius: 20px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); white-space: nowrap; }
+  .project-desc { font-size: 13px; color: var(--steel-300); margin-bottom: 16px; }
+
+  .status-stepper { display: flex; margin-bottom: 16px; }
+  .status-stepper .step { flex: 1; text-align: center; position: relative; }
+  .status-stepper .step::before { content: ''; position: absolute; top: 6px; left: -50%; width: 100%; height: 2px; background: var(--gunmetal-600); z-index: 0; }
+  .status-stepper .step:first-child::before { display: none; }
+  .status-stepper .dot { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--gunmetal-600); border: 2px solid var(--gunmetal-600); margin: 0 auto 8px; position: relative; z-index: 1; }
+  .status-stepper .label { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-300); }
+  .status-stepper .step.done .dot, .status-stepper .step.current .dot { background: var(--orange); border-color: var(--orange); }
+  .status-stepper .step.done::before, .status-stepper .step.current::before { background: var(--orange); }
+  .status-stepper .step.current .label { color: var(--white); }
+  .status-stepper .step.done .label { color: var(--steel-100); }
+  .stepper-current { display: none; }
+
+  @media (max-width: 640px) {
+    .status-stepper .label { display: none; }
+    .status-stepper { margin-bottom: 8px; }
+    .stepper-current { display: block; font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--white); margin-bottom: 14px; }
+  }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 20px; margin-bottom: 14px; }
+  .meta-item .mlabel { font-size: 11px; color: var(--steel-300); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+  .meta-item .mvalue { font-size: 14px; color: var(--white); }
+  .project-notes { font-size: 13px; color: var(--steel-100); background: var(--gunmetal-900); border-radius: 4px; padding: 10px 14px; margin-bottom: 10px; }
+  .toggle-hint { font-size: 12px; color: var(--steel-300); }
 
   .timeline { padding: 0 26px 24px; border-top: 1px solid var(--gunmetal-700); margin-top: 4px; display: none; }
   .timeline.open { display: block; }
@@ -32,7 +64,6 @@
   .timeline-body .tnote { font-size: 13px; color: var(--steel-100); margin-bottom: 3px; }
   .timeline-body .tdate { font-size: 11px; color: var(--steel-300); }
 
-  .toggle-hint { font-size: 12px; color: var(--steel-300); margin-top: 6px; }
   .loading-note { color: var(--steel-300); }
   .no-updates-note { color: var(--steel-300); font-size: 13px; padding-top: 16px; }
 
@@ -41,15 +72,28 @@
   body.content-light .dash-header .sub { color: var(--ink-600); }
   body.content-light .logout-btn { border-color: var(--paper-border); color: var(--ink-600); }
   body.content-light .empty-state { color: var(--ink-600); }
+  body.content-light .team-member-head { border-color: var(--paper-border); }
+  body.content-light .team-member-head .tm-name { color: var(--ink-900); }
+  body.content-light .team-member-head .tm-role { color: var(--ink-600); }
+  body.content-light .team-empty { color: var(--ink-600); }
   body.content-light .project-card { background: var(--paper-800); border-color: var(--paper-border); }
   body.content-light .project-name { color: var(--ink-900); }
   body.content-light .project-desc { color: var(--ink-600); }
+  body.content-light .status-stepper .step::before { background: var(--paper-border); }
+  body.content-light .status-stepper .dot { background: var(--white); border-color: var(--paper-border); }
+  body.content-light .status-stepper .label { color: var(--ink-600); }
+  body.content-light .status-stepper .step.current .label { color: var(--ink-900); }
+  body.content-light .status-stepper .step.done .label { color: var(--ink-600); }
+  body.content-light .stepper-current { color: var(--ink-900); }
+  body.content-light .meta-item .mlabel { color: var(--ink-600); }
+  body.content-light .meta-item .mvalue { color: var(--ink-900); }
+  body.content-light .project-notes { background: var(--white); border: 1px solid var(--paper-border); color: var(--ink-600); }
+  body.content-light .toggle-hint { color: var(--ink-600); }
   body.content-light .timeline { border-color: var(--paper-border); }
   body.content-light .timeline-item { border-color: var(--paper-border); }
   body.content-light .timeline-body .tstatus { color: var(--ink-900); }
   body.content-light .timeline-body .tnote { color: var(--ink-600); }
   body.content-light .timeline-body .tdate { color: var(--ink-600); }
-  body.content-light .toggle-hint { color: var(--ink-600); }
   body.content-light .loading-note { color: var(--ink-600); }
   body.content-light .no-updates-note { color: var(--ink-600); }
 </style>
@@ -73,7 +117,7 @@
 <div class="dash-header">
   <div>
     <h1>Mis Proyectos</h1>
-    <p class="sub" id="clientName">Cargando...</p>
+    <p class="sub" id="whoami">Cargando...</p>
   </div>
   <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
 </div>
@@ -154,7 +198,79 @@
 <script src="app.js"></script>
 <script>
   const dashContent = document.getElementById('dashContent');
-  const clientNameEl = document.getElementById('clientName');
+  const whoamiEl = document.getElementById('whoami');
+
+  const STATUS_ORDER = ['espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
+  const STATUS_LABELS = {
+    espera_pedido: 'Espera de pedido',
+    en_fabricacion: 'En fabricación',
+    entrega_programada: 'Entrega programada',
+    entregado: 'Entregado',
+  };
+
+  function renderStepper(status) {
+    const currentIdx = STATUS_ORDER.indexOf(status);
+    const steps = '<div class="status-stepper">' + STATUS_ORDER.map((s, i) => {
+      let cls = 'step';
+      if (i < currentIdx) cls += ' done';
+      else if (i === currentIdx) cls += ' current';
+      return `<div class="${cls}"><span class="dot"></span><span class="label">${STATUS_LABELS[s]}</span></div>`;
+    }).join('') + '</div>';
+    const currentLine = `<div class="stepper-current">Paso ${currentIdx + 1} de ${STATUS_ORDER.length} — ${STATUS_LABELS[status]}</div>`;
+    return steps + currentLine;
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function renderProjectCard(project) {
+    const updates = (project.portal_project_updates || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const metaItems = [];
+    if (project.quote_number) metaItems.push(['N° de cotización', project.quote_number]);
+    if (project.po_number) metaItems.push(['N° de orden de compra', project.po_number]);
+    if (project.product_service) metaItems.push(['Producto / servicio', project.product_service + (project.quantity ? ' — ' + project.quantity : '')]);
+    if (project.estimated_delivery_date) metaItems.push(['Entrega estimada', formatDate(project.estimated_delivery_date)]);
+
+    const card = document.createElement('div');
+    card.className = 'project-card';
+
+    const head = document.createElement('div');
+    head.className = 'project-head';
+    head.innerHTML = `
+      <div class="project-name">${escapeHtml(project.name)}</div>
+      ${project.description ? `<div class="project-desc">${escapeHtml(project.description)}</div>` : ''}
+      ${renderStepper(project.status)}
+      ${metaItems.length ? `<div class="meta-grid">${metaItems.map(([l, v]) => `<div class="meta-item"><div class="mlabel">${escapeHtml(l)}</div><div class="mvalue">${escapeHtml(v)}</div></div>`).join('')}</div>` : ''}
+      ${project.notes ? `<div class="project-notes">${escapeHtml(project.notes)}</div>` : ''}
+      <div class="toggle-hint">Clic para ver historial ▾</div>
+    `;
+
+    const timeline = document.createElement('div');
+    timeline.className = 'timeline';
+    if (updates.length === 0) {
+      timeline.innerHTML = '<p class="no-updates-note">Sin actualizaciones registradas todavía.</p>';
+    } else {
+      timeline.innerHTML = updates.map(u => `
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-body">
+            <div class="tstatus">${escapeHtml(STATUS_LABELS[u.status] || u.status)}</div>
+            ${u.note ? `<div class="tnote">${escapeHtml(u.note)}</div>` : ''}
+            <div class="tdate">${new Date(u.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    head.addEventListener('click', () => timeline.classList.toggle('open'));
+
+    card.appendChild(head);
+    card.appendChild(timeline);
+    return card;
+  }
 
   async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -162,69 +278,87 @@
       window.location.href = 'portal.html';
       return;
     }
-
     const userId = session.user.id;
 
-    const { data: client } = await supabaseClient
-      .from('portal_clients')
-      .select('company_name, contact_name')
+    const { data: me } = await supabaseClient
+      .from('portal_users')
+      .select('full_name, puesto, area, client_id, must_change_password, portal_clients(company_name)')
       .eq('id', userId)
       .single();
 
-    clientNameEl.textContent = client ? `${client.company_name}${client.contact_name ? ' — ' + client.contact_name : ''}` : session.user.email;
-
-    const { data: portal_projects, error } = await supabaseClient
-      .from('portal_projects')
-      .select('id, name, description, current_status, portal_project_updates(id, status_label, note, created_at)')
-      .eq('client_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (error || !portal_projects || portal_projects.length === 0) {
-      dashContent.innerHTML = '<div class="empty-state">Todavía no hay proyectos registrados a su nombre.</div>';
+    if (me && me.must_change_password) {
+      window.location.href = 'portal.html';
       return;
     }
 
+    const empresa = me && me.portal_clients ? me.portal_clients.company_name : '';
+    const rolePart = me && (me.puesto || me.area) ? [me.puesto, me.area].filter(Boolean).join(' · ') : '';
+    whoamiEl.textContent = me
+      ? [me.full_name, [rolePart, empresa].filter(Boolean).join(' — ')].filter(Boolean).join(' — ')
+      : session.user.email;
+
+    // RLS ya limita esto a: yo mismo + todos mis subordinados (organigrama completo)
+    const { data: visibleUsers } = await supabaseClient
+      .from('portal_users')
+      .select('id, full_name, puesto, area, manager_id');
+
+    const usersById = {};
+    (visibleUsers || []).forEach(u => { usersById[u.id] = u; });
+    const teamMembers = (visibleUsers || []).filter(u => u.id !== userId);
+
+    // RLS ya limita esto a: mis proyectos + los de mis subordinados
+    const { data: projects, error } = await supabaseClient
+      .from('portal_projects')
+      .select('id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
+      .order('created_at', { ascending: false });
+
     dashContent.innerHTML = '';
-    portal_projects.forEach((project) => {
-      const updates = (project.portal_project_updates || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-      const card = document.createElement('div');
-      card.className = 'project-card';
+    const myProjects = (projects || []).filter(p => p.owner_user_id === userId);
+    if (teamMembers.length > 0) {
+      const lbl = document.createElement('div');
+      lbl.className = 'section-label';
+      lbl.textContent = 'Mis proyectos';
+      dashContent.appendChild(lbl);
+    }
 
-      const head = document.createElement('div');
-      head.className = 'project-head';
-      head.innerHTML = `
-        <div>
-          <div class="project-name">${escapeHtml(project.name)}</div>
-          <div class="project-desc">${escapeHtml(project.description || '')}</div>
-          <div class="toggle-hint">Clic para ver historial ▾</div>
-        </div>
-        <span class="status-badge">${escapeHtml(project.current_status)}</span>
-      `;
+    if (error || myProjects.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'Todavía no hay proyectos registrados a su nombre.';
+      dashContent.appendChild(empty);
+    } else {
+      myProjects.forEach(p => dashContent.appendChild(renderProjectCard(p)));
+    }
 
-      const timeline = document.createElement('div');
-      timeline.className = 'timeline';
-      if (updates.length === 0) {
-        timeline.innerHTML = '<p class="no-updates-note">Sin actualizaciones registradas todavía.</p>';
-      } else {
-        timeline.innerHTML = updates.map(u => `
-          <div class="timeline-item">
-            <div class="timeline-dot"></div>
-            <div class="timeline-body">
-              <div class="tstatus">${escapeHtml(u.status_label)}</div>
-              ${u.note ? `<div class="tnote">${escapeHtml(u.note)}</div>` : ''}
-              <div class="tdate">${new Date(u.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-            </div>
-          </div>
-        `).join('');
-      }
+    if (teamMembers.length > 0) {
+      const teamLbl = document.createElement('div');
+      teamLbl.className = 'section-label';
+      teamLbl.textContent = 'Proyectos de mi equipo';
+      dashContent.appendChild(teamLbl);
 
-      head.addEventListener('click', () => timeline.classList.toggle('open'));
+      teamMembers.forEach(member => {
+        const memberProjects = (projects || []).filter(p => p.owner_user_id === member.id);
+        const wrap = document.createElement('div');
+        wrap.className = 'team-member';
 
-      card.appendChild(head);
-      card.appendChild(timeline);
-      dashContent.appendChild(card);
-    });
+        const head = document.createElement('div');
+        head.className = 'team-member-head';
+        const rolePart = [member.puesto, member.area].filter(Boolean).join(' · ');
+        head.innerHTML = `<span class="tm-name">${escapeHtml(member.full_name)}</span>${rolePart ? `<span class="tm-role">${escapeHtml(rolePart)}</span>` : ''}`;
+        wrap.appendChild(head);
+
+        if (memberProjects.length === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'team-empty';
+          empty.textContent = 'Sin proyectos registrados.';
+          wrap.appendChild(empty);
+        } else {
+          memberProjects.forEach(p => wrap.appendChild(renderProjectCard(p)));
+        }
+        dashContent.appendChild(wrap);
+      });
+    }
   }
 
   function escapeHtml(str) {

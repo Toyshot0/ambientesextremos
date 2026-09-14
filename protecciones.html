@@ -11,7 +11,11 @@
   .intro { padding: 48px 48px 40px; max-width: 900px; border-bottom: 1px solid var(--gunmetal-700); }
   .intro h1 { font-size: 44px; font-weight: 600; margin-bottom: 16px; }
   .intro p { color: var(--steel-100); font-size: 17px; max-width: 640px; }
-  .grid-section { padding: 48px; max-width: 1050px; margin: 0 auto; }
+  .grid-section { padding: 48px; max-width: 1500px; margin: 0 auto; }
+  /* Grid de productos: se aprovecha el ancho disponible con columnas que se
+     acomodan solas (auto-fill) en vez del tope fijo de 3 que usa el resto del
+     sitio — mismo criterio que ya usa Cables. */
+  .grid-section .product-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
   @media (max-width: 600px) {
     .intro, .grid-section { padding-left: 24px; padding-right: 24px; }
     .intro h1 { font-size: 32px; }
@@ -31,8 +35,8 @@
   <nav>
     <ul>
       <li><a href="sensores.html">Sensores</a></li>
-      <li><a href="cables.html">Cables</a></li>
       <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="cables.html">Cables</a></li>
       <li><a href="protecciones.html" class="active">Protecciones</a></li>
       <li><a href="portal.html" class="nav-cta-btn">Portal de Clientes</a></li>
       <li><a href="#" class="js-open-modal">Contacto</a></li>
@@ -106,11 +110,22 @@
       </div>
     </div>
 
-    <a class="product-card" href="mangueras-metalicas.html">
-      <div class="product-photo"><img src="manguera-hermetica.jpg" alt="Manguera metálica flexible hermética" style="width:100%;height:100%;object-fit:contain;background:var(--white);"></div>
+    <a class="product-card" href="manguera-metalica-no-hermetica.html">
+      <div class="product-photo"><img src="manguera-interlock.jpg" alt="Manguera metálica flexible no hermética, tipo interlock" style="width:100%;height:100%;object-fit:contain;background:var(--white);"></div>
       <div class="product-body">
-        <h3>Mangueras Metálicas Flexibles</h3>
-        <p>Conducción flexible resistente a temperatura, abrasión e impacto mecánico en línea de proceso.</p>
+        <h3>Manguera Metálica Flexible No Hermética</h3>
+        <p>Construcción interlock — protección mecánica flexible contra aplastamiento, abrasión e impacto, sin sellado.</p>
+        <span class="ver-producto">Ver producto
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="product-card" href="manguera-metalica-hermetica.html">
+      <div class="product-photo"><img src="manguera-hermetica.jpg" alt="Manguera metálica flexible hermética trenzada" style="width:100%;height:100%;object-fit:contain;background:var(--white);"></div>
+      <div class="product-body">
+        <h3>Manguera Metálica Flexible Hermética</h3>
+        <p>Construcción trenzada — protección mecánica y sellado contra líquidos, vapor o gases.</p>
         <span class="ver-producto">Ver producto
           <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M8 1L13 5L8 9M13 5H1" stroke="currentColor" stroke-width="1.5"/></svg>
         </span>
@@ -145,8 +160,8 @@
     <div class="footer-col">
       <h4>Productos</h4>
       <a href="sensores.html">Sensores</a>
-      <a href="cables.html">Cables</a>
       <a href="ensambles.html">Ensambles</a>
+      <a href="cables.html">Cables</a>
       <a href="protecciones.html">Protecciones</a>
     </div>
     <div class="footer-col">

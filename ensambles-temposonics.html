@@ -69,7 +69,8 @@
   .specs-table td:last-child { color: var(--white); }
   .specs-table tr:hover { background: var(--gunmetal-800); }
 
-  .connector-box { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 20px 24px; max-width: 720px; }
+  .connector-box { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 20px 24px; max-width: 720px; margin-bottom: 16px; }
+  .connector-box .cname { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--orange); margin-bottom: 10px; }
   .connector-box p { font-size: 14px; color: var(--steel-100); margin-bottom: 8px; }
   .connector-box p:last-child { margin-bottom: 0; }
   .connector-box strong { color: var(--white); }
@@ -100,11 +101,21 @@
     background-position: right 14px center;
     cursor: pointer;
   }
+  .cq-field input[type="text"] {
+    background: var(--gunmetal-800);
+    border: 1px solid var(--gunmetal-600);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 11px 14px;
+    border-radius: 3px;
+  }
   .radio-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
   .radio-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--steel-100); cursor: pointer; }
   .radio-item input[type="radio"] { width: 16px; height: 16px; accent-color: var(--orange); cursor: pointer; }
   .length-field { max-width: 260px; }
   .length-field-standalone { max-width: 260px; margin-bottom: 10px; }
+  .cq-field-solo { max-width: 260px; }
   .cq-note { font-size: 13px; color: var(--steel-300); }
   .protection-block { margin-top: 22px; padding-top: 22px; border-top: 1px solid var(--gunmetal-700); max-width: 720px; }
 
@@ -142,6 +153,7 @@
   body.content-light .cq-field select { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-900); }
   body.content-light .radio-item { color: var(--ink-600); }
   body.content-light .option-item { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .cq-field input[type="text"] { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-900); }
 </style>
 </head>
 <body class="content-light">
@@ -204,40 +216,28 @@
   </div>
 
   <div class="section">
-    <h2 class="section-title">Longitud</h2>
-    <div class="connector-question">
-      <div class="cq-field length-field-standalone">
-        <label>Longitud del ensamble</label>
-        <select id="lengthSelect">
-          <option>50 m (estándar)</option>
-          <option>Otra longitud</option>
-        </select>
-      </div>
-      <div class="cq-note">Disponible en múltiplos de 10 metros.</div>
-    </div>
-  </div>
-
-  <div class="section">
     <h2 class="section-title">Configuración de conectores</h2>
+
     <div class="connector-box">
-      <p><strong>Estándar:</strong> conector industrial para sensor Temposonics, marca MTS, en ambos extremos.</p>
+      <div class="cname">Punta 1</div>
+      <p><strong>Conector industrial para sensor Temposonics</strong>, marca MTS</p>
+      <p>Va directo al sensor — este extremo es fijo, no es configurable.</p>
+    </div>
+
+    <div class="connector-box">
+      <div class="cname">Punta 2</div>
+      <p><strong>Terminales a clemas</strong> (estándar)</p>
+      <p>También disponible con conector industrial para sensor Temposonics, si la aplicación lo requiere.</p>
     </div>
 
     <div class="connector-question">
-      <div class="cq-label">¿Necesita modificar la configuración estándar?</div>
+      <div class="cq-label">Terminación en Punta 2</div>
       <div class="cq-grid">
-        <div class="cq-field">
-          <label>Punta 1</label>
-          <select id="punta1Select">
-            <option>Conector industrial para sensor Temposonics</option>
-            <option>Terminales</option>
-          </select>
-        </div>
-        <div class="cq-field">
+        <div class="cq-field cq-field-solo">
           <label>Punta 2</label>
           <select id="punta2Select">
+            <option>Terminales a clemas</option>
             <option>Conector industrial para sensor Temposonics</option>
-            <option>Terminales</option>
           </select>
         </div>
       </div>
@@ -279,6 +279,24 @@
           </select>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Longitud</h2>
+    <div class="connector-question">
+      <div class="cq-field length-field-standalone">
+        <label>Longitud del ensamble</label>
+        <select id="lengthSelect">
+          <option>50 m (estándar)</option>
+          <option>Otra longitud</option>
+        </select>
+      </div>
+      <div class="cq-field length-field-standalone" id="customLengthField" style="display:none;">
+        <label>Especifique la longitud</label>
+        <input type="text" id="customLengthInput" placeholder="Ej. 35 m">
+      </div>
+      <div class="cq-note">Disponible en múltiplos de 10 metros.</div>
     </div>
   </div>
 
@@ -379,6 +397,12 @@
 <script src="portal-config.js"></script>
 <script src="app.js"></script>
 <script>
+  // Longitud: mostrar el campo de texto solo cuando se elige "Otra longitud".
+  document.getElementById('lengthSelect').addEventListener('change', function () {
+    document.getElementById('customLengthField').style.display =
+      this.value === 'Otra longitud' ? 'flex' : 'none';
+  });
+
   // Contraparte: mostrar el campo de longitud de cable solo cuando se elige
   // la opción "con cable".
   document.querySelectorAll('input[name="contraparte"]').forEach(function (radio) {
@@ -410,12 +434,19 @@
       const productName = h1 ? h1.textContent.split('—')[0].trim() : '';
       let msg = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
 
-      const lengthSelect = document.getElementById('lengthSelect');
-      if (lengthSelect) msg += ' Longitud: ' + lengthSelect.value + '.';
-
-      const punta1 = document.getElementById('punta1Select');
       const punta2 = document.getElementById('punta2Select');
-      if (punta1 && punta2) msg += ' Punta 1: ' + punta1.value + '. Punta 2: ' + punta2.value + '.';
+      if (punta2) msg += ' Punta 1: Conector industrial para sensor Temposonics (fijo). Punta 2: ' + punta2.value + '.';
+
+      const lengthSelect = document.getElementById('lengthSelect');
+      if (lengthSelect) {
+        if (lengthSelect.value === 'Otra longitud') {
+          const customLength = document.getElementById('customLengthInput');
+          const customVal = customLength && customLength.value.trim() ? customLength.value.trim() : 'por especificar';
+          msg += ' Longitud: otra (' + customVal + ').';
+        } else {
+          msg += ' Longitud: ' + lengthSelect.value + '.';
+        }
+      }
 
       const contraparte = document.querySelector('input[name="contraparte"]:checked');
       if (contraparte) {

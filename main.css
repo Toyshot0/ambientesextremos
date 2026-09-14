@@ -240,6 +240,10 @@ body.content-light .type-badge-sm { background: var(--paper-border); color: var(
 body.content-light .pill { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
 body.content-light .pill.active, body.content-light .pill:hover { border-color: var(--orange); color: var(--orange); }
 
+body.content-light .caution-note { background: var(--paper-800); border-color: var(--paper-border); }
+body.content-light .caution-note p { color: var(--ink-600); }
+body.content-light .caution-note strong { color: var(--ink-900); }
+
 /* El bloque de CTA final (y la tarjeta de Configurador de Cable en el hub de
    Cables) se quedan oscuros a propósito, como acento, incluso en páginas con
    contenido claro. */

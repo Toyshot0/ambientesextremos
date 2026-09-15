@@ -491,11 +491,16 @@
           </div>
           <div class="form-row">
             <div class="field"><label>N° de cotización</label><input type="text" id="projectQuote"></div>
-            <div class="field"><label>N° de orden de compra del cliente (OC)</label><input type="text" id="projectPO"></div>
+            <div class="field">
+              <label>N° de orden de compra del cliente (OC)</label>
+              <input type="text" id="projectPO">
+              <p class="field-note">Obligatorio en cuanto el proyecto ya tiene pedido confirmado (cualquier estatus distinto de "Espera de pedido").</p>
+            </div>
           </div>
-          <div class="form-row">
+          <div class="form-row triple">
             <div class="field"><label>Estatus</label><select id="projectStatus">${statusOptionsHtml('espera_pedido')}</select></div>
             <div class="field"><label>Entrega estimada (opcional)</label><input type="date" id="projectDate"></div>
+            <div class="field"><label>Fecha real de entrega (opcional)</label><input type="date" id="projectActualDate"></div>
           </div>
           <div class="form-row single">
             <div class="field"><label>Notas (opcional)</label><textarea id="projectNotes"></textarea></div>
@@ -686,7 +691,7 @@
   async function loadProjects() {
     let query = supabaseClient
       .from('portal_projects')
-      .select('id, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_suppliers(id, provider, po_number_supplier)')
+      .select('id, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, notes, portal_project_suppliers(id, provider, po_number_supplier)')
       .order('created_at', { ascending: false });
     if (currentRole === 'vendedor') query = query.eq('owner_vendedor_id', currentStaffId);
     const { data } = await query;
@@ -897,6 +902,15 @@
   async function submitProject(e) {
     e.preventDefault();
     const msg = document.getElementById('projectMsg');
+    const status = document.getElementById('projectStatus').value;
+    const poNumber = document.getElementById('projectPO').value.trim();
+
+    if (status !== 'espera_pedido' && !poNumber) {
+      msg.className = 'msg error';
+      msg.textContent = 'Falta el número de pedido (OC) del cliente — es obligatorio en cuanto el proyecto ya tiene pedido (cualquier estatus distinto de "Espera de pedido").';
+      return;
+    }
+
     const payload = {
       client_id: document.getElementById('projectClient').value,
       owner_user_id: document.getElementById('projectOwner').value,
@@ -905,9 +919,10 @@
       product_service: document.getElementById('projectProduct').value || null,
       quantity: document.getElementById('projectQty').value || null,
       quote_number: document.getElementById('projectQuote').value || null,
-      po_number: document.getElementById('projectPO').value || null,
-      status: document.getElementById('projectStatus').value,
+      po_number: poNumber || null,
+      status: status,
       estimated_delivery_date: document.getElementById('projectDate').value || null,
+      actual_delivery_date: document.getElementById('projectActualDate').value || null,
       notes: document.getElementById('projectNotes').value || null,
       updated_at: new Date().toISOString(),
     };
@@ -967,6 +982,7 @@
     document.getElementById('projectPO').value = p.po_number || '';
     document.getElementById('projectStatus').value = p.status;
     document.getElementById('projectDate').value = p.estimated_delivery_date || '';
+    document.getElementById('projectActualDate').value = p.actual_delivery_date || '';
     document.getElementById('projectNotes').value = p.notes || '';
     supplierRows = (p.portal_project_suppliers || []).map(s => ({ provider: s.provider, po_number_supplier: s.po_number_supplier || '' }));
     renderSupplierRows();
@@ -1066,7 +1082,7 @@
       html += `
       <div class="row-item">
         <span class="r-main">${escapeHtml(p.name)}</span>
-        <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}</span>
+        <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}</span>
         ${supplierMeta ? `<span class="r-meta">Proveedores (interno): ${supplierMeta}</span>` : ''}
         <span class="status-pill-sm${isDelivered ? ' delivered' : ''}">${STATUS_LABELS[p.status] || p.status}</span>
         <span class="r-actions">
@@ -1091,6 +1107,13 @@
     const msg = document.getElementById('updateMsg');
     const projectId = document.getElementById('updateProject').value;
     const status = document.getElementById('updateStatus').value;
+
+    const projectForUpdate = projectsCache.find(p => p.id === projectId);
+    if (status !== 'espera_pedido' && projectForUpdate && !projectForUpdate.po_number) {
+      msg.className = 'msg error';
+      msg.textContent = 'Este proyecto no tiene número de pedido (OC) del cliente todavía — agrégalo editando el proyecto (panel "Todos los proyectos" / "Mis proyectos") antes de avanzar su estatus.';
+      return;
+    }
 
     const { error: updateError } = await supabaseClient.from('portal_project_updates').insert({
       project_id: projectId,

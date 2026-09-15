@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Despiece de Ensambles — AMBIENTES EXTREMOS</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .admin-header h1 { font-size: 22px; font-weight: 600; }
+  .tools-back-link { display: inline-block; font-size: 12.5px; color: var(--steel-300); text-decoration: none; margin-bottom: 6px; }
+  .tools-back-link:hover { color: var(--orange); }
+  .admin-header-right { display: flex; align-items: center; gap: 16px; }
+  .staff-identity { font-size: 13px; color: var(--steel-300); text-align: right; }
+  .staff-identity strong { color: var(--white); font-weight: 600; }
+  body.content-light .staff-identity { color: var(--ink-600); }
+  body.content-light .staff-identity strong { color: var(--ink-900); }
+  .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
+  .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  .admin-content { padding: 32px 48px 64px; max-width: 1180px; }
+  .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
+
+  .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; }
+  .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .panel .panel-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 18px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+  .tab-btn { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 9px 18px; cursor: pointer; }
+  .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  body.content-light .tab-btn { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
+  .field input, .field select, .field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--orange); }
+  .field-note { font-size: 11px; color: var(--steel-300); margin-top: 5px; }
+
+  .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
+  .submit-btn:hover { background: #d0531a; }
+  .cancel-btn { background: transparent; color: var(--steel-300); border: 1px solid var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; margin-left: 10px; }
+
+  .msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
+  .msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
+  .msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
+
+  .empty-note { font-size: 13px; color: var(--steel-300); padding: 8px 0; }
+  .hidden { display: none !important; }
+  .verifying-note { color: var(--steel-300); }
+
+  /* Panel de compras — tabla de componentes cruzando proyectos */
+  .comp-table { width: 100%; border-collapse: collapse; }
+  .comp-table th { text-align: left; font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steel-300); padding: 8px 10px; border-bottom: 1px solid var(--gunmetal-600); }
+  .comp-table td { padding: 8px 10px; border-bottom: 1px solid var(--gunmetal-700); font-size: 13px; vertical-align: middle; }
+  .comp-table td .r-main { font-weight: 600; }
+  .comp-table td .r-meta { font-size: 11.5px; color: var(--steel-300); }
+  .comp-table select, .comp-table input { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 13px; padding: 6px 8px; border-radius: 3px; }
+  .comp-table .qa { font-size: 12px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; color: var(--orange); cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .comp-table .qa.danger { color: #e05a5a; }
+  .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; padding: 3px 9px; border-radius: 12px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); white-space: nowrap; }
+  .status-pill-sm.recibido { background: rgba(60,180,100,0.14); border-color: #2ecc71; color: #7fe0a5; }
+  body.content-light .status-pill-sm.recibido { color: #1f7a45; }
+
+  .row-item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 12px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 14px; cursor: pointer; }
+  .row-item:last-child { border-bottom: none; }
+  .row-item .r-main { font-weight: 600; }
+  .row-item .r-meta { font-size: 12px; color: var(--steel-300); }
+  .row-item:hover { border-color: var(--orange); }
+
+  .ensamble-summary { background: var(--gunmetal-900); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 14px 16px; margin-bottom: 18px; font-size: 13px; }
+  .ensamble-summary .es-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .ensamble-summary .es-meta { color: var(--steel-300); }
+
+  body.content-light .admin-header { border-color: var(--paper-border); }
+  body.content-light .admin-header h1 { color: var(--ink-900); }
+  body.content-light .tools-back-link { color: var(--ink-600); }
+  body.content-light .tools-back-link:hover { color: var(--orange); }
+  body.content-light .logout-btn { border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .denied { color: var(--ink-600); }
+  body.content-light .panel { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .panel h2 { color: var(--ink-900); }
+  body.content-light .panel .panel-sub { color: var(--ink-600); }
+  body.content-light .field label { color: var(--ink-600); }
+  body.content-light .field input, body.content-light .field select { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .field-note { color: var(--ink-600); }
+  body.content-light .cancel-btn { border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .msg.success { color: #1f7a45; }
+  body.content-light .msg.error { color: #a63232; }
+  body.content-light .empty-note { color: var(--ink-600); }
+  body.content-light .verifying-note { color: var(--ink-600); }
+  body.content-light .comp-table th { color: var(--ink-600); border-color: var(--paper-border); }
+  body.content-light .comp-table td { border-color: var(--paper-border); }
+  body.content-light .comp-table td .r-meta { color: var(--ink-600); }
+  body.content-light .comp-table select, body.content-light .comp-table input { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .row-item { border-color: var(--paper-border); }
+  body.content-light .row-item .r-meta { color: var(--ink-600); }
+  body.content-light .ensamble-summary { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .ensamble-summary .es-meta { color: var(--ink-600); }
+</style>
+</head>
+<body class="content-light">
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="admin-header">
+  <div>
+    <a class="tools-back-link" href="herramientas.html">← Volver a Herramientas</a>
+    <h1>Despiece de Ensambles — Panel de Compras</h1>
+  </div>
+  <div class="admin-header-right">
+    <span class="staff-identity" id="staffIdentity"></span>
+    <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+  </div>
+</div>
+
+<div class="admin-content" id="adminContent">
+  <p class="verifying-note">Verificando acceso...</p>
+</div>
+
+<script src="portal-config.js"></script>
+<script>
+  const adminContent = document.getElementById('adminContent');
+
+  const PROVIDER_ORDER = ['nsd', 'mazzella', 'watteredge', 'avanta', 'prysmian'];
+  const PROVIDER_LABELS = {
+    nsd: 'NSD',
+    mazzella: 'Mazzella',
+    watteredge: 'Watteredge',
+    avanta: 'Avanta (fabricación propia)',
+    prysmian: 'Prysmian',
+  };
+  function providerOptionsHtml(selected) {
+    return '<option value="">Sin definir</option>' + PROVIDER_ORDER.map(p => `<option value="${p}"${p === selected ? ' selected' : ''}>${PROVIDER_LABELS[p]}</option>`).join('');
+  }
+
+  const COMPONENT_STATUS_ORDER = ['por_pedir', 'pedido', 'en_transito', 'recibido'];
+  const COMPONENT_STATUS_LABELS = {
+    por_pedir: 'Por pedir',
+    pedido: 'Pedido al proveedor',
+    en_transito: 'En tránsito',
+    recibido: 'Recibido en AVANTA',
+  };
+  function componentStatusOptionsHtml(selected) {
+    return COMPONENT_STATUS_ORDER.map(s => `<option value="${s}"${s === selected ? ' selected' : ''}>${COMPONENT_STATUS_LABELS[s]}</option>`).join('');
+  }
+
+  let currentRole = null; // 'admin' | 'vendedor'
+  let currentStaffId = null;
+  let clientsCache = [];
+  let usersCache = [];
+  let projectsCache = []; // proyectos (ensambles) — datos mínimos para localizar/crear
+  let componentsCache = []; // TODOS los componentes visibles para este rol, con su proyecto embebido
+  let activeTab = 'compras'; // 'compras' | 'buscar'
+  let selectedProjectId = null; // proyecto abierto en la pestaña "Buscar / cargar ensamble"
+  let newRowDrafts = []; // filas nuevas sin guardar en el editor de un ensamble
+
+  function setStaffIdentity(label) {
+    const el = document.getElementById('staffIdentity');
+    if (el) el.innerHTML = label;
+  }
+
+  async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.location.href = 'portal.html'; return; }
+    currentStaffId = session.user.id;
+    const sessionEmail = session.user.email || '';
+
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', currentStaffId).single();
+    if (adminRow) {
+      currentRole = 'admin';
+      setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
+      await loadAll();
+      renderShell();
+      return;
+    }
+
+    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name').eq('id', currentStaffId).single();
+    if (vendedorRow) {
+      currentRole = 'vendedor';
+      setStaffIdentity(`<strong>${escapeHtml(vendedorRow.full_name)}</strong> — Vendedor`);
+      await loadAll();
+      renderShell();
+      return;
+    }
+
+    adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
+  }
+
+  async function loadAll() {
+    const { data: clients } = await supabaseClient.from('portal_clients').select('id, company_name').order('company_name');
+    clientsCache = clients || [];
+
+    const { data: users } = await supabaseClient.from('portal_users').select('id, full_name, client_id').order('full_name');
+    usersCache = users || [];
+
+    let projQuery = supabaseClient
+      .from('portal_projects')
+      .select('id, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date')
+      .order('created_at', { ascending: false });
+    if (currentRole === 'vendedor') projQuery = projQuery.eq('owner_vendedor_id', currentStaffId);
+    const { data: projects } = await projQuery;
+    projectsCache = projects || [];
+
+    await reloadComponents();
+  }
+
+  async function reloadComponents() {
+    const { data } = await supabaseClient
+      .from('portal_project_components')
+      .select('id, project_id, component_name, status, provider, po_number_component, supplier_commitment_date, order_index, portal_projects(id, name, client_id, status)')
+      .order('created_at', { ascending: true });
+    componentsCache = data || [];
+  }
+
+  function clientName(id) {
+    const c = clientsCache.find(c => c.id === id);
+    return c ? c.company_name : '—';
+  }
+  function userName(id) {
+    const u = usersCache.find(u => u.id === id);
+    return u ? u.full_name : '—';
+  }
+
+  function renderShell() {
+    adminContent.innerHTML = `
+      <div class="tabs">
+        <button type="button" class="tab-btn" data-tab="compras">Panel de compras</button>
+        <button type="button" class="tab-btn" data-tab="buscar">Buscar / cargar ensamble</button>
+      </div>
+      <div id="tabContent"></div>
+    `;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => { activeTab = btn.getAttribute('data-tab'); renderTabs(); });
+    });
+    renderTabs();
+  }
+
+  function renderTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === activeTab));
+    if (activeTab === 'compras') renderComprasTab();
+    else renderBuscarTab();
+  }
+
+  // =====================================================================
+  // Pestaña 1 — Panel de compras: todos los componentes, de todos los
+  // ensambles, en una sola vista filtrable. Pensada para responder
+  // "¿qué me falta pedir hoy?" sin tener que entrar proyecto por proyecto.
+  // =====================================================================
+  function renderComprasTab() {
+    const wrap = document.getElementById('tabContent');
+    wrap.innerHTML = `
+      <div class="panel">
+        <h2>Panel de compras</h2>
+        <p class="panel-sub">Todos los componentes de todos los ensambles, sin importar de qué proyecto/cliente son. Edita estatus, proveedor, PO o fecha directo aquí — se guarda al momento.</p>
+        <div class="form-row triple" style="margin-bottom:10px;">
+          <div class="field"><label>Proveedor</label><select id="compFilterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
+          <div class="field"><label>Estatus</label><select id="compFilterStatus"><option value="">Todos</option><option value="__pending__">Pendientes (no recibidos)</option>${componentStatusOptionsHtml('')}</select></div>
+          <div class="field"><label>Cliente</label><select id="compFilterClient"><option value="">Todos</option>${clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row single" style="margin-bottom:4px;">
+          <div class="field"><label>Buscar (componente, ensamble, PO)</label><input type="text" id="compFilterText" placeholder="Ej. Motor 3 HP o OC-9010"></div>
+        </div>
+        <div id="compTableWrap" style="margin-top:14px;"></div>
+      </div>
+    `;
+    ['compFilterProvider', 'compFilterStatus', 'compFilterClient'].forEach(id => document.getElementById(id).addEventListener('change', renderComprasTable));
+    document.getElementById('compFilterText').addEventListener('input', renderComprasTable);
+    renderComprasTable();
+  }
+
+  function filteredComponents() {
+    const provider = document.getElementById('compFilterProvider').value;
+    const status = document.getElementById('compFilterStatus').value;
+    const clientId = document.getElementById('compFilterClient').value;
+    const text = document.getElementById('compFilterText').value.trim().toLowerCase();
+    return componentsCache.filter(c => {
+      const proj = c.portal_projects;
+      if (provider && c.provider !== provider) return false;
+      if (status === '__pending__' && c.status === 'recibido') return false;
+      if (status && status !== '__pending__' && c.status !== status) return false;
+      if (clientId && (!proj || proj.client_id !== clientId)) return false;
+      if (text) {
+        const haystack = [c.component_name, c.po_number_component, proj ? proj.name : '', proj ? clientName(proj.client_id) : ''].filter(Boolean).join(' ').toLowerCase();
+        if (!haystack.includes(text)) return false;
+      }
+      return true;
+    });
+  }
+
+  function formatDateShort(d) {
+    if (!d) return '';
+    return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function renderComprasTable() {
+    const wrap = document.getElementById('compTableWrap');
+    if (!wrap) return;
+    if (componentsCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay componentes cargados — ve a "Buscar / cargar ensamble" para agregar los del primer ensamble.</p>';
+      return;
+    }
+    const list = filteredComponents();
+    if (list.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Ningún componente coincide con el filtro.</p>';
+      return;
+    }
+    wrap.innerHTML = `
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Componente</th>
+            <th>Ensamble / Cliente</th>
+            <th>Proveedor</th>
+            <th>Estatus</th>
+            <th>PO</th>
+            <th>Compromiso proveedor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="compTableBody"></tbody>
+      </table>
+    `;
+    const body = document.getElementById('compTableBody');
+    body.innerHTML = list.map(c => {
+      const proj = c.portal_projects;
+      return `
+      <tr data-comp-row="${c.id}">
+        <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
+        <td>
+          <div class="r-main">${proj ? escapeHtml(proj.name) : '—'}</div>
+          <div class="r-meta">${proj ? escapeHtml(clientName(proj.client_id)) : ''}</div>
+        </td>
+        <td><select data-live-provider="${c.id}">${providerOptionsHtml(c.provider || '')}</select></td>
+        <td><select data-live-status="${c.id}">${componentStatusOptionsHtml(c.status)}</select></td>
+        <td><input type="text" data-live-po="${c.id}" value="${escapeHtml(c.po_number_component || '')}" placeholder="OC-..."></td>
+        <td><input type="date" data-live-date="${c.id}" value="${c.supplier_commitment_date || ''}"></td>
+        <td>
+          ${proj ? `<a class="qa" data-open-project="${proj.id}">Ver ensamble</a>` : ''}
+          <a class="qa danger" data-quick-remove="${c.id}">Quitar</a>
+        </td>
+      </tr>
+    `;
+    }).join('');
+
+    list.forEach(c => {
+      body.querySelector(`[data-live-provider="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'provider', e.target.value || null));
+      body.querySelector(`[data-live-status="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'status', e.target.value));
+      body.querySelector(`[data-live-po="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'po_number_component', e.target.value.trim() || null));
+      body.querySelector(`[data-live-date="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'supplier_commitment_date', e.target.value || null));
+      const openLink = body.querySelector(`[data-open-project="${c.portal_projects ? c.portal_projects.id : ''}"]`);
+      if (openLink) openLink.addEventListener('click', () => { activeTab = 'buscar'; selectedProjectId = c.portal_projects.id; renderShell(); });
+      body.querySelector(`[data-quick-remove="${c.id}"]`).addEventListener('click', () => quickRemoveComponent(c.id));
+    });
+  }
+
+  async function updateComponentField(componentId, field, value) {
+    const { error } = await supabaseClient.from('portal_project_components').update({ [field]: value }).eq('id', componentId);
+    if (!error) {
+      const c = componentsCache.find(c => c.id === componentId);
+      if (c) c[field] = value;
+    }
+  }
+
+  async function quickRemoveComponent(componentId) {
+    if (!confirm('¿Quitar este componente? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabaseClient.from('portal_project_components').delete().eq('id', componentId);
+    if (!error) {
+      componentsCache = componentsCache.filter(c => c.id !== componentId);
+      renderComprasTable();
+    }
+  }
+
+  // =====================================================================
+  // Pestaña 2 — Buscar / cargar ensamble: localizar un proyecto existente
+  // (o crear uno rápido) y editar ahí sus componentes uno por uno.
+  // =====================================================================
+  function renderBuscarTab() {
+    const wrap = document.getElementById('tabContent');
+    wrap.innerHTML = `
+      <div class="panel">
+        <h2>Buscar ensamble</h2>
+        <p class="panel-sub">Localiza el proyecto (ensamble) por nombre, cliente, cotización u OC — o carga uno nuevo si todavía no existe.</p>
+        <div class="form-row single" style="margin-bottom:4px;">
+          <div class="field"><label>Buscar</label><input type="text" id="projSearchText" placeholder="Ej. Ternium o COT-4821"></div>
+        </div>
+        <div id="projSearchResults" style="margin-top:10px;"></div>
+        <button type="button" class="cancel-btn" id="newEnsambleBtn" style="margin-left:0; margin-top:14px;">+ Cargar ensamble nuevo</button>
+        <div id="newEnsambleForm" class="hidden" style="margin-top:14px; padding-top:14px; border-top:1px dashed var(--gunmetal-600);">
+          <div id="newEnsambleMsg" class="msg"></div>
+          <div class="form-row">
+            <div class="field"><label>Empresa</label><select id="neClient"><option value="">Seleccione...</option>${clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('')}</select></div>
+            <div class="field"><label>Usuario (dueño)</label><select id="neOwner"><option value="">Seleccione una empresa primero...</option></select></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Nombre del ensamble</label><input type="text" id="neName" placeholder="Ej. Ensamble control M12 — Ternium HSM"></div>
+          </div>
+          <p class="field-note">Esto crea el proyecto con lo mínimo para empezar a cargarle componentes — el resto (cotización, OC, fechas, estatus) se termina de llenar en Administración de Proyectos.</p>
+          <button type="button" class="submit-btn" id="neSaveBtn">Crear y abrir</button>
+          <button type="button" class="cancel-btn" id="neCancelBtn">Cancelar</button>
+        </div>
+      </div>
+      <div id="ensambleEditorWrap"></div>
+    `;
+    document.getElementById('projSearchText').addEventListener('input', renderProjSearchResults);
+    document.getElementById('newEnsambleBtn').addEventListener('click', () => document.getElementById('newEnsambleForm').classList.remove('hidden'));
+    document.getElementById('neCancelBtn').addEventListener('click', () => document.getElementById('newEnsambleForm').classList.add('hidden'));
+    document.getElementById('neClient').addEventListener('change', refreshNeOwnerOptions);
+    document.getElementById('neSaveBtn').addEventListener('click', saveNewEnsamble);
+    renderProjSearchResults();
+    if (selectedProjectId) renderEnsambleEditor(selectedProjectId);
+  }
+
+  function refreshNeOwnerOptions() {
+    const clientId = document.getElementById('neClient').value;
+    const sel = document.getElementById('neOwner');
+    if (!clientId) { sel.innerHTML = '<option value="">Seleccione una empresa primero...</option>'; return; }
+    const candidates = usersCache.filter(u => u.client_id === clientId);
+    sel.innerHTML = '<option value="">Seleccione...</option>' + candidates.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('');
+  }
+
+  async function saveNewEnsamble() {
+    const msg = document.getElementById('newEnsambleMsg');
+    const client_id = document.getElementById('neClient').value;
+    const owner_user_id = document.getElementById('neOwner').value;
+    const name = document.getElementById('neName').value.trim();
+    if (!client_id || !owner_user_id || !name) {
+      msg.className = 'msg error';
+      msg.textContent = 'Faltan datos — empresa, usuario dueño y nombre son obligatorios.';
+      return;
+    }
+    const payload = { client_id, owner_user_id, name, status: 'espera_pedido' };
+    if (currentRole === 'vendedor') payload.owner_vendedor_id = currentStaffId;
+    const { data, error } = await supabaseClient.from('portal_projects').insert(payload).select('id, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date').single();
+    if (error) {
+      msg.className = 'msg error';
+      msg.textContent = 'Error: ' + error.message;
+      return;
+    }
+    projectsCache.unshift(data);
+    document.getElementById('newEnsambleForm').classList.add('hidden');
+    document.getElementById('neClient').value = '';
+    document.getElementById('neOwner').innerHTML = '<option value="">Seleccione una empresa primero...</option>';
+    document.getElementById('neName').value = '';
+    selectedProjectId = data.id;
+    renderProjSearchResults();
+    renderEnsambleEditor(data.id);
+  }
+
+  function renderProjSearchResults() {
+    const wrap = document.getElementById('projSearchResults');
+    if (!wrap) return;
+    const text = document.getElementById('projSearchText').value.trim().toLowerCase();
+    if (!text) {
+      wrap.innerHTML = '<p class="empty-note">Escribe para buscar, o usa "+ Cargar ensamble nuevo".</p>';
+      return;
+    }
+    const matches = projectsCache.filter(p => {
+      const haystack = [p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(text);
+    }).slice(0, 20);
+    if (matches.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Ningún proyecto coincide.</p>';
+      return;
+    }
+    wrap.innerHTML = matches.map(p => `
+      <div class="row-item" data-select-project="${p.id}">
+        <span class="r-main">${escapeHtml(p.name)}</span>
+        <span class="r-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.po_number ? ' — OC ' + escapeHtml(p.po_number) : ''}</span>
+      </div>
+    `).join('');
+    matches.forEach(p => {
+      wrap.querySelector(`[data-select-project="${p.id}"]`).addEventListener('click', () => { selectedProjectId = p.id; renderEnsambleEditor(p.id); });
+    });
+  }
+
+  function renderEnsambleEditor(projectId) {
+    const wrap = document.getElementById('ensambleEditorWrap');
+    const p = projectsCache.find(pr => pr.id === projectId);
+    if (!wrap || !p) { if (wrap) wrap.innerHTML = ''; return; }
+
+    newRowDrafts = [];
+    wrap.innerHTML = `
+      <div class="panel">
+        <h2>Componentes de este ensamble</h2>
+        <p class="panel-sub">Cada componente se pide a un proveedor distinto. La fecha compromiso y la fecha real de entrega del ensamble completo se editan en Administración de Proyectos → Editar.</p>
+        <div class="ensamble-summary">
+          <div class="es-name">${escapeHtml(p.name)}</div>
+          <div class="es-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}</div>
+        </div>
+        <div id="existingCompWrap"></div>
+        <div id="newCompMsg" class="msg"></div>
+        <div id="newCompWrap" style="margin-top:10px;"></div>
+        <button type="button" class="cancel-btn" id="addNewCompBtn" style="margin-left:0;">+ Agregar componente</button>
+        <button type="button" class="submit-btn hidden" id="saveNewCompBtn" style="margin-left:10px;">Guardar nuevos componentes</button>
+      </div>
+    `;
+    document.getElementById('addNewCompBtn').addEventListener('click', () => {
+      newRowDrafts.push({ component_name: '', status: 'por_pedir', provider: '', po_number_component: '', supplier_commitment_date: '' });
+      renderNewCompRows();
+    });
+    document.getElementById('saveNewCompBtn').addEventListener('click', () => saveNewCompRows(projectId));
+    renderExistingComponents(projectId);
+    renderNewCompRows();
+  }
+
+  function renderExistingComponents(projectId) {
+    const wrap = document.getElementById('existingCompWrap');
+    if (!wrap) return;
+    const rows = componentsCache.filter(c => c.project_id === projectId);
+    if (rows.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Ningún componente cargado todavía para este ensamble.</p>';
+      return;
+    }
+    wrap.innerHTML = `
+      <table class="comp-table">
+        <thead><tr><th>Componente</th><th>Proveedor</th><th>Estatus</th><th>PO</th><th>Compromiso proveedor</th><th></th></tr></thead>
+        <tbody id="existingCompBody"></tbody>
+      </table>
+    `;
+    const body = document.getElementById('existingCompBody');
+    body.innerHTML = rows.map(c => `
+      <tr>
+        <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
+        <td><select data-ex-provider="${c.id}">${providerOptionsHtml(c.provider || '')}</select></td>
+        <td><select data-ex-status="${c.id}">${componentStatusOptionsHtml(c.status)}</select></td>
+        <td><input type="text" data-ex-po="${c.id}" value="${escapeHtml(c.po_number_component || '')}"></td>
+        <td><input type="date" data-ex-date="${c.id}" value="${c.supplier_commitment_date || ''}"></td>
+        <td><a class="qa danger" data-ex-remove="${c.id}">Quitar</a></td>
+      </tr>
+    `).join('');
+    rows.forEach(c => {
+      body.querySelector(`[data-ex-provider="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'provider', e.target.value || null));
+      body.querySelector(`[data-ex-status="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'status', e.target.value));
+      body.querySelector(`[data-ex-po="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'po_number_component', e.target.value.trim() || null));
+      body.querySelector(`[data-ex-date="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'supplier_commitment_date', e.target.value || null));
+      body.querySelector(`[data-ex-remove="${c.id}"]`).addEventListener('click', async () => {
+        if (!confirm('¿Quitar este componente?')) return;
+        const { error } = await supabaseClient.from('portal_project_components').delete().eq('id', c.id);
+        if (!error) { componentsCache = componentsCache.filter(x => x.id !== c.id); renderExistingComponents(projectId); renderComprasTableIfVisible(); }
+      });
+    });
+  }
+
+  function renderComprasTableIfVisible() {
+    if (document.getElementById('compTableWrap')) renderComprasTable();
+  }
+
+  function renderNewCompRows() {
+    const wrap = document.getElementById('newCompWrap');
+    const saveBtn = document.getElementById('saveNewCompBtn');
+    if (!wrap) return;
+    if (newRowDrafts.length === 0) {
+      wrap.innerHTML = '';
+      if (saveBtn) saveBtn.classList.add('hidden');
+      return;
+    }
+    if (saveBtn) saveBtn.classList.remove('hidden');
+    wrap.innerHTML = newRowDrafts.map((row, i) => `
+      <div class="form-row" style="grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr auto; align-items:end;">
+        <div class="field"><label>Componente</label><input type="text" data-new-name="${i}" value="${escapeHtml(row.component_name)}" placeholder="Ej. Motor 3 HP"></div>
+        <div class="field"><label>Proveedor</label><select data-new-provider="${i}">${providerOptionsHtml(row.provider)}</select></div>
+        <div class="field"><label>Estatus</label><select data-new-status="${i}">${componentStatusOptionsHtml(row.status)}</select></div>
+        <div class="field"><label>PO</label><input type="text" data-new-po="${i}" value="${escapeHtml(row.po_number_component)}" placeholder="OC-..."></div>
+        <div class="field"><label>Compromiso proveedor</label><input type="date" data-new-date="${i}" value="${row.supplier_commitment_date || ''}"></div>
+        <button type="button" class="cancel-btn" data-new-remove="${i}" style="margin-left:0;">Quitar</button>
+      </div>
+    `).join('');
+    newRowDrafts.forEach((row, i) => {
+      wrap.querySelector(`[data-new-name="${i}"]`).addEventListener('input', e => { newRowDrafts[i].component_name = e.target.value; });
+      wrap.querySelector(`[data-new-provider="${i}"]`).addEventListener('change', e => { newRowDrafts[i].provider = e.target.value; });
+      wrap.querySelector(`[data-new-status="${i}"]`).addEventListener('change', e => { newRowDrafts[i].status = e.target.value; });
+      wrap.querySelector(`[data-new-po="${i}"]`).addEventListener('input', e => { newRowDrafts[i].po_number_component = e.target.value; });
+      wrap.querySelector(`[data-new-date="${i}"]`).addEventListener('change', e => { newRowDrafts[i].supplier_commitment_date = e.target.value; });
+      wrap.querySelector(`[data-new-remove="${i}"]`).addEventListener('click', () => { newRowDrafts.splice(i, 1); renderNewCompRows(); });
+    });
+  }
+
+  async function saveNewCompRows(projectId) {
+    const msg = document.getElementById('newCompMsg');
+    const rows = newRowDrafts.filter(r => r.component_name && r.component_name.trim());
+    if (rows.length === 0) {
+      msg.className = 'msg error';
+      msg.textContent = 'Agrega al menos un componente con nombre antes de guardar.';
+      return;
+    }
+    if (rows.some(r => r.po_number_component && !r.provider)) {
+      msg.className = 'msg error';
+      msg.textContent = 'Falta elegir el proveedor en alguna fila que ya tiene PO capturada.';
+      return;
+    }
+    const payload = rows.map(r => ({
+      project_id: projectId,
+      component_name: r.component_name.trim(),
+      status: r.status || 'por_pedir',
+      provider: r.provider || null,
+      po_number_component: r.po_number_component || null,
+      supplier_commitment_date: r.supplier_commitment_date || null,
+    }));
+    const { error } = await supabaseClient.from('portal_project_components').insert(payload);
+    if (error) {
+      msg.className = 'msg error';
+      msg.textContent = 'Error: ' + error.message;
+      return;
+    }
+    msg.className = 'msg success';
+    msg.textContent = 'Componentes agregados correctamente.';
+    newRowDrafts = [];
+    await reloadComponents();
+    renderExistingComponents(projectId);
+    renderNewCompRows();
+    renderComprasTableIfVisible();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'portal.html';
+  });
+
+  init();
+</script>
+
+</body>
+</html>

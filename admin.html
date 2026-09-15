@@ -28,9 +28,13 @@
   .quick-nav { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 20px; background: var(--gunmetal-900); }
   .quick-nav a { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 8px 16px; text-decoration: none; white-space: nowrap; transition: border-color 0.15s, color 0.15s; }
   .quick-nav a:hover { border-color: var(--orange); color: var(--orange); }
+  .quick-nav a.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  .quick-nav a.active:hover { color: var(--white); }
   body.content-light .quick-nav { background: var(--paper-900); }
   body.content-light .quick-nav a { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
   body.content-light .quick-nav a:hover { border-color: var(--orange); color: var(--orange); }
+  body.content-light .quick-nav a.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  body.content-light .quick-nav a.active:hover { color: var(--white); }
   .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
   .panel .panel-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 18px; }
 
@@ -67,6 +71,12 @@
   .row-item .r-wrap { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
 
   .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 14px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); white-space: nowrap; }
+  .status-pill-sm.delivered { background: rgba(60,180,100,0.14); border-color: #2ecc71; color: #7fe0a5; }
+  body.content-light .status-pill-sm.delivered { color: #1f7a45; }
+
+  .client-group-header { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steel-300); margin: 22px 0 8px; padding-top: 14px; border-top: 1px solid var(--gunmetal-700); }
+  .client-group-header:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  body.content-light .client-group-header { color: var(--ink-600); border-color: var(--paper-border); }
 
   .inline-edit { display: none; width: 100%; padding: 14px 0 6px; border-top: 1px dashed var(--gunmetal-600); margin-top: 10px; }
   .inline-edit.open { display: block; }
@@ -270,8 +280,12 @@
     adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
   }
 
+  const ALL_TOOLS_TARGET = '#all-tools';
+  let activePanelTargets = new Set([ALL_TOOLS_TARGET]);
+
   function quickNavHtml(role) {
     const adminLinks = [
+      [ALL_TOOLS_TARGET, 'Todas las herramientas'],
       ['#panel-empresa', 'Empresas'],
       ['#panel-crear-usuario', 'Crear usuario'],
       ['#panel-usuarios', 'Usuarios'],
@@ -281,12 +295,52 @@
       ['#panel-actualizacion', 'Actualizar estatus'],
     ];
     const vendedorLinks = [
+      [ALL_TOOLS_TARGET, 'Todas las herramientas'],
       ['#panel-proyecto', 'Crear proyecto'],
       ['#panel-mis-proyectos', 'Mis proyectos'],
       ['#panel-actualizacion', 'Actualizar estatus'],
     ];
     const links = role === 'admin' ? adminLinks : vendedorLinks;
-    return `<nav class="quick-nav">${links.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}</nav>`;
+    return `<nav class="quick-nav" id="quickNav">${links.map(([href, label]) => `<a href="${href}" data-nav-target="${href}">${label}</a>`).join('')}</nav>`;
+  }
+
+  // ---- Filtro de paneles del quick-nav: "Todas las herramientas" muestra
+  // todo (estado por default); cualquier otro botón oculta el resto y se
+  // pueden combinar varios a la vez; si se deseleccionan todos, regresa
+  // automáticamente a "Todas las herramientas" para no dejar la pantalla en blanco. ----
+  function initPanelToggle() {
+    activePanelTargets = new Set([ALL_TOOLS_TARGET]);
+    const nav = document.getElementById('quickNav');
+    if (!nav) return;
+    nav.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = a.getAttribute('data-nav-target');
+        if (target === ALL_TOOLS_TARGET) {
+          activePanelTargets = new Set([ALL_TOOLS_TARGET]);
+        } else {
+          activePanelTargets.delete(ALL_TOOLS_TARGET);
+          if (activePanelTargets.has(target)) activePanelTargets.delete(target);
+          else activePanelTargets.add(target);
+          if (activePanelTargets.size === 0) activePanelTargets = new Set([ALL_TOOLS_TARGET]);
+        }
+        applyPanelToggleState();
+      });
+    });
+    applyPanelToggleState();
+  }
+
+  function applyPanelToggleState() {
+    const nav = document.getElementById('quickNav');
+    if (!nav) return;
+    const showAll = activePanelTargets.has(ALL_TOOLS_TARGET);
+    nav.querySelectorAll('a').forEach(a => {
+      const target = a.getAttribute('data-nav-target');
+      a.classList.toggle('active', showAll ? target === ALL_TOOLS_TARGET : activePanelTargets.has(target));
+    });
+    document.querySelectorAll('.admin-content .panel').forEach(panel => {
+      panel.classList.toggle('hidden', !showAll && !activePanelTargets.has('#' + panel.id));
+    });
   }
 
   function renderAdmin() {
@@ -361,10 +415,12 @@
 
       <div class="panel" id="panel-todos-proyectos">
         <h2>Todos los proyectos</h2>
-        <div class="form-row triple" style="margin-bottom:18px;">
+        <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
+        <div class="form-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:18px;">
           <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
           <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
           <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
+          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">Activos (no entregados)</option>${statusOptionsHtml('')}</select></div>
         </div>
         <div class="form-row single" style="margin-bottom:4px;">
           <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
@@ -404,9 +460,11 @@
     document.getElementById('filterClient').addEventListener('change', renderProjectsList);
     document.getElementById('filterUser').addEventListener('change', renderProjectsList);
     document.getElementById('filterProvider').addEventListener('change', renderProjectsList);
+    document.getElementById('filterStatus').addEventListener('change', renderProjectsList);
     document.getElementById('filterText').addEventListener('input', renderProjectsList);
     supplierRows = [];
     renderSupplierRows();
+    initPanelToggle();
   }
 
   // ---- Formulario de proyecto (compartido entre admin y vendedor) ----
@@ -529,8 +587,10 @@
 
       <div class="panel" id="panel-mis-proyectos">
         <h2>Mis proyectos</h2>
-        <div class="form-row single" style="margin-bottom:4px;">
+        <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
+        <div class="form-row" style="margin-bottom:4px;">
           <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">Activos (no entregados)</option>${statusOptionsHtml('')}</select></div>
         </div>
         <div id="projectsList"></div>
       </div>
@@ -560,8 +620,10 @@
     document.getElementById('addSupplierRowBtn').addEventListener('click', () => { addSupplierRow(); renderSupplierRows(); });
     document.getElementById('updateForm').addEventListener('submit', submitUpdate);
     document.getElementById('filterText').addEventListener('input', renderProjectsList);
+    document.getElementById('filterStatus').addEventListener('change', renderProjectsList);
     supplierRows = [];
     renderSupplierRows();
+    initPanelToggle();
   }
 
   let vendedoresCache = [];
@@ -937,19 +999,28 @@
     }
   }
 
+  function formatDateShort(d) {
+    if (!d) return '';
+    return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
   function filteredProjects() {
     const fc = document.getElementById('filterClient');
     const fu = document.getElementById('filterUser');
     const fp = document.getElementById('filterProvider');
+    const fs = document.getElementById('filterStatus');
     const ft = document.getElementById('filterText');
     const clientId = fc ? fc.value : '';
     const userId = fu ? fu.value : '';
     const provider = fp ? fp.value : '';
+    const status = fs ? fs.value : '';
     const text = ft ? ft.value.trim().toLowerCase() : '';
     return projectsCache.filter(p => {
       if (clientId && p.client_id !== clientId) return false;
       if (userId && p.owner_user_id !== userId) return false;
       if (provider && !(p.portal_project_suppliers || []).some(s => s.provider === provider)) return false;
+      if (status === '__active__' && p.status === 'entregado') return false;
+      if (status && status !== '__active__' && p.status !== status) return false;
       if (text) {
         const haystack = [p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
         if (!haystack.includes(text)) return false;
@@ -958,6 +1029,9 @@
     });
   }
 
+  // Agrupado por empresa/planta (cada proyecto ES la "planta" o pedido de esa
+  // empresa) — dentro de cada empresa, activos primero y entregados al final,
+  // respetando el orden original (más reciente primero) dentro de cada grupo.
   function renderProjectsList() {
     const wrap = document.getElementById('projectsList');
     if (!wrap) return;
@@ -970,24 +1044,41 @@
       wrap.innerHTML = '<p class="empty-note">Ningún proyecto coincide con el filtro.</p>';
       return;
     }
-    wrap.innerHTML = list.map(p => {
+
+    const sorted = list.slice().sort((a, b) => {
+      const byClient = clientName(a.client_id).localeCompare(clientName(b.client_id));
+      if (byClient !== 0) return byClient;
+      const aDelivered = a.status === 'entregado' ? 1 : 0;
+      const bDelivered = b.status === 'entregado' ? 1 : 0;
+      return aDelivered - bDelivered;
+    });
+
+    let html = '';
+    let lastClientId = null;
+    sorted.forEach(p => {
+      if (p.client_id !== lastClientId) {
+        html += `<div class="client-group-header">${escapeHtml(clientName(p.client_id))}</div>`;
+        lastClientId = p.client_id;
+      }
       const suppliers = p.portal_project_suppliers || [];
       const supplierMeta = suppliers.map(s => `${PROVIDER_LABELS[s.provider] || s.provider}${s.po_number_supplier ? ' (OC ' + escapeHtml(s.po_number_supplier) + ')' : ''}`).join(', ');
-      return `
+      const isDelivered = p.status === 'entregado';
+      html += `
       <div class="row-item">
         <span class="r-main">${escapeHtml(p.name)}</span>
-        <span class="r-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}</span>
-        ${supplierMeta ? `<span class="r-meta">Proveedores: ${supplierMeta}</span>` : ''}
-        <span class="status-pill-sm">${STATUS_LABELS[p.status] || p.status}</span>
+        <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}</span>
+        ${supplierMeta ? `<span class="r-meta">Proveedores (interno): ${supplierMeta}</span>` : ''}
+        <span class="status-pill-sm${isDelivered ? ' delivered' : ''}">${STATUS_LABELS[p.status] || p.status}</span>
         <span class="r-actions">
           <a data-edit-project="${p.id}">Editar</a>
           ${currentRole === 'admin' ? `<a class="danger" data-delete-project="${p.id}">Eliminar</a>` : ''}
         </span>
       </div>
     `;
-    }).join('');
+    });
+    wrap.innerHTML = html;
 
-    list.forEach(p => {
+    sorted.forEach(p => {
       document.querySelector(`[data-edit-project="${p.id}"]`).addEventListener('click', () => startProjectEdit(p.id));
       const delLink = document.querySelector(`[data-delete-project="${p.id}"]`);
       if (delLink) delLink.addEventListener('click', () => deleteProject(p.id));

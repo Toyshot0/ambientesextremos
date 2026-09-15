@@ -8,17 +8,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css">
 <style>
-  .tools-wrap { max-width: 600px; margin: 0 auto; padding: 64px 24px; }
-  .tools-wrap h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
-  .tools-wrap .sub { font-size: 14px; color: var(--steel-300); margin-bottom: 32px; }
-  .tool-link { display: flex; align-items: center; justify-content: space-between; background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 20px 24px; margin-bottom: 14px; text-decoration: none; color: inherit; transition: border-color 0.2s; }
-  .tool-link:hover { border-color: var(--orange); }
-  .tool-link .tname { font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
-  .tool-link .tdesc { font-size: 13px; color: var(--steel-300); }
-  .tool-link .arrow { color: var(--orange); font-size: 18px; flex-shrink: 0; margin-left: 16px; }
+  .tools-wrap { max-width: 640px; margin: 0 auto; padding: 64px 24px 96px; }
+  .tools-wrap h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; color: var(--ink-900); }
+  .tools-wrap .sub { font-size: 14px; color: var(--ink-600); margin-bottom: 40px; }
+
+  .tools-group { margin-bottom: 36px; }
+  .tools-group h2 { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; color: var(--ink-600); margin-bottom: 14px; }
+
+  .tool-link { display: flex; align-items: center; gap: 16px; text-decoration: none; color: inherit; border-radius: 6px; padding: 20px 22px; margin-bottom: 12px; transition: border-color 0.15s, transform 0.15s; }
+  .tool-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .tool-body { flex: 1 1 auto; min-width: 0; }
+  .tool-link .tname { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .tool-link .tdesc { font-size: 13px; }
+  .tool-link .arrow { flex-shrink: 0; font-size: 18px; margin-left: 8px; }
+
+  /* Primaria — Administración de Proyectos: la herramienta que se usa a diario */
+  .tool-link.primary { background: var(--paper-800); border: 1px solid var(--orange); }
+  .tool-link.primary:hover { transform: translateY(-1px); }
+  .tool-link.primary .tool-icon { background: var(--orange); color: var(--white); }
+  .tool-link.primary .tname { color: var(--ink-900); }
+  .tool-link.primary .tdesc { color: var(--ink-600); }
+  .tool-link.primary .arrow { color: var(--orange); }
+
+  /* Secundaria — accesos y vistas de referencia, uso ocasional */
+  .tool-link.secondary { background: transparent; border: 1px solid var(--paper-border); }
+  .tool-link.secondary:hover { border-color: var(--ink-600); }
+  .tool-link.secondary .tool-icon { background: var(--paper-800); border: 1px solid var(--paper-border); color: var(--ink-600); }
+  .tool-link.secondary .tname { color: var(--ink-900); }
+  .tool-link.secondary .tdesc { color: var(--ink-600); }
+  .tool-link.secondary .arrow { color: var(--ink-600); }
 </style>
 </head>
-<body>
+<body class="content-light">
 
 <header>
   <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
@@ -37,29 +58,44 @@
   <h1>Herramientas internas</h1>
   <p class="sub">Accesos directos — esta página no está enlazada desde ningún otro lugar del sitio.</p>
 
-  <a class="tool-link" href="admin.html">
-    <div>
-      <div class="tname">Administración de Proyectos</div>
-      <div class="tdesc">Registrar clientes, crear proyectos, publicar actualizaciones de estatus.</div>
-    </div>
-    <span class="arrow">→</span>
-  </a>
+  <div class="tools-group">
+    <h2>ADMINISTRACIÓN</h2>
+    <a class="tool-link primary" href="admin.html">
+      <span class="tool-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10c0-3.9 3.1-7 7-7s7 3.1 7 7-3.1 7-7 7-7-3.1-7-7Z" stroke="currentColor" stroke-width="1.4"/><path d="M10 6v4l2.8 2.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </span>
+      <div class="tool-body">
+        <div class="tname">Administración de Proyectos</div>
+        <div class="tdesc">Empresas, usuarios, personal interno, proyectos y estatus.</div>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </div>
 
-  <a class="tool-link" href="https://arneses-app.vercel.app/historial" target="_blank" rel="noopener">
-    <div>
-      <div class="tname">Historial de Ensambles</div>
-      <div class="tdesc">Configuraciones de arneses creadas por clientes en el configurador.</div>
-    </div>
-    <span class="arrow">↗</span>
-  </a>
+  <div class="tools-group">
+    <h2>OTROS ACCESOS</h2>
+    <a class="tool-link secondary" href="https://arneses-app.vercel.app/historial" target="_blank" rel="noopener">
+      <span class="tool-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 3h10v12H4z" stroke="currentColor" stroke-width="1.3"/><path d="M6.5 6.5h5M6.5 9h5M6.5 11.5h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </span>
+      <div class="tool-body">
+        <div class="tname">Historial de Ensambles</div>
+        <div class="tdesc">Configuraciones de arneses creadas por clientes en el configurador.</div>
+      </div>
+      <span class="arrow">↗</span>
+    </a>
 
-  <a class="tool-link" href="portal.html">
-    <div>
-      <div class="tname">Portal de Clientes (vista pública)</div>
-      <div class="tdesc">Para probar cómo lo ve un cliente al iniciar sesión.</div>
-    </div>
-    <span class="arrow">→</span>
-  </a>
+    <a class="tool-link secondary" href="portal.html">
+      <span class="tool-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6.2" r="2.4" stroke="currentColor" stroke-width="1.3"/><path d="M3.8 14.5c0-2.9 2.3-4.6 5.2-4.6s5.2 1.7 5.2 4.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </span>
+      <div class="tool-body">
+        <div class="tname">Portal de Clientes (vista pública)</div>
+        <div class="tdesc">Para probar cómo lo ve un cliente al iniciar sesión — no es Administración.</div>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </div>
 </div>
 
 </body>

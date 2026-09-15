@@ -21,7 +21,14 @@
   .admin-content { padding: 32px 48px 64px; max-width: 1080px; }
   .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
 
-  .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; }
+  .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; scroll-margin-top: 76px; }
+
+  .quick-nav { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 20px; background: var(--gunmetal-900); }
+  .quick-nav a { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 8px 16px; text-decoration: none; white-space: nowrap; transition: border-color 0.15s, color 0.15s; }
+  .quick-nav a:hover { border-color: var(--orange); color: var(--orange); }
+  body.content-light .quick-nav { background: var(--paper-900); }
+  body.content-light .quick-nav a { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .quick-nav a:hover { border-color: var(--orange); color: var(--orange); }
   .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
   .panel .panel-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 18px; }
 
@@ -256,9 +263,29 @@
     adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
   }
 
+  function quickNavHtml(role) {
+    const adminLinks = [
+      ['#panel-empresa', 'Empresas'],
+      ['#panel-crear-usuario', 'Crear usuario'],
+      ['#panel-usuarios', 'Usuarios'],
+      ['#panel-personal', 'Personal AVANTA'],
+      ['#panel-proyecto', 'Crear proyecto'],
+      ['#panel-todos-proyectos', 'Todos los proyectos'],
+      ['#panel-actualizacion', 'Actualizar estatus'],
+    ];
+    const vendedorLinks = [
+      ['#panel-proyecto', 'Crear proyecto'],
+      ['#panel-mis-proyectos', 'Mis proyectos'],
+      ['#panel-actualizacion', 'Actualizar estatus'],
+    ];
+    const links = role === 'admin' ? adminLinks : vendedorLinks;
+    return `<nav class="quick-nav">${links.map(([href, label]) => `<a href="${href}">${label}</a>`).join('')}</nav>`;
+  }
+
   function renderAdmin() {
     adminContent.innerHTML = `
-      <div class="panel">
+      ${quickNavHtml('admin')}
+      <div class="panel" id="panel-empresa">
         <h2>Registrar empresa cliente</h2>
         <p class="panel-sub">El primer paso — cada usuario que crees abajo pertenece a una de estas empresas.</p>
         <div id="clientMsg" class="msg"></div>
@@ -270,7 +297,7 @@
         </form>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panel-crear-usuario">
         <h2>Crear usuario</h2>
         <p class="panel-sub">Crea el acceso de una persona dentro de una empresa cliente. Se genera una contraseña temporal que la persona debe cambiar en su primer ingreso.</p>
         <div id="userMsg" class="msg"></div>
@@ -294,13 +321,13 @@
         </form>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panel-usuarios">
         <h2>Usuarios registrados</h2>
         <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien.</p>
         <div id="usersList"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panel-personal">
         <h2>Personal interno de AVANTA</h2>
         <p class="panel-sub">Da de alta a tu jefe (mismo acceso que tú) o a un vendedor (solo carga y edita sus propios proyectos). Se genera una contraseña temporal.</p>
         <div id="staffMsg" class="msg"></div>
@@ -325,7 +352,7 @@
 
       ${projectFormHtml()}
 
-      <div class="panel">
+      <div class="panel" id="panel-todos-proyectos">
         <h2>Todos los proyectos</h2>
         <div class="form-row triple" style="margin-bottom:18px;">
           <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
@@ -338,7 +365,7 @@
         <div id="projectsList"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panel-actualizacion">
         <h2>Agregar actualización de estatus</h2>
         <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
         <div id="updateMsg" class="msg"></div>
@@ -378,7 +405,7 @@
   // ---- Formulario de proyecto (compartido entre admin y vendedor) ----
   function projectFormHtml() {
     return `
-      <div class="panel">
+      <div class="panel" id="panel-proyecto">
         <h2 id="projectFormTitle">Crear proyecto</h2>
         <p class="panel-sub" id="projectFormSub">Registra un pedido o proyecto para un usuario específico.</p>
         <div id="projectMsg" class="msg"></div>
@@ -488,11 +515,12 @@
 
   function renderVendedor(fullName) {
     adminContent.innerHTML = `
+      ${quickNavHtml('vendedor')}
       <p class="admin-note">Sesión de vendedor — ${escapeHtml(fullName)}. Aquí solo ves y editas los proyectos que tú cargaste.</p>
 
       ${projectFormHtml()}
 
-      <div class="panel">
+      <div class="panel" id="panel-mis-proyectos">
         <h2>Mis proyectos</h2>
         <div class="form-row single" style="margin-bottom:4px;">
           <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
@@ -500,7 +528,7 @@
         <div id="projectsList"></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panel-actualizacion">
         <h2>Agregar actualización de estatus</h2>
         <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
         <div id="updateMsg" class="msg"></div>

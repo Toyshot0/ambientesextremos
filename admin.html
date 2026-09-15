@@ -196,23 +196,48 @@
     return STATUS_ORDER.map(s => `<option value="${s}"${s === selected ? ' selected' : ''}>${STATUS_LABELS[s]}</option>`).join('');
   }
 
+  const PROVIDER_ORDER = ['nsd', 'mazzella', 'watteredge', 'avanta', 'prysmian'];
+  const PROVIDER_LABELS = {
+    nsd: 'NSD',
+    mazzella: 'Mazzella',
+    watteredge: 'Watteredge',
+    avanta: 'Avanta (fabricación propia)',
+    prysmian: 'Prysmian',
+  };
+  function providerOptionsHtml(selected) {
+    return '<option value="">Seleccione...</option>' + PROVIDER_ORDER.map(p => `<option value="${p}"${p === selected ? ' selected' : ''}>${PROVIDER_LABELS[p]}</option>`).join('');
+  }
+
   let clientsCache = [];
   let usersCache = [];
   let projectsCache = [];
   let editingProjectId = null;
+  let currentRole = null; // 'admin' | 'vendedor'
+  let currentStaffId = null;
+  let supplierRows = []; // [{provider, po_number_supplier}] — filas del formulario de proyecto en edición
 
   async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { window.location.href = 'portal.html'; return; }
+    currentStaffId = session.user.id;
 
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', session.user.id).single();
-    if (!adminRow) {
-      adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos de administrador.</div>';
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', currentStaffId).single();
+    if (adminRow) {
+      currentRole = 'admin';
+      renderAdmin();
+      await refreshAll();
       return;
     }
 
-    renderAdmin();
-    await refreshAll();
+    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name').eq('id', currentStaffId).single();
+    if (vendedorRow) {
+      currentRole = 'vendedor';
+      renderVendedor(vendedorRow.full_name);
+      await refreshAll();
+      return;
+    }
+
+    adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
   }
 
   function renderAdmin() {
@@ -260,42 +285,40 @@
       </div>
 
       <div class="panel">
-        <h2 id="projectFormTitle">Crear proyecto</h2>
-        <p class="panel-sub" id="projectFormSub">Registra un pedido o proyecto para un usuario específico.</p>
-        <div id="projectMsg" class="msg"></div>
-        <form id="projectForm">
+        <h2>Personal interno de AVANTA</h2>
+        <p class="panel-sub">Da de alta a tu jefe (mismo acceso que tú) o a un vendedor (solo carga y edita sus propios proyectos). Se genera una contraseña temporal.</p>
+        <div id="staffMsg" class="msg"></div>
+        <div id="staffCredentialBox"></div>
+        <form id="staffForm">
           <div class="form-row">
-            <div class="field"><label>Empresa</label><select id="projectClient" required><option value="">Seleccione...</option></select></div>
-            <div class="field"><label>Usuario (dueño del proyecto)</label><select id="projectOwner" required><option value="">Seleccione una empresa primero...</option></select></div>
+            <div class="field"><label>Correo electrónico</label><input type="email" id="staffEmail" required></div>
+            <div class="field"><label>Nombre completo</label><input type="text" id="staffFullName" required></div>
           </div>
           <div class="form-row single">
-            <div class="field"><label>Nombre del proyecto</label><input type="text" id="projectName" required></div>
+            <div class="field"><label>Nivel de acceso</label>
+              <select id="staffRole" required>
+                <option value="vendedor">Vendedor — solo sus propios proyectos</option>
+                <option value="admin">Administrador — mismo acceso que tú</option>
+              </select>
+            </div>
           </div>
-          <div class="form-row single">
-            <div class="field"><label>Descripción</label><textarea id="projectDesc"></textarea></div>
-          </div>
-          <div class="form-row">
-            <div class="field"><label>Producto o servicio</label><input type="text" id="projectProduct" placeholder="Ej. Cable Draka 4x6"></div>
-            <div class="field"><label>Cantidad</label><input type="text" id="projectQty" placeholder="Ej. 200 metros"></div>
-          </div>
-          <div class="form-row">
-            <div class="field"><label>N° de cotización</label><input type="text" id="projectQuote"></div>
-            <div class="field"><label>N° de orden de compra (OC)</label><input type="text" id="projectPO"></div>
-          </div>
-          <div class="form-row">
-            <div class="field"><label>Estatus</label><select id="projectStatus">${statusOptionsHtml('espera_pedido')}</select></div>
-            <div class="field"><label>Entrega estimada (opcional)</label><input type="date" id="projectDate"></div>
-          </div>
-          <div class="form-row single">
-            <div class="field"><label>Notas (opcional)</label><textarea id="projectNotes"></textarea></div>
-          </div>
-          <button type="submit" class="submit-btn" id="projectSubmitBtn">Crear proyecto</button>
-          <button type="button" class="cancel-btn hidden" id="projectCancelBtn">Cancelar edición</button>
+          <button type="submit" class="submit-btn" id="staffSubmitBtn">Crear acceso</button>
         </form>
+        <div id="vendedoresList" style="margin-top:18px;"></div>
       </div>
+
+      ${projectFormHtml()}
 
       <div class="panel">
         <h2>Todos los proyectos</h2>
+        <div class="form-row triple" style="margin-bottom:18px;">
+          <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
+          <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
+          <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row single" style="margin-bottom:4px;">
+          <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+        </div>
         <div id="projectsList"></div>
       </div>
 
@@ -322,10 +345,189 @@
     document.getElementById('userForm').addEventListener('submit', submitUser);
     document.getElementById('userClient').addEventListener('change', refreshUserManagerOptions);
     document.getElementById('userBirthday').addEventListener('input', (e) => formatBirthdayInput(e.target));
+    document.getElementById('staffForm').addEventListener('submit', submitStaff);
     document.getElementById('projectForm').addEventListener('submit', submitProject);
     document.getElementById('projectClient').addEventListener('change', refreshProjectOwnerOptions);
     document.getElementById('projectCancelBtn').addEventListener('click', cancelProjectEdit);
+    document.getElementById('addSupplierRowBtn').addEventListener('click', () => { addSupplierRow(); renderSupplierRows(); });
     document.getElementById('updateForm').addEventListener('submit', submitUpdate);
+    document.getElementById('filterClient').addEventListener('change', renderProjectsList);
+    document.getElementById('filterUser').addEventListener('change', renderProjectsList);
+    document.getElementById('filterProvider').addEventListener('change', renderProjectsList);
+    document.getElementById('filterText').addEventListener('input', renderProjectsList);
+    supplierRows = [];
+    renderSupplierRows();
+  }
+
+  // ---- Formulario de proyecto (compartido entre admin y vendedor) ----
+  function projectFormHtml() {
+    return `
+      <div class="panel">
+        <h2 id="projectFormTitle">Crear proyecto</h2>
+        <p class="panel-sub" id="projectFormSub">Registra un pedido o proyecto para un usuario específico.</p>
+        <div id="projectMsg" class="msg"></div>
+        <form id="projectForm">
+          <div class="form-row">
+            <div class="field"><label>Empresa</label><select id="projectClient" required><option value="">Seleccione...</option></select></div>
+            <div class="field"><label>Usuario (dueño del proyecto)</label><select id="projectOwner" required><option value="">Seleccione una empresa primero...</option></select></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Nombre del proyecto</label><input type="text" id="projectName" required></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Descripción</label><textarea id="projectDesc"></textarea></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Producto o servicio</label><input type="text" id="projectProduct" placeholder="Ej. Cable Draka 4x6"></div>
+            <div class="field"><label>Cantidad</label><input type="text" id="projectQty" placeholder="Ej. 200 metros"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>N° de cotización</label><input type="text" id="projectQuote"></div>
+            <div class="field"><label>N° de orden de compra del cliente (OC)</label><input type="text" id="projectPO"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Estatus</label><select id="projectStatus">${statusOptionsHtml('espera_pedido')}</select></div>
+            <div class="field"><label>Entrega estimada (opcional)</label><input type="date" id="projectDate"></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Notas (opcional)</label><textarea id="projectNotes"></textarea></div>
+          </div>
+          <div class="form-row single">
+            <label style="display:block; font-size:12px; color: var(--steel-300); margin-bottom:6px;">Proveedores — información interna, el cliente nunca la ve</label>
+            <div id="supplierRowsWrap"></div>
+            <button type="button" class="cancel-btn" id="addSupplierRowBtn" style="margin-left:0;">+ Agregar proveedor</button>
+          </div>
+          <button type="submit" class="submit-btn" id="projectSubmitBtn">Crear proyecto</button>
+          <button type="button" class="cancel-btn hidden" id="projectCancelBtn">Cancelar edición</button>
+        </form>
+      </div>
+    `;
+  }
+
+  function addSupplierRow(provider, po) {
+    supplierRows.push({ provider: provider || '', po_number_supplier: po || '' });
+  }
+
+  function renderSupplierRows() {
+    const wrap = document.getElementById('supplierRowsWrap');
+    if (!wrap) return;
+    if (supplierRows.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Ningún proveedor agregado todavía.</p>';
+      return;
+    }
+    wrap.innerHTML = supplierRows.map((row, i) => `
+      <div class="form-row" style="grid-template-columns: 1fr 1fr auto; align-items:end;">
+        <div class="field"><label>Proveedor</label><select data-supplier-provider="${i}">${providerOptionsHtml(row.provider)}</select></div>
+        <div class="field"><label>OC a este proveedor</label><input type="text" data-supplier-po="${i}" value="${escapeHtml(row.po_number_supplier)}" placeholder="Ej. OC-9001"></div>
+        <button type="button" class="cancel-btn" data-supplier-remove="${i}" style="margin-left:0;">Quitar</button>
+      </div>
+    `).join('');
+    supplierRows.forEach((row, i) => {
+      wrap.querySelector(`[data-supplier-provider="${i}"]`).addEventListener('change', (e) => { supplierRows[i].provider = e.target.value; });
+      wrap.querySelector(`[data-supplier-po="${i}"]`).addEventListener('input', (e) => { supplierRows[i].po_number_supplier = e.target.value; });
+      wrap.querySelector(`[data-supplier-remove="${i}"]`).addEventListener('click', () => { supplierRows.splice(i, 1); renderSupplierRows(); });
+    });
+  }
+
+  // ---- Personal interno de AVANTA (crear jefe/admin o vendedor) ----
+  async function submitStaff(e) {
+    e.preventDefault();
+    const msg = document.getElementById('staffMsg');
+    const credBox = document.getElementById('staffCredentialBox');
+    const btn = document.getElementById('staffSubmitBtn');
+    credBox.innerHTML = '';
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+
+    const payload = {
+      email: document.getElementById('staffEmail').value.trim(),
+      full_name: document.getElementById('staffFullName').value.trim(),
+      role: document.getElementById('staffRole').value,
+    };
+
+    const { data, error } = await supabaseClient.functions.invoke('create-staff-user', { body: payload });
+
+    btn.disabled = false;
+    btn.textContent = 'Crear acceso';
+
+    if (error || !data || data.error) {
+      msg.className = 'msg error';
+      msg.textContent = 'Error: ' + (data && data.error ? data.error : (error ? error.message : 'no se pudo crear el acceso'));
+      return;
+    }
+
+    msg.className = 'msg success';
+    msg.textContent = 'Acceso creado correctamente.';
+    credBox.innerHTML = `
+      <div class="credential-box">
+        <div class="cred-line">Correo: <strong>${escapeHtml(payload.email)}</strong></div>
+        <div class="cred-line">Contraseña temporal: <span class="cred-pass">${escapeHtml(data.tempPassword)}</span></div>
+        <div class="cred-note">Cópiela y compártasela ahora — no se volverá a mostrar. Inicia sesión en portal.html y se le pedirá cambiarla.</div>
+      </div>
+    `;
+    document.getElementById('staffForm').reset();
+    await loadVendedores();
+    renderVendedoresList();
+  }
+
+  function renderVendedor(fullName) {
+    adminContent.innerHTML = `
+      <p class="admin-note">Sesión de vendedor — ${escapeHtml(fullName)}. Aquí solo ves y editas los proyectos que tú cargaste.</p>
+
+      ${projectFormHtml()}
+
+      <div class="panel">
+        <h2>Mis proyectos</h2>
+        <div class="form-row single" style="margin-bottom:4px;">
+          <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+        </div>
+        <div id="projectsList"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Agregar actualización de estatus</h2>
+        <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
+        <div id="updateMsg" class="msg"></div>
+        <form id="updateForm">
+          <div class="form-row single">
+            <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
+          </div>
+          <div class="form-row single">
+            <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
+          </div>
+          <button type="submit" class="submit-btn">Publicar actualización</button>
+        </form>
+      </div>
+    `;
+
+    document.getElementById('projectForm').addEventListener('submit', submitProject);
+    document.getElementById('projectClient').addEventListener('change', refreshProjectOwnerOptions);
+    document.getElementById('projectCancelBtn').addEventListener('click', cancelProjectEdit);
+    document.getElementById('addSupplierRowBtn').addEventListener('click', () => { addSupplierRow(); renderSupplierRows(); });
+    document.getElementById('updateForm').addEventListener('submit', submitUpdate);
+    document.getElementById('filterText').addEventListener('input', renderProjectsList);
+    supplierRows = [];
+    renderSupplierRows();
+  }
+
+  let vendedoresCache = [];
+  async function loadVendedores() {
+    const { data } = await supabaseClient.from('portal_vendedores').select('id, full_name, email').order('full_name');
+    vendedoresCache = data || [];
+  }
+  function renderVendedoresList() {
+    const wrap = document.getElementById('vendedoresList');
+    if (!wrap) return;
+    if (vendedoresCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay vendedores registrados.</p>';
+      return;
+    }
+    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Vendedores con acceso:</p>' + vendedoresCache.map(v => `
+      <div class="row-item"><span class="r-main">${escapeHtml(v.full_name)}</span><span class="r-meta">${escapeHtml(v.email)}</span></div>
+    `).join('');
   }
 
   async function refreshAll() {
@@ -333,11 +535,26 @@
     await loadUsers();
     await loadProjects();
     refreshClientSelects();
-    refreshUserManagerOptions();
     refreshProjectOwnerOptions();
-    renderUsersList();
-    renderProjectsList();
     refreshUpdateProjectSelect();
+    if (currentRole === 'admin') {
+      await loadVendedores();
+      refreshUserManagerOptions();
+      renderUsersList();
+      renderVendedoresList();
+      refreshFilterSelects();
+    } else {
+      refreshFilterSelects();
+    }
+    renderProjectsList();
+  }
+
+  function refreshFilterSelects() {
+    const fc = document.getElementById('filterClient');
+    const fu = document.getElementById('filterUser');
+    if (!fc || !fu) return;
+    fc.innerHTML = '<option value="">Todas</option>' + clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('');
+    fu.innerHTML = '<option value="">Todos</option>' + usersCache.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('');
   }
 
   async function loadClients() {
@@ -354,10 +571,12 @@
   }
 
   async function loadProjects() {
-    const { data } = await supabaseClient
+    let query = supabaseClient
       .from('portal_projects')
-      .select('id, client_id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes')
+      .select('id, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_suppliers(id, provider, po_number_supplier)')
       .order('created_at', { ascending: false });
+    if (currentRole === 'vendedor') query = query.eq('owner_vendedor_id', currentStaffId);
+    const { data } = await query;
     projectsCache = data || [];
   }
 
@@ -372,8 +591,10 @@
 
   function refreshClientSelects() {
     const opts = '<option value="">Seleccione...</option>' + clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('');
-    document.getElementById('userClient').innerHTML = opts;
-    document.getElementById('projectClient').innerHTML = opts;
+    const userClientSel = document.getElementById('userClient');
+    const projectClientSel = document.getElementById('projectClient');
+    if (userClientSel) userClientSel.innerHTML = opts;
+    if (projectClientSel) projectClientSel.innerHTML = opts;
   }
 
   function refreshUserManagerOptions() {
@@ -577,12 +798,32 @@
       notes: document.getElementById('projectNotes').value || null,
       updated_at: new Date().toISOString(),
     };
+    if (currentRole === 'vendedor' && !editingProjectId) {
+      payload.owner_vendedor_id = currentStaffId;
+    }
 
-    let error;
+    const validSuppliers = supplierRows.filter(r => r.provider);
+    if (supplierRows.some(r => !r.provider && r.po_number_supplier)) {
+      msg.className = 'msg error';
+      msg.textContent = 'Falta elegir el proveedor en una de las filas de proveedores.';
+      return;
+    }
+
+    let error, projectId = editingProjectId;
     if (editingProjectId) {
       ({ error } = await supabaseClient.from('portal_projects').update(payload).eq('id', editingProjectId));
     } else {
-      ({ error } = await supabaseClient.from('portal_projects').insert(payload));
+      const insertRes = await supabaseClient.from('portal_projects').insert(payload).select('id').single();
+      error = insertRes.error;
+      projectId = insertRes.data ? insertRes.data.id : null;
+    }
+
+    if (!error && projectId) {
+      await supabaseClient.from('portal_project_suppliers').delete().eq('project_id', projectId);
+      if (validSuppliers.length > 0) {
+        const rows = validSuppliers.map(r => ({ project_id: projectId, provider: r.provider, po_number_supplier: r.po_number_supplier || null }));
+        ({ error } = await supabaseClient.from('portal_project_suppliers').insert(rows));
+      }
     }
 
     msg.className = error ? 'msg error' : 'msg success';
@@ -614,6 +855,8 @@
     document.getElementById('projectStatus').value = p.status;
     document.getElementById('projectDate').value = p.estimated_delivery_date || '';
     document.getElementById('projectNotes').value = p.notes || '';
+    supplierRows = (p.portal_project_suppliers || []).map(s => ({ provider: s.provider, po_number_supplier: s.po_number_supplier || '' }));
+    renderSupplierRows();
     document.getElementById('projectSubmitBtn').textContent = 'Guardar cambios';
     document.getElementById('projectCancelBtn').classList.remove('hidden');
     document.getElementById('projectForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -628,6 +871,8 @@
     document.getElementById('projectStatus').value = 'espera_pedido';
     document.getElementById('projectSubmitBtn').textContent = 'Crear proyecto';
     document.getElementById('projectCancelBtn').classList.add('hidden');
+    supplierRows = [];
+    renderSupplierRows();
   }
 
   async function deleteProject(projectId) {
@@ -641,27 +886,60 @@
     }
   }
 
+  function filteredProjects() {
+    const fc = document.getElementById('filterClient');
+    const fu = document.getElementById('filterUser');
+    const fp = document.getElementById('filterProvider');
+    const ft = document.getElementById('filterText');
+    const clientId = fc ? fc.value : '';
+    const userId = fu ? fu.value : '';
+    const provider = fp ? fp.value : '';
+    const text = ft ? ft.value.trim().toLowerCase() : '';
+    return projectsCache.filter(p => {
+      if (clientId && p.client_id !== clientId) return false;
+      if (userId && p.owner_user_id !== userId) return false;
+      if (provider && !(p.portal_project_suppliers || []).some(s => s.provider === provider)) return false;
+      if (text) {
+        const haystack = [p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
+        if (!haystack.includes(text)) return false;
+      }
+      return true;
+    });
+  }
+
   function renderProjectsList() {
     const wrap = document.getElementById('projectsList');
+    if (!wrap) return;
+    const list = filteredProjects();
     if (projectsCache.length === 0) {
       wrap.innerHTML = '<p class="empty-note">Todavía no hay proyectos registrados.</p>';
       return;
     }
-    wrap.innerHTML = projectsCache.map(p => `
+    if (list.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Ningún proyecto coincide con el filtro.</p>';
+      return;
+    }
+    wrap.innerHTML = list.map(p => {
+      const suppliers = p.portal_project_suppliers || [];
+      const supplierMeta = suppliers.map(s => `${PROVIDER_LABELS[s.provider] || s.provider}${s.po_number_supplier ? ' (OC ' + escapeHtml(s.po_number_supplier) + ')' : ''}`).join(', ');
+      return `
       <div class="row-item">
         <span class="r-main">${escapeHtml(p.name)}</span>
-        <span class="r-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC ' + escapeHtml(p.po_number) : ''}</span>
+        <span class="r-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}</span>
+        ${supplierMeta ? `<span class="r-meta">Proveedores: ${supplierMeta}</span>` : ''}
         <span class="status-pill-sm">${STATUS_LABELS[p.status] || p.status}</span>
         <span class="r-actions">
           <a data-edit-project="${p.id}">Editar</a>
-          <a class="danger" data-delete-project="${p.id}">Eliminar</a>
+          ${currentRole === 'admin' ? `<a class="danger" data-delete-project="${p.id}">Eliminar</a>` : ''}
         </span>
       </div>
-    `).join('');
+    `;
+    }).join('');
 
-    projectsCache.forEach(p => {
+    list.forEach(p => {
       document.querySelector(`[data-edit-project="${p.id}"]`).addEventListener('click', () => startProjectEdit(p.id));
-      document.querySelector(`[data-delete-project="${p.id}"]`).addEventListener('click', () => deleteProject(p.id));
+      const delLink = document.querySelector(`[data-delete-project="${p.id}"]`);
+      if (delLink) delLink.addEventListener('click', () => deleteProject(p.id));
     });
   }
 

@@ -8,8 +8,13 @@
 <link rel="stylesheet" href="main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; }
+  .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
   .admin-header h1 { font-size: 22px; font-weight: 600; }
+  .admin-header-right { display: flex; align-items: center; gap: 16px; }
+  .staff-identity { font-size: 13px; color: var(--steel-300); text-align: right; }
+  .staff-identity strong { color: var(--white); font-weight: 600; }
+  body.content-light .staff-identity { color: var(--ink-600); }
+  body.content-light .staff-identity strong { color: var(--ink-900); }
   .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
   .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
 
@@ -105,7 +110,10 @@
 
 <div class="admin-header">
   <h1>Administración — Portal de Clientes</h1>
-  <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+  <div class="admin-header-right">
+    <span class="staff-identity" id="staffIdentity"></span>
+    <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+  </div>
 </div>
 
 <div class="admin-content" id="adminContent">
@@ -216,14 +224,21 @@
   let currentStaffId = null;
   let supplierRows = []; // [{provider, po_number_supplier}] — filas del formulario de proyecto en edición
 
+  function setStaffIdentity(label) {
+    const el = document.getElementById('staffIdentity');
+    if (el) el.innerHTML = label;
+  }
+
   async function init() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { window.location.href = 'portal.html'; return; }
     currentStaffId = session.user.id;
+    const sessionEmail = session.user.email || '';
 
     const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', currentStaffId).single();
     if (adminRow) {
       currentRole = 'admin';
+      setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
       renderAdmin();
       await refreshAll();
       return;
@@ -232,6 +247,7 @@
     const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name').eq('id', currentStaffId).single();
     if (vendedorRow) {
       currentRole = 'vendedor';
+      setStaffIdentity(`<strong>${escapeHtml(vendedorRow.full_name)}</strong> — Vendedor`);
       renderVendedor(vendedorRow.full_name);
       await refreshAll();
       return;

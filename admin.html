@@ -10,6 +10,8 @@
 <style>
   .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
   .admin-header h1 { font-size: 22px; font-weight: 600; }
+  .tools-back-link { display: inline-block; font-size: 12.5px; color: var(--steel-300); text-decoration: none; margin-bottom: 6px; }
+  .tools-back-link:hover { color: var(--orange); }
   .admin-header-right { display: flex; align-items: center; gap: 16px; }
   .staff-identity { font-size: 13px; color: var(--steel-300); text-align: right; }
   .staff-identity strong { color: var(--white); font-weight: 600; }
@@ -76,6 +78,8 @@
 
   body.content-light .admin-header { border-color: var(--paper-border); }
   body.content-light .admin-header h1 { color: var(--ink-900); }
+  body.content-light .tools-back-link { color: var(--ink-600); }
+  body.content-light .tools-back-link:hover { color: var(--orange); }
   body.content-light .logout-btn { border-color: var(--paper-border); color: var(--ink-600); }
   body.content-light .denied { color: var(--ink-600); }
   body.content-light .panel { background: var(--paper-800); border-color: var(--paper-border); }
@@ -116,7 +120,10 @@
 </header>
 
 <div class="admin-header">
-  <h1>Administración — Portal de Clientes</h1>
+  <div>
+    <a class="tools-back-link" href="herramientas.html">← Volver a Herramientas</a>
+    <h1>Administración — Portal de Clientes</h1>
+  </div>
   <div class="admin-header-right">
     <span class="staff-identity" id="staffIdentity"></span>
     <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>

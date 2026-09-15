@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Ver como cliente — Herramientas — AMBIENTES EXTREMOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .vc-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .vc-header h1 { font-size: 22px; font-weight: 600; }
+  .tools-back-link { display: inline-block; font-size: 12.5px; color: var(--steel-300); text-decoration: none; margin-bottom: 6px; }
+  .tools-back-link:hover { color: var(--orange); }
+  .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  .vc-content { padding: 32px 48px 64px; max-width: 980px; }
+  .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
+  .verifying-note { color: var(--steel-300); }
+
+  /* ---- Selector de cliente ---- */
+  .picker-intro { font-size: 14px; color: var(--ink-600); margin-bottom: 20px; }
+  .picker-search { width: 100%; max-width: 440px; background: var(--white); border: 1px solid var(--paper-border); color: var(--ink-900); font-family: 'Inter', sans-serif; font-size: 14px; padding: 11px 14px; border-radius: 4px; margin-bottom: 24px; }
+  .picker-search:focus { outline: none; border-color: var(--orange); }
+  .picker-empresa { margin-bottom: 24px; }
+  .picker-empresa h3 { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--orange); margin-bottom: 10px; }
+  .picker-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--paper-800); border: 1px solid var(--paper-border); border-radius: 6px; padding: 14px 18px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+  .picker-row:hover { border-color: var(--orange); }
+  .picker-row .pname { font-size: 14px; font-weight: 600; color: var(--ink-900); }
+  .picker-row .pmeta { font-size: 12.5px; color: var(--ink-600); }
+  .picker-row .parrow { color: var(--orange); font-size: 16px; flex-shrink: 0; }
+  .picker-empty { font-size: 13px; color: var(--ink-600); padding: 20px 0; }
+
+  /* ---- Banner de modo solo lectura ---- */
+  .vc-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: rgba(232,94,28,0.1); border: 1px solid var(--orange); border-radius: 6px; padding: 14px 20px; margin-bottom: 28px; }
+  .vc-banner .vb-text { font-size: 13.5px; color: var(--ink-900); }
+  .vc-banner .vb-text strong { color: var(--orange); }
+  .vc-banner .vb-tag { font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--orange); }
+  .vc-back { font-family: 'Oswald', sans-serif; font-size: 12.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--orange); text-decoration: none; white-space: nowrap; }
+  .vc-back:hover { text-decoration: underline; }
+
+  /* ---- Réplica visual de dashboard.html (misma pantalla que ve el cliente) ---- */
+  .section-label { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange); margin: 36px 0 14px; }
+  .section-label:first-child { margin-top: 0; }
+  .team-member { margin-bottom: 28px; }
+  .team-member-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--paper-border); }
+  .team-member-head .tm-name { font-size: 15px; font-weight: 600; color: var(--ink-900); }
+  .team-member-head .tm-role { font-size: 13px; color: var(--ink-600); }
+  .team-empty { font-size: 13px; color: var(--ink-600); padding: 4px 0 4px; }
+
+  .project-card { background: var(--paper-800); border: 1px solid var(--paper-border); border-radius: 6px; margin-bottom: 20px; overflow: hidden; }
+  .project-head { padding: 22px 26px; cursor: pointer; }
+  .project-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; color: var(--ink-900); }
+  .project-desc { font-size: 13px; color: var(--ink-600); margin-bottom: 16px; }
+
+  .status-stepper { display: flex; margin-bottom: 16px; }
+  .status-stepper .step { flex: 1; text-align: center; position: relative; }
+  .status-stepper .step::before { content: ''; position: absolute; top: 6px; left: -50%; width: 100%; height: 2px; background: var(--paper-border); z-index: 0; }
+  .status-stepper .step:first-child::before { display: none; }
+  .status-stepper .dot { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--white); border: 2px solid var(--paper-border); margin: 0 auto 8px; position: relative; z-index: 1; }
+  .status-stepper .label { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-600); }
+  .status-stepper .step.done .dot, .status-stepper .step.current .dot { background: var(--orange); border-color: var(--orange); }
+  .status-stepper .step.done::before, .status-stepper .step.current::before { background: var(--orange); }
+  .status-stepper .step.current .label { color: var(--ink-900); }
+  .status-stepper .step.done .label { color: var(--ink-600); }
+  .stepper-current { display: none; }
+
+  @media (max-width: 640px) {
+    .status-stepper .label { display: none; }
+    .status-stepper { margin-bottom: 8px; }
+    .stepper-current { display: block; font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-900); margin-bottom: 14px; }
+  }
+
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px 20px; margin-bottom: 14px; }
+  .meta-item .mlabel { font-size: 11px; color: var(--ink-600); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+  .meta-item .mvalue { font-size: 14px; color: var(--ink-900); }
+  .project-notes { font-size: 13px; color: var(--ink-600); background: var(--white); border: 1px solid var(--paper-border); border-radius: 4px; padding: 10px 14px; margin-bottom: 10px; }
+  .toggle-hint { font-size: 12px; color: var(--ink-600); }
+
+  .timeline { padding: 0 26px 24px; border-top: 1px solid var(--paper-border); margin-top: 4px; display: none; }
+  .timeline.open { display: block; }
+  .timeline-item { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--paper-border); }
+  .timeline-item:last-child { border-bottom: none; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); margin-top: 5px; flex-shrink: 0; }
+  .timeline-body .tstatus { font-size: 14px; font-weight: 600; color: var(--ink-900); margin-bottom: 3px; }
+  .timeline-body .tnote { font-size: 13px; color: var(--ink-600); margin-bottom: 3px; }
+  .timeline-body .tdate { font-size: 11px; color: var(--ink-600); }
+
+  .loading-note { color: var(--ink-600); }
+  .no-updates-note { color: var(--ink-600); font-size: 13px; padding-top: 16px; }
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--ink-600); }
+</style>
+</head>
+<body class="content-light">
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="portal.html" class="nav-cta-btn">Portal de Clientes</a></li>
+      <li><a href="#" class="js-open-modal">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="vc-header">
+  <div>
+    <a class="tools-back-link" href="herramientas.html">← Volver a Herramientas</a>
+    <h1>Ver como cliente</h1>
+  </div>
+  <div>
+    <span class="staff-identity" id="staffIdentity" style="font-size:13px; color:var(--ink-600); margin-right:16px;"></span>
+    <a class="logout-btn" href="admin.html">Ir a Administración</a>
+  </div>
+</div>
+
+<div class="vc-content" id="vcContent">
+  <p class="verifying-note">Verificando acceso...</p>
+</div>
+
+<footer id="contacto">
+  <div class="footer-inner">
+    <div class="footer-col footer-brand">
+      <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+      <p>Tecnologías para aplicaciones industriales severas.</p>
+      <div class="footer-contact-item">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 3L7 8L13 3M2 2H12C12.55 2 13 2.45 13 3V11C13 11.55 12.55 12 12 12H2C1.45 12 1 11.55 1 11V3C1 2.45 1.45 2 2 2Z" stroke="currentColor" stroke-width="1.2"/></svg>
+        ricardogarcia@avantatech.com.mx
+      </div>
+      <div class="footer-contact-item">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 1.5H4.5L5.5 4L4 5C4.5 6.5 5.5 7.5 7 8L8 6.5L10.5 7.5V9.5C10.5 10.05 10.05 10.5 9.5 10.5C5.5 10.5 2.5 7.5 2.5 3.5C2.5 2.95 2.5 1.5 2.5 1.5Z" stroke="currentColor" stroke-width="1.2"/></svg>
+        (81) 1216 0561
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Productos</h4>
+      <a href="sensores.html">Sensores</a>
+      <a href="ensambles.html">Ensambles</a>
+      <a href="cables.html">Cables</a>
+      <a href="protecciones.html">Protecciones</a>
+    </div>
+    <div class="footer-col">
+      <h4>Recursos</h4>
+      <a href="https://arneses-app.vercel.app/" target="_blank" rel="noopener">Configurador de Ensambles</a>
+      <a href="https://arneses-app.vercel.app/" target="_blank" rel="noopener">Configurador de Cable</a>
+      <a href="aplicaciones-siderurgicas.html">Aplicaciones Siderúrgicas</a>
+      <a href="portal.html">Portal de Clientes</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contacto</h4>
+      <a href="#" class="js-open-modal" data-quote-cta="true">Solicitar cotización</a>
+      <a href="#" class="js-open-modal">Cuéntenos su aplicación</a>
+      <a href="#" class="js-open-modal">Asesoría técnica</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 AMBIENTES EXTREMOS. Todos los derechos reservados.</span>
+    <div class="footer-legal-links">
+      <a href="#">Aviso de privacidad</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ===== Modal "Cuéntenos su aplicación" (componente compartido) ===== -->
+<div class="modal-overlay" id="appModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalCloseBtn">✕</button>
+    <h3>Cuéntenos su aplicación</h3>
+    <p class="modal-sub">Describa lo que necesita y le contactamos lo antes posible.</p>
+    <div class="modal-msg" id="modalMsg"></div>
+    <form id="appForm">
+      <div class="modal-field">
+        <label>Nombre</label>
+        <input type="text" id="leadName" required>
+      </div>
+      <div class="modal-field">
+        <label>Correo o teléfono</label>
+        <input type="text" id="leadContact" required placeholder="correo@empresa.com o teléfono">
+      </div>
+      <div class="modal-field">
+        <label>Cuéntenos su aplicación</label>
+        <textarea id="leadMessage" required placeholder="Ej. Necesito un sensor de posición para un cilindro hidráulico expuesto a alta temperatura..."></textarea>
+      </div>
+      <button type="submit" class="btn-primary modal-submit" id="leadSubmitBtn">Enviar</button>
+    </form>
+  </div>
+</div>
+
+<script src="portal-config.js"></script>
+<script src="app.js"></script>
+<script>
+  const vcContent = document.getElementById('vcContent');
+
+  const STATUS_ORDER = ['espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
+  const STATUS_LABELS = {
+    espera_pedido: 'Espera de pedido',
+    en_fabricacion: 'En fabricación',
+    entrega_programada: 'Entrega programada',
+    entregado: 'Entregado',
+  };
+
+  let allClients = [];
+  let allUsers = [];
+  let allProjects = [];
+
+  function setStaffIdentity(label) {
+    const el = document.getElementById('staffIdentity');
+    if (el) el.innerHTML = label;
+  }
+
+  async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.location.href = 'portal.html'; return; }
+
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', session.user.id).single();
+    if (!adminRow) {
+      vcContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
+      return;
+    }
+    setStaffIdentity(`<strong>${escapeHtml(session.user.email || '')}</strong> — Administrador`);
+
+    // Mismo alcance que "Todos los proyectos" en admin.html: como administrador,
+    // RLS ya te deja leer todas las filas de estas 3 tablas — no hace falta
+    // ningún permiso nuevo ni tocar la sesión de nadie.
+    const [{ data: clients }, { data: users }, { data: projects }] = await Promise.all([
+      supabaseClient.from('portal_clients').select('id, company_name').order('company_name'),
+      supabaseClient.from('portal_users').select('id, full_name, email, puesto, area, manager_id, client_id').order('full_name'),
+      supabaseClient
+        .from('portal_projects')
+        .select('id, client_id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
+        .order('created_at', { ascending: false }),
+    ]);
+    allClients = clients || [];
+    allUsers = users || [];
+    allProjects = projects || [];
+
+    renderPicker();
+  }
+
+  function clientName(id) {
+    const c = allClients.find(c => c.id === id);
+    return c ? c.company_name : '—';
+  }
+
+  // ---- Selector: lista de clientes agrupados por empresa, con buscador ----
+  function renderPicker() {
+    vcContent.innerHTML = `
+      <p class="picker-intro">Elige un usuario cliente para ver exactamente su pantalla — solo lectura, no puedes editar nada desde aquí.</p>
+      <input type="text" class="picker-search" id="pickerSearch" placeholder="Buscar por nombre o empresa...">
+      <div id="pickerList"></div>
+    `;
+    document.getElementById('pickerSearch').addEventListener('input', renderPickerList);
+    renderPickerList();
+  }
+
+  function renderPickerList() {
+    const wrap = document.getElementById('pickerList');
+    const term = (document.getElementById('pickerSearch').value || '').trim().toLowerCase();
+
+    if (allUsers.length === 0) {
+      wrap.innerHTML = '<p class="picker-empty">Todavía no hay usuarios clientes registrados.</p>';
+      return;
+    }
+
+    const byClient = {};
+    allUsers.forEach(u => {
+      const empresa = clientName(u.client_id);
+      if (term && !(`${u.full_name} ${empresa}`.toLowerCase().includes(term))) return;
+      (byClient[u.client_id] = byClient[u.client_id] || []).push(u);
+    });
+
+    const clientIds = Object.keys(byClient).sort((a, b) => clientName(a).localeCompare(clientName(b)));
+    if (clientIds.length === 0) {
+      wrap.innerHTML = '<p class="picker-empty">Ningún usuario coincide con la búsqueda.</p>';
+      return;
+    }
+
+    wrap.innerHTML = clientIds.map(cid => `
+      <div class="picker-empresa">
+        <h3>${escapeHtml(clientName(cid))}</h3>
+        ${byClient[cid].map(u => {
+          const rolePart = [u.puesto, u.area].filter(Boolean).join(' · ');
+          return `
+            <div class="picker-row" data-user-id="${u.id}">
+              <div>
+                <div class="pname">${escapeHtml(u.full_name)}</div>
+                ${rolePart ? `<div class="pmeta">${escapeHtml(rolePart)}</div>` : ''}
+              </div>
+              <span class="parrow">→</span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `).join('');
+
+    wrap.querySelectorAll('[data-user-id]').forEach(row => {
+      row.addEventListener('click', () => renderClientView(row.getAttribute('data-user-id')));
+    });
+  }
+
+  // ---- Vista: exactamente lo que ve ese usuario en dashboard.html ----
+  function subtreeOf(rootId) {
+    // Todos los usuarios cuya cadena de jefes llega a rootId (cualquier nivel).
+    const byManager = {};
+    allUsers.forEach(u => { if (u.manager_id) (byManager[u.manager_id] = byManager[u.manager_id] || []).push(u); });
+    const result = [];
+    const queue = [rootId];
+    while (queue.length) {
+      const current = queue.shift();
+      (byManager[current] || []).forEach(u => { result.push(u); queue.push(u.id); });
+    }
+    return result;
+  }
+
+  function renderClientView(userId) {
+    const me = allUsers.find(u => u.id === userId);
+    if (!me) return;
+
+    const empresa = clientName(me.client_id);
+    const rolePart = [me.puesto, me.area].filter(Boolean).join(' · ');
+    const whoLine = [me.full_name, [rolePart, empresa].filter(Boolean).join(' — ')].filter(Boolean).join(' — ');
+
+    const teamMembers = subtreeOf(userId);
+    const myProjects = allProjects.filter(p => p.owner_user_id === userId);
+
+    vcContent.innerHTML = `
+      <div class="vc-banner">
+        <div class="vb-text"><span class="vb-tag">Vista de solo lectura</span> — Viendo como: <strong>${escapeHtml(whoLine)}</strong></div>
+        <a class="vc-back" href="#" id="pickAnotherLink">← Elegir otro usuario</a>
+      </div>
+      <div id="clientProjectsWrap"></div>
+    `;
+    document.getElementById('pickAnotherLink').addEventListener('click', (e) => { e.preventDefault(); renderPicker(); });
+
+    const dashWrap = document.getElementById('clientProjectsWrap');
+
+    if (teamMembers.length > 0) {
+      const lbl = document.createElement('div');
+      lbl.className = 'section-label';
+      lbl.textContent = 'Sus proyectos';
+      dashWrap.appendChild(lbl);
+    }
+
+    if (myProjects.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'Todavía no hay proyectos registrados a nombre de esta persona.';
+      dashWrap.appendChild(empty);
+    } else {
+      myProjects.forEach(p => dashWrap.appendChild(renderProjectCard(p)));
+    }
+
+    if (teamMembers.length > 0) {
+      const teamLbl = document.createElement('div');
+      teamLbl.className = 'section-label';
+      teamLbl.textContent = 'Proyectos de su equipo';
+      dashWrap.appendChild(teamLbl);
+
+      teamMembers.forEach(member => {
+        const memberProjects = allProjects.filter(p => p.owner_user_id === member.id);
+        const wrap = document.createElement('div');
+        wrap.className = 'team-member';
+
+        const head = document.createElement('div');
+        head.className = 'team-member-head';
+        const mRolePart = [member.puesto, member.area].filter(Boolean).join(' · ');
+        head.innerHTML = `<span class="tm-name">${escapeHtml(member.full_name)}</span>${mRolePart ? `<span class="tm-role">${escapeHtml(mRolePart)}</span>` : ''}`;
+        wrap.appendChild(head);
+
+        if (memberProjects.length === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'team-empty';
+          empty.textContent = 'Sin proyectos registrados.';
+          wrap.appendChild(empty);
+        } else {
+          memberProjects.forEach(p => wrap.appendChild(renderProjectCard(p)));
+        }
+        dashWrap.appendChild(wrap);
+      });
+    }
+
+    dashWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ---- Idénticas a dashboard.html, para que se vea pixel-a-pixel igual ----
+  function renderStepper(status) {
+    const currentIdx = STATUS_ORDER.indexOf(status);
+    const steps = '<div class="status-stepper">' + STATUS_ORDER.map((s, i) => {
+      let cls = 'step';
+      if (i < currentIdx) cls += ' done';
+      else if (i === currentIdx) cls += ' current';
+      return `<div class="${cls}"><span class="dot"></span><span class="label">${STATUS_LABELS[s]}</span></div>`;
+    }).join('') + '</div>';
+    const currentLine = `<div class="stepper-current">Paso ${currentIdx + 1} de ${STATUS_ORDER.length} — ${STATUS_LABELS[status]}</div>`;
+    return steps + currentLine;
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function renderProjectCard(project) {
+    const updates = (project.portal_project_updates || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const metaItems = [];
+    if (project.quote_number) metaItems.push(['N° de cotización', project.quote_number]);
+    if (project.po_number) metaItems.push(['N° de orden de compra', project.po_number]);
+    if (project.product_service) metaItems.push(['Producto / servicio', project.product_service + (project.quantity ? ' — ' + project.quantity : '')]);
+    if (project.estimated_delivery_date) metaItems.push(['Entrega estimada', formatDate(project.estimated_delivery_date)]);
+
+    const card = document.createElement('div');
+    card.className = 'project-card';
+
+    const head = document.createElement('div');
+    head.className = 'project-head';
+    head.innerHTML = `
+      <div class="project-name">${escapeHtml(project.name)}</div>
+      ${project.description ? `<div class="project-desc">${escapeHtml(project.description)}</div>` : ''}
+      ${renderStepper(project.status)}
+      ${metaItems.length ? `<div class="meta-grid">${metaItems.map(([l, v]) => `<div class="meta-item"><div class="mlabel">${escapeHtml(l)}</div><div class="mvalue">${escapeHtml(v)}</div></div>`).join('')}</div>` : ''}
+      ${project.notes ? `<div class="project-notes">${escapeHtml(project.notes)}</div>` : ''}
+      <div class="toggle-hint">Clic para ver historial ▾</div>
+    `;
+
+    const timeline = document.createElement('div');
+    timeline.className = 'timeline';
+    if (updates.length === 0) {
+      timeline.innerHTML = '<p class="no-updates-note">Sin actualizaciones registradas todavía.</p>';
+    } else {
+      timeline.innerHTML = updates.map(u => `
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-body">
+            <div class="tstatus">${escapeHtml(STATUS_LABELS[u.status] || u.status)}</div>
+            ${u.note ? `<div class="tnote">${escapeHtml(u.note)}</div>` : ''}
+            <div class="tdate">${new Date(u.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    head.addEventListener('click', () => timeline.classList.toggle('open'));
+
+    card.appendChild(head);
+    card.appendChild(timeline);
+    return card;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  init();
+
+  const appModal = document.getElementById('appModal');
+  const appForm = document.getElementById('appForm');
+  const modalMsg = document.getElementById('modalMsg');
+  const leadSubmitBtn = document.getElementById('leadSubmitBtn');
+  const leadMessage = document.getElementById('leadMessage');
+
+  function openModal(prefill) {
+    appModal.classList.add('open');
+    modalMsg.style.display = 'none';
+    if (prefill) {
+      const h1 = document.querySelector('.hero h1');
+      const productName = h1 ? h1.textContent.split('—')[0].trim() : '';
+      leadMessage.value = productName ? ('Interesado en cotización para: ' + productName + '.') : '';
+    }
+  }
+  function closeModal() {
+    appModal.classList.remove('open');
+  }
+
+  document.querySelectorAll('.js-open-modal').forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      e.preventDefault();
+      openModal(el.hasAttribute('data-quote-cta'));
+    });
+  });
+
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  appModal.addEventListener('click', (e) => { if (e.target === appModal) closeModal(); });
+
+  appForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    leadSubmitBtn.disabled = true;
+    leadSubmitBtn.textContent = 'Enviando...';
+
+    const { error: leadError } = await supabaseClient.from('site_leads').insert({
+      name: document.getElementById('leadName').value,
+      contact: document.getElementById('leadContact').value,
+      message: document.getElementById('leadMessage').value,
+    });
+
+    if (leadError) {
+      modalMsg.className = 'modal-msg error';
+      modalMsg.textContent = 'No se pudo enviar. Intente de nuevo o escríbanos directo a ricardogarcia@avantatech.com.mx';
+      modalMsg.style.display = 'block';
+      leadSubmitBtn.disabled = false;
+      leadSubmitBtn.textContent = 'Enviar';
+      return;
+    }
+
+    modalMsg.className = 'modal-msg success';
+    modalMsg.textContent = '¡Gracias! Recibimos su mensaje y le contactaremos lo antes posible.';
+    modalMsg.style.display = 'block';
+    appForm.reset();
+    leadSubmitBtn.disabled = false;
+    leadSubmitBtn.textContent = 'Enviar';
+    setTimeout(closeModal, 2200);
+  });
+</script>
+
+</body>
+</html>

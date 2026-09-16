@@ -76,9 +76,8 @@
   .row-item .r-actions a.danger { color: #e05a5a; }
   .row-item .r-wrap { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
 
-  .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 14px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); white-space: nowrap; }
-  .status-pill-sm.delivered { background: rgba(60,180,100,0.14); border-color: #2ecc71; color: #7fe0a5; }
-  body.content-light .status-pill-sm.delivered { color: #1f7a45; }
+  .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 14px; background: var(--orange); border: 1px solid var(--orange); color: #ffffff; white-space: nowrap; }
+  .status-pill-sm.delivered { background: #1f9d55; border-color: #1f9d55; color: #ffffff; }
 
   .client-group-header { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steel-300); margin: 22px 0 8px; padding-top: 14px; border-top: 1px solid var(--gunmetal-700); }
   .client-group-header:first-child { margin-top: 0; padding-top: 0; border-top: none; }
@@ -98,6 +97,17 @@
   .stat-card .slabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--steel-300); margin-top: 6px; }
   body.content-light .stat-card { background: var(--paper-800); border-color: var(--paper-border); }
   body.content-light .stat-card .slabel { color: var(--ink-600); }
+  .stat-card.clickable, .row-item.clickable { cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+  .stat-card.clickable:hover { border-color: var(--orange); }
+  .row-item.clickable:hover .r-main { color: var(--orange); }
+
+  .sub-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 22px; }
+  .sub-nav-btn { font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: transparent; border: 1px solid var(--gunmetal-600); border-radius: 16px; padding: 6px 14px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
+  .sub-nav-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .sub-nav-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+  body.content-light .sub-nav-btn { color: var(--ink-600); border-color: var(--paper-border); }
+  body.content-light .sub-nav-btn.active { color: #fff; }
+  .subpanel-hidden { display: none; }
 
   body.content-light .admin-header { border-color: var(--paper-border); }
   body.content-light .admin-header h1 { color: var(--ink-900); }
@@ -309,16 +319,16 @@
   function quickNavHtml(role) {
     const adminLinks = [
       [ALL_TOOLS_TARGET, 'Todas las herramientas'],
-      ['#section-clientes', '1. Clientes y usuarios'],
-      ['#section-proyectos', '2. Proyectos'],
-      ['#section-empleados', '3. Empleados AVANTA'],
-      ['#section-dashboard', '4. Dashboard'],
+      ['#section-dashboard', '1. Dashboard'],
+      ['#section-clientes', '2. Clientes y usuarios'],
+      ['#section-proyectos', '3. Proyectos'],
+      ['#section-empleados', '4. Empleados AVANTA'],
       ['#section-configuracion', '5. Configuración y seguridad'],
     ];
     const vendedorLinks = [
       [ALL_TOOLS_TARGET, 'Todas las herramientas'],
-      ['#section-proyectos', 'Proyectos'],
       ['#section-dashboard', 'Dashboard'],
+      ['#section-proyectos', 'Proyectos'],
       ['#section-configuracion', 'Mi cuenta'],
     ];
     const links = role === 'admin' ? adminLinks : vendedorLinks;
@@ -364,12 +374,45 @@
     });
   }
 
+  // ---- Sub-navegación dentro de cada herramienta: cuando una sección tiene
+  // más de un panel, se agregan botones para elegir cuál ver (uno a la vez,
+  // el primero queda activo por default). Reutilizable con subNavHtml(). ----
+  function subNavHtml(items) {
+    if (!items || items.length < 2) return '';
+    return `<div class="sub-nav">${items.map(([id, label], i) => `<button type="button" class="sub-nav-btn${i === 0 ? ' active' : ''}" data-sub-panel="${id}">${label}</button>`).join('')}</div>`;
+  }
+  function initSubNav(root) {
+    (root || document).querySelectorAll('.sub-nav').forEach(nav => {
+      const links = Array.from(nav.querySelectorAll('.sub-nav-btn'));
+      function show(id) {
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('data-sub-panel') === id));
+        links.forEach(a => {
+          const pid = a.getAttribute('data-sub-panel');
+          const el = document.getElementById(pid);
+          if (el) el.classList.toggle('subpanel-hidden', pid !== id);
+        });
+      }
+      links.forEach(a => a.addEventListener('click', () => show(a.getAttribute('data-sub-panel'))));
+      show(links[0].getAttribute('data-sub-panel'));
+    });
+  }
+  function goToSubPanel(panelId) {
+    const btn = document.querySelector(`.sub-nav-btn[data-sub-panel="${panelId}"]`);
+    if (btn) btn.click();
+  }
+
   function renderAdmin() {
     adminContent.innerHTML = `
       ${quickNavHtml('admin')}
 
+      <div class="tool-section" id="section-dashboard">
+        <h1 class="section-title">1. Dashboard</h1>
+        ${dashboardPanelHtml()}
+      </div>
+
       <div class="tool-section" id="section-clientes">
-        <h1 class="section-title">1. Clientes y usuarios</h1>
+        <h1 class="section-title">2. Clientes y usuarios</h1>
+        ${subNavHtml([['panel-empresa', 'Empresas cliente'], ['panel-crear-usuario', 'Crear usuario'], ['panel-usuarios', 'Usuarios registrados']])}
         <div class="panel" id="panel-empresa">
           <h2>Empresas cliente</h2>
           <p class="panel-sub">El primer paso — cada usuario que crees abajo pertenece a una de estas empresas. Puedes editar el nombre o desactivar una empresa más abajo.</p>
@@ -409,22 +452,22 @@
 
         <div class="panel" id="panel-usuarios">
           <h2>Usuarios registrados</h2>
-          <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien, o desactivar su acceso.</p>
+          <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien, o desactivar su acceso. (El jefe de cada quien se maneja aquí — para dar acceso a revisar los proyectos de otra persona sin ser su jefe, ve a "5. Configuración y seguridad → Estructura organizacional".)</p>
           <div id="usersList"></div>
         </div>
       </div>
 
       <div class="tool-section" id="section-proyectos">
-        <h1 class="section-title">2. Proyectos</h1>
-        ${projectFormHtml('admin')}
-
+        <h1 class="section-title">3. Proyectos</h1>
+        ${subNavHtml([['panel-todos-proyectos', 'Todos los proyectos'], ['panel-proyecto', 'Crear proyecto'], ['panel-actualizacion', 'Actualizar estatus']])}
         <div class="panel" id="panel-todos-proyectos">
           <h2>Todos los proyectos</h2>
           <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
-          <div class="form-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:18px;">
+          <div class="form-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom:18px;">
             <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
             <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
             <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
+            <div class="field"><label>Filtrar por responsable</label><select id="filterResponsable"><option value="">Todos</option><option value="__unassigned__">Sin asignar</option></select></div>
             <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
           </div>
           <div class="form-row single" style="margin-bottom:4px;">
@@ -432,6 +475,8 @@
           </div>
           <div id="projectsList"></div>
         </div>
+
+        ${projectFormHtml('admin')}
 
         <div class="panel" id="panel-actualizacion">
           <h2>Agregar actualización de estatus</h2>
@@ -453,7 +498,7 @@
       </div>
 
       <div class="tool-section" id="section-empleados">
-        <h1 class="section-title">3. Empleados AVANTA</h1>
+        <h1 class="section-title">4. Empleados AVANTA</h1>
         <div class="panel" id="panel-personal">
           <h2>Personal interno de AVANTA</h2>
           <p class="panel-sub">Da de alta a tu jefe (mismo acceso que tú) o a un vendedor (solo carga y edita sus propios proyectos). Se genera una contraseña temporal.</p>
@@ -478,17 +523,12 @@
         </div>
       </div>
 
-      <div class="tool-section" id="section-dashboard">
-        <h1 class="section-title">4. Dashboard</h1>
-        ${dashboardPanelHtml()}
-      </div>
-
       <div class="tool-section" id="section-configuracion">
         <h1 class="section-title">5. Configuración y seguridad</h1>
-        ${miCuentaPanelHtml()}
-        ${rolesInfoPanelHtml()}
-        ${auditoriaPanelHtml()}
-        ${controlAccesoPanelHtml()}
+        ${subNavHtml([['panel-estructura-org', 'Estructura organizacional'], ['panel-acceso', 'Acceso y contraseñas'], ['panel-historial-actividad', 'Historial de actividad']])}
+        ${estructuraOrgPanelHtml()}
+        ${accesoPanelHtml()}
+        ${historialActividadPanelHtml()}
       </div>
     `;
 
@@ -505,12 +545,16 @@
     document.getElementById('filterClient').addEventListener('change', renderProjectsList);
     document.getElementById('filterUser').addEventListener('change', renderProjectsList);
     document.getElementById('filterProvider').addEventListener('change', renderProjectsList);
+    document.getElementById('filterResponsable').addEventListener('change', renderProjectsList);
     document.getElementById('filterStatus').addEventListener('change', renderProjectsList);
     document.getElementById('filterText').addEventListener('input', renderProjectsList);
     document.getElementById('staffPwForm').addEventListener('submit', submitStaffChangePassword);
+    document.getElementById('grantForm').addEventListener('submit', submitGrant);
+    document.getElementById('grantGrantee').addEventListener('change', refreshGrantTargetOptions);
     supplierRows = [];
     renderSupplierRows();
     initPanelToggle();
+    initSubNav(adminContent);
   }
 
   // ---- Dashboard: resumen de proyectos (compartido entre admin y vendedor;
@@ -577,35 +621,181 @@
     if (!error) document.getElementById('staffPwForm').reset();
   }
 
-  function rolesInfoPanelHtml() {
+  // ---- 5.1 Estructura organizacional — el jefe de cada usuario se maneja
+  // en "2. Clientes y usuarios → Usuarios registrados" (sin cambio). Aquí
+  // se maneja algo distinto e independiente: dar (o quitar) acceso a que
+  // una persona revise los proyectos de otra, SIN que exista relación de
+  // jefe entre ellas. Restringido a usuarios de la misma empresa, y sin
+  // cascada a los subordinados del usuario objetivo (solo sus proyectos
+  // propios) — el default más seguro. ----
+  function estructuraOrgPanelHtml() {
     return `
-      <div class="panel" id="panel-roles-info">
-        <h2>Roles y permisos</h2>
-        <p class="panel-sub">Por ahora el portal maneja 2 niveles de acceso interno.</p>
-        <div class="row-item"><span class="r-main">Administrador</span><span class="r-meta">Acceso completo: ve y edita todos los clientes, usuarios, proyectos y empleados. Puede dar de alta a otros administradores o vendedores.</span></div>
-        <div class="row-item"><span class="r-main">Vendedor</span><span class="r-meta">Ve y edita únicamente los proyectos que él mismo cargó, o que un administrador le asignó como Responsable de Avanta. No puede crear empresas, usuarios ni otros empleados.</span></div>
+      <div class="panel" id="panel-estructura-org">
+        <h2>Estructura organizacional</h2>
+        <p class="panel-sub">El jefe de cada usuario (organigrama jefe → subordinado) se sigue asignando en "2. Clientes y usuarios → Usuarios registrados" — eso no cambió. Aquí se maneja algo distinto: dar acceso a que una persona revise los proyectos de otra sin que exista relación de jefe entre ellas.</p>
+        <div id="grantMsg" class="msg"></div>
+        <form id="grantForm">
+          <div class="form-row">
+            <div class="field"><label>Dar acceso a</label><select id="grantGrantee" required><option value="">Seleccione un usuario...</option></select></div>
+            <div class="field"><label>Para ver los proyectos de</label><select id="grantTarget" required><option value="">Seleccione un usuario primero...</option></select></div>
+          </div>
+          <p class="field-note">Solo entre usuarios de la misma empresa. El acceso es solo a los proyectos propios de esa persona — no incluye, en cascada, los proyectos de quienes están debajo de ella en el organigrama.</p>
+          <button type="submit" class="submit-btn">Dar acceso</button>
+        </form>
+        <div id="grantsList" style="margin-top:18px;"></div>
       </div>
     `;
   }
 
-  function controlAccesoPanelHtml() {
+  let grantsCache = [];
+  function refreshGrantSelects() {
+    const gSel = document.getElementById('grantGrantee');
+    if (!gSel) return;
+    const current = gSel.value;
+    gSel.innerHTML = '<option value="">Seleccione un usuario...</option>' + usersCache.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)} — ${escapeHtml(clientName(u.client_id))}</option>`).join('');
+    if (current) gSel.value = current;
+    refreshGrantTargetOptions();
+  }
+  function refreshGrantTargetOptions() {
+    const gSel = document.getElementById('grantGrantee');
+    const tSel = document.getElementById('grantTarget');
+    if (!gSel || !tSel) return;
+    const grantee = usersCache.find(u => u.id === gSel.value);
+    if (!grantee) { tSel.innerHTML = '<option value="">Seleccione un usuario primero...</option>'; return; }
+    const candidates = usersCache.filter(u => u.client_id === grantee.client_id && u.id !== grantee.id);
+    tSel.innerHTML = candidates.length
+      ? '<option value="">Seleccione...</option>' + candidates.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('')
+      : '<option value="">Sin otros usuarios en esta empresa</option>';
+  }
+  async function loadGrants() {
+    const { data, error } = await supabaseClient
+      .from('portal_user_view_grants')
+      .select('id, grantee_user_id, target_user_id, created_at')
+      .order('created_at', { ascending: false });
+    grantsCache = error ? [] : (data || []);
+  }
+  function renderGrants() {
+    const wrap = document.getElementById('grantsList');
+    if (!wrap) return;
+    if (grantsCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no se ha dado ningún acceso cruzado.</p>';
+      return;
+    }
+    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Accesos cruzados activos:</p>' + grantsCache.map(g => {
+      const grantee = usersCache.find(u => u.id === g.grantee_user_id);
+      const target = usersCache.find(u => u.id === g.target_user_id);
+      return `
+        <div class="row-item">
+          <span class="r-main">${escapeHtml(grantee ? grantee.full_name : '—')}</span>
+          <span class="r-meta">puede ver los proyectos de ${escapeHtml(target ? target.full_name : '—')}</span>
+          <span class="r-actions"><a data-grant-revoke="${g.id}">Quitar</a></span>
+        </div>
+      `;
+    }).join('');
+    wrap.querySelectorAll('[data-grant-revoke]').forEach(a => {
+      a.addEventListener('click', () => revokeGrant(a.getAttribute('data-grant-revoke')));
+    });
+  }
+  async function submitGrant(e) {
+    e.preventDefault();
+    const msg = document.getElementById('grantMsg');
+    const grantee_user_id = document.getElementById('grantGrantee').value;
+    const target_user_id = document.getElementById('grantTarget').value;
+    if (!grantee_user_id || !target_user_id) {
+      msg.className = 'msg error';
+      msg.textContent = 'Selecciona ambos usuarios.';
+      return;
+    }
+    if (grantee_user_id === target_user_id) {
+      msg.className = 'msg error';
+      msg.textContent = 'Selecciona dos usuarios distintos.';
+      return;
+    }
+    const { error } = await supabaseClient.from('portal_user_view_grants').insert({ grantee_user_id, target_user_id });
+    msg.className = error ? 'msg error' : 'msg success';
+    msg.textContent = error ? 'Error: ' + error.message : 'Acceso otorgado correctamente.';
+    if (!error) {
+      document.getElementById('grantForm').reset();
+      refreshGrantTargetOptions();
+      await loadGrants();
+      renderGrants();
+    }
+  }
+  async function revokeGrant(id) {
+    if (!confirm('¿Quitar este acceso?')) return;
+    const { error } = await supabaseClient.from('portal_user_view_grants').delete().eq('id', id);
+    if (error) { alert('No se pudo quitar: ' + error.message); return; }
+    await loadGrants();
+    renderGrants();
+  }
+
+  // ---- 5.2 Acceso y contraseñas — cambio de tu propia contraseña (igual
+  // que antes), más una lista combinada para activar/desactivar cualquier
+  // cuenta del portal desde un solo lugar. Los controles individuales en
+  // "Clientes y usuarios" y "Empleados AVANTA" siguen funcionando igual —
+  // esta lista es un acceso rápido adicional, no los reemplaza. No se
+  // agregó un flujo nuevo de restablecimiento de contraseña (Ric pidió
+  // dejar eso tal como está). ----
+  function accesoPanelHtml() {
     return `
-      <div class="panel" id="panel-control-acceso">
-        <h2>Control de acceso</h2>
-        <p class="panel-sub">Así se decide automáticamente qué ve cada quien — no requiere configuración manual.</p>
-        <div class="row-item"><span class="r-main">Clientes</span><span class="r-meta">Cada usuario cliente ve solo sus propios proyectos, más los de las personas debajo de él en el organigrama de su empresa (jefe → subordinado, cualquier nivel).</span></div>
-        <div class="row-item"><span class="r-main">Vendedores</span><span class="r-meta">Ven solo los proyectos donde son el Responsable de Avanta.</span></div>
-        <div class="row-item"><span class="r-main">Administradores</span><span class="r-meta">Ven todo, sin restricción.</span></div>
-        <p class="field-note" style="margin-top:12px;">Una cuenta desactivada (empresa, usuario, vendedor o administrador) pierde el acceso al iniciar sesión o en su siguiente carga de página — ver secciones "1. Clientes y usuarios" y "3. Empleados AVANTA".</p>
+      <div class="panel" id="panel-acceso">
+        <h2>Acceso y contraseñas</h2>
+        <p class="panel-sub">Cambia tu propia contraseña cuando quieras.</p>
+        <div id="staffPwMsg" class="msg"></div>
+        <form id="staffPwForm">
+          <div class="form-row">
+            <div class="field pw-field"><label>Nueva contraseña</label><input type="password" id="staffNewPw" required minlength="8" autocomplete="new-password"></div>
+            <div class="field pw-field"><label>Confirmar contraseña</label><input type="password" id="staffConfirmPw" required minlength="8" autocomplete="new-password"></div>
+          </div>
+          <button type="submit" class="submit-btn" id="staffPwBtn">Guardar contraseña</button>
+        </form>
+        <p class="field-note" style="margin:22px 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--steel-300);">Activar / desactivar accesos</p>
+        <p class="panel-sub">Lista combinada de empresas, usuarios, vendedores y administradores. Para editar nombre, puesto, área o jefe de un usuario, ve a "2. Clientes y usuarios".</p>
+        <div id="accesoList"></div>
       </div>
     `;
   }
 
-  function auditoriaPanelHtml() {
+  function renderAccesoList() {
+    const wrap = document.getElementById('accesoList');
+    if (!wrap) return;
+    const rows = [
+      ...clientsCache.map(c => ({ kind: 'client', id: c.id, label: c.company_name, meta: 'Empresa cliente', active: c.active !== false })),
+      ...usersCache.map(u => ({ kind: 'user', id: u.id, label: u.full_name, meta: `Usuario — ${clientName(u.client_id)}`, active: u.active !== false })),
+      ...vendedoresCache.map(v => ({ kind: 'vendedor', id: v.id, label: v.full_name, meta: 'Vendedor AVANTA', active: v.active !== false })),
+      ...adminsCache.map(a => ({ kind: 'admin', id: a.id, label: a.full_name, meta: 'Administrador AVANTA', active: a.active !== false })),
+    ];
+    if (rows.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay cuentas registradas.</p>';
+      return;
+    }
+    wrap.innerHTML = rows.map(r => `
+      <div class="row-item">
+        <span class="r-main">${escapeHtml(r.label)}${!r.active ? ' <em style="color:var(--steel-300);">(desactivado)</em>' : ''}</span>
+        <span class="r-meta">${escapeHtml(r.meta)}</span>
+        <span class="r-actions"><a data-acceso-toggle="${r.id}" data-acceso-kind="${r.kind}" data-acceso-active="${r.active}">${r.active ? 'Desactivar' : 'Activar'}</a></span>
+      </div>
+    `).join('');
+    wrap.querySelectorAll('[data-acceso-toggle]').forEach(a => {
+      a.addEventListener('click', () => {
+        const kind = a.getAttribute('data-acceso-kind');
+        const id = a.getAttribute('data-acceso-toggle');
+        const isActive = a.getAttribute('data-acceso-active') === 'true';
+        if (kind === 'client') toggleClientActive(id, !isActive);
+        else if (kind === 'user') toggleUserActive(id, !isActive);
+        else toggleStaffActive(kind, id, !isActive);
+      });
+    });
+  }
+
+  // ---- 5.3 Historial de actividad — combina los accesos (inicios de
+  // sesión) con el historial de cambios de estatus de proyectos que ya
+  // existía, en un solo feed ordenado por fecha (más reciente primero). ----
+  function historialActividadPanelHtml() {
     return `
-      <div class="panel" id="panel-auditoria">
-        <h2>Historial / auditoría de cambios</h2>
-        <p class="panel-sub">Últimas actualizaciones de estatus publicadas en cualquier proyecto, de más reciente a más antigua.</p>
+      <div class="panel" id="panel-historial-actividad">
+        <h2>Historial de actividad</h2>
+        <p class="panel-sub">Accesos al portal y actualizaciones de estatus publicadas en cualquier proyecto, de más reciente a más antigua.</p>
         <div id="auditoriaList"></div>
       </div>
     `;
@@ -613,21 +803,43 @@
 
   let auditoriaCache = [];
   async function loadAuditoria() {
-    const { data, error } = await supabaseClient
-      .from('portal_project_updates')
-      .select('id, status, note, created_at, portal_projects(name, client_id)')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    auditoriaCache = error ? [] : (data || []);
+    const [updatesRes, loginsRes] = await Promise.all([
+      supabaseClient
+        .from('portal_project_updates')
+        .select('id, status, note, created_at, portal_projects(name, client_id)')
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabaseClient
+        .from('portal_login_events')
+        .select('id, actor_role, actor_label, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50),
+    ]);
+    const updates = (updatesRes.error ? [] : (updatesRes.data || [])).map(u => ({ type: 'update', created_at: u.created_at, data: u }));
+    const logins = (loginsRes.error ? [] : (loginsRes.data || [])).map(l => ({ type: 'login', created_at: l.created_at, data: l }));
+    auditoriaCache = [...updates, ...logins]
+      .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+      .slice(0, 80);
   }
   function renderAuditoria() {
     const wrap = document.getElementById('auditoriaList');
     if (!wrap) return;
     if (auditoriaCache.length === 0) {
-      wrap.innerHTML = '<p class="empty-note">Sin actualizaciones registradas todavía.</p>';
+      wrap.innerHTML = '<p class="empty-note">Sin actividad registrada todavía.</p>';
       return;
     }
-    wrap.innerHTML = auditoriaCache.map(u => {
+    const ROLE_LABELS = { admin: 'Administrador', vendedor: 'Vendedor', cliente: 'Cliente' };
+    wrap.innerHTML = auditoriaCache.map(item => {
+      if (item.type === 'login') {
+        const l = item.data;
+        return `
+          <div class="row-item">
+            <span class="r-main">${escapeHtml(l.actor_label || '—')}</span>
+            <span class="r-meta">Inicio de sesión — ${escapeHtml(ROLE_LABELS[l.actor_role] || l.actor_role)} — ${formatDateShort((l.created_at || '').slice(0, 10))}</span>
+          </div>
+        `;
+      }
+      const u = item.data;
       const proj = u.portal_projects;
       const projName = proj ? proj.name : '—';
       const cliente = proj ? clientName(proj.client_id) : '—';
@@ -638,6 +850,32 @@
         </div>
       `;
     }).join('');
+  }
+
+  // ---- Dashboard interactivo: los números y las filas de los desgloses son
+  // clickeables y llevan directo a "Proyectos" ya filtrado (goToProyectosFiltered). ----
+  function goToProyectosFiltered(filters) {
+    filters = filters || {};
+    activePanelTargets = new Set(['#section-proyectos']);
+    applyPanelToggleState();
+    goToSubPanel(currentRole === 'admin' ? 'panel-todos-proyectos' : 'panel-mis-proyectos');
+
+    const fc = document.getElementById('filterClient');
+    const fr = document.getElementById('filterResponsable');
+    const fs = document.getElementById('filterStatus');
+    const ft = document.getElementById('filterText');
+    if (fs) fs.value = filters.status || '';
+    if (ft) {
+      // El panel de vendedor no tiene filtro de empresa/responsable propio —
+      // se usa el buscador de texto como respaldo para filtrar por empresa.
+      ft.value = (!fc && filters.clientLabel) ? filters.clientLabel : '';
+    }
+    if (fc) fc.value = filters.clientId || '';
+    if (fr) fr.value = filters.responsableId || '';
+
+    renderProjectsList();
+    const list = document.getElementById('projectsList');
+    if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function renderDashboard() {
@@ -652,17 +890,17 @@
     const byClient = {};
     projectsCache.forEach(p => { byClient[p.client_id] = (byClient[p.client_id] || 0) + 1; });
     const clientRows = Object.keys(byClient)
-      .map(cid => [clientName(cid), byClient[cid]])
-      .sort((a, b) => b[1] - a[1]);
+      .map(cid => [cid, clientName(cid), byClient[cid]])
+      .sort((a, b) => b[2] - a[2]);
 
     const byResponsable = {};
     projectsCache.forEach(p => {
-      const key = p.owner_vendedor_id || '__sin_asignar__';
+      const key = p.owner_vendedor_id || '__unassigned__';
       byResponsable[key] = (byResponsable[key] || 0) + 1;
     });
     const responsableRows = Object.keys(byResponsable)
-      .map(vid => [vid === '__sin_asignar__' ? 'Sin asignar' : vendedorName(vid), byResponsable[vid]])
-      .sort((a, b) => b[1] - a[1]);
+      .map(vid => [vid, vid === '__unassigned__' ? 'Sin asignar' : vendedorName(vid), byResponsable[vid]])
+      .sort((a, b) => b[2] - a[2]);
 
     const today = todayIso();
     const vencidos = projectsCache
@@ -672,17 +910,17 @@
 
     wrap.innerHTML = `
       <div class="stat-grid">
-        <div class="stat-card"><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
-        ${STATUS_ORDER.map(s => `<div class="stat-card"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
+        <div class="stat-card clickable" data-dash-filter-status=""><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
+        ${STATUS_ORDER.map(s => `<div class="stat-card clickable" data-dash-filter-status="${s}"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
       </div>
       <div class="form-row" style="align-items:start;">
         <div>
           <p class="field-note" style="margin-bottom:8px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--steel-300);">Proyectos por empresa</p>
-          ${clientRows.length ? clientRows.map(([n, c]) => `<div class="row-item" style="padding:8px 0;"><span class="r-main" style="min-width:auto;">${escapeHtml(n)}</span><span class="r-meta" style="margin-left:auto;">${c}</span></div>`).join('') : '<p class="empty-note">Sin datos todavía.</p>'}
+          ${clientRows.length ? clientRows.map(([cid, n, c]) => `<div class="row-item clickable" style="padding:8px 0;" data-dash-filter-client="${cid}" data-dash-filter-client-label="${escapeHtml(n)}"><span class="r-main" style="min-width:auto;">${escapeHtml(n)}</span><span class="r-meta" style="margin-left:auto;">${c}</span></div>`).join('') : '<p class="empty-note">Sin datos todavía.</p>'}
         </div>
         <div>
           <p class="field-note" style="margin-bottom:8px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--steel-300);">Proyectos por responsable de Avanta</p>
-          ${responsableRows.length ? responsableRows.map(([n, c]) => `<div class="row-item" style="padding:8px 0;"><span class="r-main" style="min-width:auto;">${escapeHtml(n)}</span><span class="r-meta" style="margin-left:auto;">${c}</span></div>`).join('') : '<p class="empty-note">Sin datos todavía.</p>'}
+          ${responsableRows.length ? responsableRows.map(([vid, n, c]) => `<div class="row-item clickable" style="padding:8px 0;" data-dash-filter-responsable="${vid}"><span class="r-main" style="min-width:auto;">${escapeHtml(n)}</span><span class="r-meta" style="margin-left:auto;">${c}</span></div>`).join('') : '<p class="empty-note">Sin datos todavía.</p>'}
         </div>
       </div>
       ${(vencidos.length || sinOC.length) ? `
@@ -703,10 +941,21 @@
         `).join('')}
       ` : ''}
     `;
+    wrap.querySelectorAll('[data-dash-filter-status]').forEach(el => {
+      el.addEventListener('click', () => goToProyectosFiltered({ status: el.getAttribute('data-dash-filter-status') }));
+    });
+    wrap.querySelectorAll('[data-dash-filter-client]').forEach(el => {
+      el.addEventListener('click', () => goToProyectosFiltered({ clientId: el.getAttribute('data-dash-filter-client'), clientLabel: el.getAttribute('data-dash-filter-client-label') }));
+    });
+    wrap.querySelectorAll('[data-dash-filter-responsable]').forEach(el => {
+      el.addEventListener('click', () => goToProyectosFiltered({ responsableId: el.getAttribute('data-dash-filter-responsable') }));
+    });
     wrap.querySelectorAll('[data-dash-edit]').forEach(a => {
-      a.addEventListener('click', () => {
+      a.addEventListener('click', (e) => {
+        e.stopPropagation();
         activePanelTargets = new Set(['#section-proyectos']);
         applyPanelToggleState();
+        goToSubPanel(currentRole === 'admin' ? 'panel-todos-proyectos' : 'panel-mis-proyectos');
         startProjectEdit(a.getAttribute('data-dash-edit'));
       });
     });
@@ -838,10 +1087,14 @@
       ${quickNavHtml('vendedor')}
       <p class="admin-note">Sesión de vendedor — ${escapeHtml(fullName)}. Aquí solo ves y editas los proyectos que tú cargaste.</p>
 
+      <div class="tool-section" id="section-dashboard">
+        <h1 class="section-title">Dashboard</h1>
+        ${dashboardPanelHtml()}
+      </div>
+
       <div class="tool-section" id="section-proyectos">
         <h1 class="section-title">Proyectos</h1>
-        ${projectFormHtml()}
-
+        ${subNavHtml([['panel-mis-proyectos', 'Mis proyectos'], ['panel-proyecto', 'Crear proyecto'], ['panel-actualizacion', 'Actualizar estatus']])}
         <div class="panel" id="panel-mis-proyectos">
           <h2>Mis proyectos</h2>
           <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
@@ -851,6 +1104,8 @@
           </div>
           <div id="projectsList"></div>
         </div>
+
+        ${projectFormHtml()}
 
         <div class="panel" id="panel-actualizacion">
           <h2>Agregar actualización de estatus</h2>
@@ -871,11 +1126,6 @@
         </div>
       </div>
 
-      <div class="tool-section" id="section-dashboard">
-        <h1 class="section-title">Dashboard</h1>
-        ${dashboardPanelHtml()}
-      </div>
-
       <div class="tool-section" id="section-configuracion">
         <h1 class="section-title">Mi cuenta</h1>
         ${miCuentaPanelHtml()}
@@ -893,6 +1143,7 @@
     supplierRows = [];
     renderSupplierRows();
     initPanelToggle();
+    initSubNav(adminContent);
   }
 
   let vendedoresCache = [];
@@ -912,6 +1163,7 @@
     await loadVendedores();
     await loadAdmins();
     renderStaffList();
+    renderAccesoList();
     refreshResponsableOptions();
   }
   async function renameStaff(role, id, currentName) {
@@ -986,6 +1238,10 @@
       renderUsersList();
       renderClientsList();
       renderStaffList();
+      renderAccesoList();
+      refreshGrantSelects();
+      await loadGrants();
+      renderGrants();
       await loadAuditoria();
       renderAuditoria();
       refreshFilterSelects();
@@ -1002,6 +1258,12 @@
     if (!fc || !fu) return;
     fc.innerHTML = '<option value="">Todas</option>' + clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('');
     fu.innerHTML = '<option value="">Todos</option>' + usersCache.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('');
+    const fr = document.getElementById('filterResponsable');
+    if (fr) {
+      const current = fr.value;
+      fr.innerHTML = '<option value="">Todos</option><option value="__unassigned__">Sin asignar</option>' + vendedoresCache.map(v => `<option value="${v.id}">${escapeHtml(v.full_name)}</option>`).join('');
+      if (current) fr.value = current;
+    }
   }
 
   async function loadClients() {
@@ -1022,6 +1284,7 @@
     if (error) { alert('No se pudo actualizar: ' + error.message); return; }
     await loadClients();
     renderClientsList();
+    renderAccesoList();
     refreshFilterSelects();
     renderProjectsList();
   }
@@ -1269,6 +1532,8 @@
     refreshUserManagerOptions();
     refreshProjectOwnerOptions();
     renderUsersList();
+    renderAccesoList();
+    refreshGrantSelects();
   }
 
   function openUserEdit(userId) {
@@ -1428,17 +1693,21 @@
     const fc = document.getElementById('filterClient');
     const fu = document.getElementById('filterUser');
     const fp = document.getElementById('filterProvider');
+    const fr = document.getElementById('filterResponsable');
     const fs = document.getElementById('filterStatus');
     const ft = document.getElementById('filterText');
     const clientId = fc ? fc.value : '';
     const userId = fu ? fu.value : '';
     const provider = fp ? fp.value : '';
+    const responsable = fr ? fr.value : '';
     const status = fs ? fs.value : '';
     const text = ft ? ft.value.trim().toLowerCase() : '';
     return projectsCache.filter(p => {
       if (clientId && p.client_id !== clientId) return false;
       if (userId && p.owner_user_id !== userId) return false;
       if (provider && !(p.portal_project_suppliers || []).some(s => s.provider === provider)) return false;
+      if (responsable === '__unassigned__' && p.owner_vendedor_id) return false;
+      if (responsable && responsable !== '__unassigned__' && p.owner_vendedor_id !== responsable) return false;
       if (status === '__active__' && p.status === 'entregado') return false;
       if (status && status !== '__active__' && p.status !== status) return false;
       if (text) {

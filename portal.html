@@ -197,17 +197,30 @@
     await supabaseClient.auth.signOut();
   }
 
-  async function routeAfterLogin(userId) {
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active').eq('id', userId).single();
+  // Registro de accesos — solo se llama con logEvent=true desde un login
+  // recién hecho (formulario de esta página), nunca desde la redirección
+  // automática por sesión ya activa (evita registrar un "acceso" cada vez
+  // que alguien recarga esta página con la sesión abierta). Es un
+  // "fire and forget": si falla, no debe bloquear ni retrasar el login.
+  async function logLoginEvent(userId, role, label) {
+    try {
+      await supabaseClient.from('portal_login_events').insert({ actor_id: userId, actor_role: role, actor_label: label || null });
+    } catch (e) { /* no bloquea el login si falla */ }
+  }
+
+  async function routeAfterLogin(userId, logEvent) {
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, full_name, active').eq('id', userId).single();
     if (adminRow) {
       if (adminRow.active === false) { await denyInactive(); return; }
+      if (logEvent) await logLoginEvent(userId, 'admin', adminRow.full_name);
       window.location.href = 'admin.html';
       return;
     }
 
-    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('must_change_password, active').eq('id', userId).single();
+    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('full_name, must_change_password, active').eq('id', userId).single();
     if (vendedorRow) {
       if (vendedorRow.active === false) { await denyInactive(); return; }
+      if (logEvent) await logLoginEvent(userId, 'vendedor', vendedorRow.full_name);
       if (vendedorRow.must_change_password) {
         pendingRole = 'vendedor';
         loginCard.classList.add('hidden');
@@ -220,11 +233,12 @@
 
     const { data: userRow } = await supabaseClient
       .from('portal_users')
-      .select('must_change_password, active')
+      .select('full_name, must_change_password, active')
       .eq('id', userId)
       .single();
 
     if (userRow && userRow.active === false) { await denyInactive(); return; }
+    if (userRow && logEvent) await logLoginEvent(userId, 'cliente', userRow.full_name);
     if (userRow && userRow.must_change_password) {
       pendingRole = 'cliente';
       loginCard.classList.add('hidden');
@@ -257,7 +271,7 @@
       return;
     }
 
-    await routeAfterLogin(data.user.id);
+    await routeAfterLogin(data.user.id, true);
   });
 
   document.getElementById('forgotLink').addEventListener('click', async (e) => {

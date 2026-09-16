@@ -242,9 +242,9 @@
 
   const STATUS_ORDER = ['activo', 'espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
   const STATUS_LABELS = {
-    activo: 'Activo',
-    espera_pedido: 'Espera de pedido',
-    en_fabricacion: 'Fabricación',
+    activo: 'Activo (Preparando cotización)',
+    espera_pedido: 'Esperando orden de compra',
+    en_fabricacion: 'Fabricando',
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
   };
@@ -459,10 +459,10 @@
 
       <div class="tool-section" id="section-proyectos">
         <h1 class="section-title">3. Proyectos</h1>
-        ${subNavHtml([['panel-todos-proyectos', 'Todos los proyectos'], ['panel-proyecto', 'Crear proyecto'], ['panel-actualizacion', 'Actualizar estatus']])}
+        ${subNavHtml([['panel-todos-proyectos', 'Todos los proyectos'], ['panel-proyecto', 'Crear proyecto']])}
         <div class="panel" id="panel-todos-proyectos">
           <h2>Todos los proyectos</h2>
-          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
+          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido. Para cambiar el estatus de un proyecto, dale "Editar".</p>
           <div class="form-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom:18px;">
             <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
             <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
@@ -471,30 +471,12 @@
             <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
           </div>
           <div class="form-row single" style="margin-bottom:4px;">
-            <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+            <div class="field"><label>Buscar (folio, nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. AVT-0012, COT-4821 o Ternium"></div>
           </div>
           <div id="projectsList"></div>
         </div>
 
         ${projectFormHtml('admin')}
-
-        <div class="panel" id="panel-actualizacion">
-          <h2>Agregar actualización de estatus</h2>
-          <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
-          <div id="updateMsg" class="msg"></div>
-          <form id="updateForm">
-            <div class="form-row single">
-              <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
-            </div>
-            <div class="form-row single">
-              <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
-            </div>
-            <div class="form-row single">
-              <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
-            </div>
-            <button type="submit" class="submit-btn">Publicar actualización</button>
-          </form>
-        </div>
       </div>
 
       <div class="tool-section" id="section-empleados">
@@ -540,8 +522,8 @@
     document.getElementById('projectForm').addEventListener('submit', submitProject);
     document.getElementById('projectClient').addEventListener('change', refreshProjectOwnerOptions);
     document.getElementById('projectCancelBtn').addEventListener('click', cancelProjectEdit);
+    document.getElementById('projectPO').addEventListener('input', updateProjectDateAvailability);
     document.getElementById('addSupplierRowBtn').addEventListener('click', () => { addSupplierRow(); renderSupplierRows(); });
-    document.getElementById('updateForm').addEventListener('submit', submitUpdate);
     document.getElementById('filterClient').addEventListener('change', renderProjectsList);
     document.getElementById('filterUser').addEventListener('change', renderProjectsList);
     document.getElementById('filterProvider').addEventListener('change', renderProjectsList);
@@ -553,6 +535,7 @@
     document.getElementById('grantGrantee').addEventListener('change', refreshGrantTargetOptions);
     supplierRows = [];
     renderSupplierRows();
+    updateProjectDateAvailability();
     initPanelToggle();
     initSubNav(adminContent);
   }
@@ -955,7 +938,7 @@
         e.stopPropagation();
         activePanelTargets = new Set(['#section-proyectos']);
         applyPanelToggleState();
-        goToSubPanel(currentRole === 'admin' ? 'panel-todos-proyectos' : 'panel-mis-proyectos');
+        // startProjectEdit() ya salta al sub-panel del formulario por su cuenta.
         startProjectEdit(a.getAttribute('data-dash-edit'));
       });
     });
@@ -967,6 +950,7 @@
       <div class="panel" id="panel-proyecto">
         <h2 id="projectFormTitle">Crear proyecto</h2>
         <p class="panel-sub" id="projectFormSub">Registra un pedido o proyecto para un usuario específico.</p>
+        <p class="field-note" id="projectFolioLine" style="display:none; margin:-8px 0 16px; font-size:13px;"></p>
         <div id="projectMsg" class="msg"></div>
         <form id="projectForm">
           <div class="form-row">
@@ -993,13 +977,28 @@
             <div class="field">
               <label>N° de orden de compra del cliente (OC)</label>
               <input type="text" id="projectPO">
-              <p class="field-note">Obligatorio a partir de "Fabricación" ("Activo" y "Espera de pedido" son previos a tener el pedido confirmado).</p>
+              <p class="field-note">Obligatorio a partir de "Fabricando" ("Activo (Preparando cotización)" y "Esperando orden de compra" son previos a tener el pedido confirmado).</p>
             </div>
           </div>
           <div class="form-row triple">
             <div class="field"><label>Estatus</label><select id="projectStatus">${statusOptionsHtml('activo')}</select></div>
-            <div class="field"><label>Entrega estimada (opcional)</label><input type="date" id="projectDate"></div>
+            <div class="field">
+              <label>Fecha compromiso con el cliente (opcional)</label>
+              <input type="date" id="projectDate" disabled>
+              <p class="field-note">Se habilita al capturar la OC — es la fecha que le prometemos al cliente, nunca antes de tener el pedido confirmado.</p>
+            </div>
             <div class="field"><label>Fecha real de entrega (opcional)</label><input type="date" id="projectActualDate"></div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>Fecha estimada interna (opcional)</label>
+              <input type="date" id="projectInternalDate">
+              <p class="field-note">Solo para uso interno de AVANTA — el cliente nunca la ve. Sirve para llevar el control de si vamos atrasados o adelantados frente a lo que nos proponemos internamente.</p>
+            </div>
+            <div class="field">
+              <label>Nota de este cambio de estatus (opcional)</label>
+              <textarea id="projectUpdateNote" placeholder="Detalle visible para el cliente — solo se guarda si cambiaste el Estatus de arriba respecto al que ya tenía"></textarea>
+            </div>
           </div>
           <div class="form-row single">
             <div class="field"><label>Notas (opcional)</label><textarea id="projectNotes"></textarea></div>
@@ -1014,6 +1013,16 @@
         </form>
       </div>
     `;
+  }
+
+  // ---- La fecha de compromiso con el cliente solo se puede capturar una
+  // vez que existe número de OC (regla pedida por Ric — antes de eso no
+  // hay pedido confirmado, así que no hay nada que prometerle todavía). ----
+  function updateProjectDateAvailability() {
+    const po = document.getElementById('projectPO');
+    const dateField = document.getElementById('projectDate');
+    if (!po || !dateField) return;
+    dateField.disabled = po.value.trim().length === 0;
   }
 
   function addSupplierRow(provider, po) {
@@ -1079,7 +1088,9 @@
     `;
     document.getElementById('staffForm').reset();
     await loadVendedores();
-    renderVendedoresList();
+    await loadAdmins();
+    renderStaffList();
+    renderAccesoList();
   }
 
   function renderVendedor(fullName) {
@@ -1094,36 +1105,18 @@
 
       <div class="tool-section" id="section-proyectos">
         <h1 class="section-title">Proyectos</h1>
-        ${subNavHtml([['panel-mis-proyectos', 'Mis proyectos'], ['panel-proyecto', 'Crear proyecto'], ['panel-actualizacion', 'Actualizar estatus']])}
+        ${subNavHtml([['panel-mis-proyectos', 'Mis proyectos'], ['panel-proyecto', 'Crear proyecto']])}
         <div class="panel" id="panel-mis-proyectos">
           <h2>Mis proyectos</h2>
-          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
+          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido. Para cambiar el estatus de un proyecto, dale "Editar".</p>
           <div class="form-row" style="margin-bottom:4px;">
-            <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+            <div class="field"><label>Buscar (folio, nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. AVT-0012, COT-4821 o Ternium"></div>
             <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
           </div>
           <div id="projectsList"></div>
         </div>
 
         ${projectFormHtml()}
-
-        <div class="panel" id="panel-actualizacion">
-          <h2>Agregar actualización de estatus</h2>
-          <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
-          <div id="updateMsg" class="msg"></div>
-          <form id="updateForm">
-            <div class="form-row single">
-              <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
-            </div>
-            <div class="form-row single">
-              <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
-            </div>
-            <div class="form-row single">
-              <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
-            </div>
-            <button type="submit" class="submit-btn">Publicar actualización</button>
-          </form>
-        </div>
       </div>
 
       <div class="tool-section" id="section-configuracion">
@@ -1135,13 +1128,14 @@
     document.getElementById('projectForm').addEventListener('submit', submitProject);
     document.getElementById('projectClient').addEventListener('change', refreshProjectOwnerOptions);
     document.getElementById('projectCancelBtn').addEventListener('click', cancelProjectEdit);
+    document.getElementById('projectPO').addEventListener('input', updateProjectDateAvailability);
     document.getElementById('addSupplierRowBtn').addEventListener('click', () => { addSupplierRow(); renderSupplierRows(); });
-    document.getElementById('updateForm').addEventListener('submit', submitUpdate);
     document.getElementById('filterText').addEventListener('input', renderProjectsList);
     document.getElementById('filterStatus').addEventListener('change', renderProjectsList);
     document.getElementById('staffPwForm').addEventListener('submit', submitStaffChangePassword);
     supplierRows = [];
     renderSupplierRows();
+    updateProjectDateAvailability();
     initPanelToggle();
     initSubNav(adminContent);
   }
@@ -1229,7 +1223,6 @@
     await loadProjects();
     refreshClientSelects();
     refreshProjectOwnerOptions();
-    refreshUpdateProjectSelect();
     if (currentRole === 'admin') {
       await loadVendedores();
       await loadAdmins();
@@ -1333,7 +1326,7 @@
   async function loadProjects() {
     let query = supabaseClient
       .from('portal_projects')
-      .select('id, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, notes, portal_project_suppliers(id, provider, po_number_supplier)')
+      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, internal_estimated_date, notes, portal_project_suppliers(id, provider, po_number_supplier)')
       .order('created_at', { ascending: false });
     if (currentRole === 'vendedor') query = query.eq('owner_vendedor_id', currentStaffId);
     const { data } = await query;
@@ -1404,13 +1397,6 @@
     const candidates = usersCache.filter(u => u.client_id === clientId);
     sel.innerHTML = '<option value="">Seleccione...</option>' +
       candidates.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}${u.puesto ? ' — ' + escapeHtml(u.puesto) : ''}</option>`).join('');
-  }
-
-  function refreshUpdateProjectSelect() {
-    const sel = document.getElementById('updateProject');
-    sel.innerHTML = '<option value="">Seleccione...</option>' + projectsCache.map(p =>
-      `<option value="${p.id}">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))} — ${escapeHtml(p.name)}</option>`
-    ).join('');
   }
 
   // ---- Registrar empresa cliente ----
@@ -1566,12 +1552,27 @@
     const msg = document.getElementById('projectMsg');
     const status = document.getElementById('projectStatus').value;
     const poNumber = document.getElementById('projectPO').value.trim();
+    const commitDate = document.getElementById('projectDate').value || null;
 
     if (status !== 'activo' && status !== 'espera_pedido' && !poNumber) {
       msg.className = 'msg error';
-      msg.textContent = 'Falta el número de pedido (OC) del cliente — es obligatorio a partir de "Fabricación" (los estatus "Activo" y "Espera de pedido" son previos a tener el pedido confirmado).';
+      msg.textContent = 'Falta el número de pedido (OC) del cliente — es obligatorio a partir de "Fabricando" (los estatus "Activo (Preparando cotización)" y "Esperando orden de compra" son previos a tener el pedido confirmado).';
       return;
     }
+    if (commitDate && !poNumber) {
+      msg.className = 'msg error';
+      msg.textContent = 'No se puede guardar una fecha de compromiso con el cliente sin OC — captura la OC primero, o quita esa fecha.';
+      return;
+    }
+
+    // Se guarda el estatus anterior (antes de sobreescribirlo) para saber si
+    // este guardado representa un cambio de estatus real y, de ser así,
+    // registrarlo en el historial — "Actualizar estatus" ya no es una
+    // herramienta aparte, ahora es parte de "Editar proyecto".
+    const previousStatus = editingProjectId
+      ? ((projectsCache.find(p => p.id === editingProjectId) || {}).status || null)
+      : null;
+    const updateNote = document.getElementById('projectUpdateNote').value.trim() || null;
 
     const payload = {
       client_id: document.getElementById('projectClient').value,
@@ -1583,8 +1584,9 @@
       quote_number: document.getElementById('projectQuote').value || null,
       po_number: poNumber || null,
       status: status,
-      estimated_delivery_date: document.getElementById('projectDate').value || null,
+      estimated_delivery_date: commitDate,
       actual_delivery_date: document.getElementById('projectActualDate').value || null,
+      internal_estimated_date: document.getElementById('projectInternalDate').value || null,
       notes: document.getElementById('projectNotes').value || null,
       updated_at: new Date().toISOString(),
     };
@@ -1619,6 +1621,12 @@
       }
     }
 
+    // Registrar en el historial cuando el estatus realmente cambió (incluye
+    // el caso de un proyecto nuevo, que "cambia" de nada a su estatus inicial).
+    if (!error && projectId && status !== previousStatus) {
+      await supabaseClient.from('portal_project_updates').insert({ project_id: projectId, status, note: updateNote });
+    }
+
     msg.className = error ? 'msg error' : 'msg success';
     msg.textContent = error ? 'Error: ' + error.message : (editingProjectId ? 'Proyecto actualizado correctamente.' : 'Proyecto creado correctamente.');
 
@@ -1626,7 +1634,6 @@
       cancelProjectEdit();
       await loadProjects();
       renderProjectsList();
-      refreshUpdateProjectSelect();
     }
   }
 
@@ -1634,8 +1641,19 @@
     const p = projectsCache.find(p => p.id === projectId);
     if (!p) return;
     editingProjectId = projectId;
+    // La sección "Proyectos" ahora tiene sub-navegación (Todos los proyectos /
+    // Crear proyecto) — hay que saltar al sub-panel del formulario, si no,
+    // el formulario se pre-carga pero se queda oculto detrás del listado.
+    goToSubPanel('panel-proyecto');
     document.getElementById('projectFormTitle').textContent = 'Editar proyecto';
     document.getElementById('projectFormSub').textContent = 'Estás editando un proyecto existente.';
+    const folioLine = document.getElementById('projectFolioLine');
+    if (p.folio) {
+      folioLine.textContent = 'Folio: ' + p.folio;
+      folioLine.style.display = '';
+    } else {
+      folioLine.style.display = 'none';
+    }
     document.getElementById('projectClient').value = p.client_id;
     refreshProjectOwnerOptions();
     document.getElementById('projectOwner').value = p.owner_user_id;
@@ -1648,11 +1666,14 @@
     document.getElementById('projectStatus').value = p.status;
     document.getElementById('projectDate').value = p.estimated_delivery_date || '';
     document.getElementById('projectActualDate').value = p.actual_delivery_date || '';
+    document.getElementById('projectInternalDate').value = p.internal_estimated_date || '';
+    document.getElementById('projectUpdateNote').value = '';
     document.getElementById('projectNotes').value = p.notes || '';
     const responsableSel = document.getElementById('projectResponsable');
     if (responsableSel) responsableSel.value = p.owner_vendedor_id || '';
     supplierRows = (p.portal_project_suppliers || []).map(s => ({ provider: s.provider, po_number_supplier: s.po_number_supplier || '' }));
     renderSupplierRows();
+    updateProjectDateAvailability();
     document.getElementById('projectSubmitBtn').textContent = 'Guardar cambios';
     document.getElementById('projectCancelBtn').classList.remove('hidden');
     document.getElementById('projectForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1663,6 +1684,7 @@
     document.getElementById('projectForm').reset();
     document.getElementById('projectFormTitle').textContent = 'Crear proyecto';
     document.getElementById('projectFormSub').textContent = 'Registra un pedido o proyecto para un usuario específico.';
+    document.getElementById('projectFolioLine').style.display = 'none';
     document.getElementById('projectOwner').innerHTML = '<option value="">Seleccione una empresa primero...</option>';
     document.getElementById('projectStatus').value = 'activo';
     const responsableSel = document.getElementById('projectResponsable');
@@ -1671,6 +1693,7 @@
     document.getElementById('projectCancelBtn').classList.add('hidden');
     supplierRows = [];
     renderSupplierRows();
+    updateProjectDateAvailability();
   }
 
   async function deleteProject(projectId) {
@@ -1680,7 +1703,6 @@
       if (editingProjectId === projectId) cancelProjectEdit();
       await loadProjects();
       renderProjectsList();
-      refreshUpdateProjectSelect();
     }
   }
 
@@ -1711,7 +1733,7 @@
       if (status === '__active__' && p.status === 'entregado') return false;
       if (status && status !== '__active__' && p.status !== status) return false;
       if (text) {
-        const haystack = [p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
+        const haystack = [p.folio, p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
         if (!haystack.includes(text)) return false;
       }
       return true;
@@ -1756,8 +1778,9 @@
       html += `
       <div class="row-item">
         <div class="r-wrap">
-          <span class="r-main">${escapeHtml(p.name)}</span>
-          <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}${responsableMeta}</span>
+          <span class="r-main">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</span>
+          <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Compromiso con cliente ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}${responsableMeta}</span>
+          ${p.internal_estimated_date ? `<span class="r-meta">Fecha estimada interna (uso interno): ${formatDateShort(p.internal_estimated_date)}</span>` : ''}
           ${supplierMeta ? `<span class="r-meta">Proveedores (interno): ${supplierMeta}</span>` : ''}
           <span class="status-pill-sm${isDelivered ? ' delivered' : ''}">${STATUS_LABELS[p.status] || p.status}</span>
           <span class="r-actions">
@@ -1808,39 +1831,6 @@
         <span class="r-meta">${formatDateShort((u.created_at || '').slice(0, 10))}${u.note ? ' — ' + escapeHtml(u.note) : ''}</span>
       </div>
     `).join('');
-  }
-
-  // ---- Agregar actualización de estatus ----
-  async function submitUpdate(e) {
-    e.preventDefault();
-    const msg = document.getElementById('updateMsg');
-    const projectId = document.getElementById('updateProject').value;
-    const status = document.getElementById('updateStatus').value;
-
-    const projectForUpdate = projectsCache.find(p => p.id === projectId);
-    if (status !== 'activo' && status !== 'espera_pedido' && projectForUpdate && !projectForUpdate.po_number) {
-      msg.className = 'msg error';
-      msg.textContent = 'Este proyecto no tiene número de pedido (OC) del cliente todavía — agrégalo editando el proyecto (panel "Todos los proyectos" / "Mis proyectos") antes de avanzar su estatus.';
-      return;
-    }
-
-    const { error: updateError } = await supabaseClient.from('portal_project_updates').insert({
-      project_id: projectId,
-      status: status,
-      note: document.getElementById('updateNote').value || null,
-    });
-
-    if (!updateError) {
-      await supabaseClient.from('portal_projects').update({ status: status, updated_at: new Date().toISOString() }).eq('id', projectId);
-    }
-
-    msg.className = updateError ? 'msg error' : 'msg success';
-    msg.textContent = updateError ? 'Error: ' + updateError.message : 'Actualización publicada — ya la puede ver el usuario y su jefe.';
-    if (!updateError) {
-      document.getElementById('updateForm').reset();
-      await loadProjects();
-      renderProjectsList();
-    }
   }
 
   function escapeHtml(str) {

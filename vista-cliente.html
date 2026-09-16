@@ -199,9 +199,9 @@
 
   const STATUS_ORDER = ['activo', 'espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
   const STATUS_LABELS = {
-    activo: 'Activo',
-    espera_pedido: 'Espera de pedido',
-    en_fabricacion: 'Fabricación',
+    activo: 'Activo (Preparando cotización)',
+    espera_pedido: 'Esperando orden de compra',
+    en_fabricacion: 'Fabricando',
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
   };
@@ -239,7 +239,7 @@
       supabaseClient.from('portal_users').select('id, full_name, email, puesto, area, manager_id, client_id').order('full_name'),
       supabaseClient
         .from('portal_projects')
-        .select('id, client_id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
+        .select('id, folio, client_id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
         .order('created_at', { ascending: false }),
     ]);
     allClients = clients || [];
@@ -419,7 +419,7 @@
     if (project.quote_number) metaItems.push(['N° de cotización', project.quote_number]);
     if (project.po_number) metaItems.push(['N° de orden de compra', project.po_number]);
     if (project.product_service) metaItems.push(['Producto / servicio', project.product_service + (project.quantity ? ' — ' + project.quantity : '')]);
-    if (project.estimated_delivery_date) metaItems.push(['Entrega estimada', formatDate(project.estimated_delivery_date)]);
+    if (project.estimated_delivery_date) metaItems.push(['Fecha de entrega comprometida', formatDate(project.estimated_delivery_date)]);
 
     const card = document.createElement('div');
     card.className = 'project-card';
@@ -427,7 +427,7 @@
     const head = document.createElement('div');
     head.className = 'project-head';
     head.innerHTML = `
-      <div class="project-name">${escapeHtml(project.name)}</div>
+      <div class="project-name">${project.folio ? escapeHtml(project.folio) + ' — ' : ''}${escapeHtml(project.name)}</div>
       ${project.description ? `<div class="project-desc">${escapeHtml(project.description)}</div>` : ''}
       ${renderStepper(project.status)}
       ${metaItems.length ? `<div class="meta-grid">${metaItems.map(([l, v]) => `<div class="meta-item"><div class="mlabel">${escapeHtml(l)}</div><div class="mvalue">${escapeHtml(v)}</div></div>`).join('')}</div>` : ''}

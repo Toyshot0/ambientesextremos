@@ -78,6 +78,8 @@
   .stat-card { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 18px 20px; }
   .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--orange); }
   .stat-card .slabel { font-size: 12px; color: var(--steel-300); margin-top: 4px; }
+  .stat-card.clickable { cursor: pointer; transition: border-color 0.15s; }
+  .stat-card.clickable:hover { border-color: var(--orange); }
   .attn-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 13px; }
   .attn-item:last-child { border-bottom: none; }
   .attn-item .a-meta { color: var(--steel-300); font-size: 12px; }
@@ -250,9 +252,9 @@
 
   const STATUS_ORDER = ['activo', 'espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
   const STATUS_LABELS = {
-    activo: 'Activo',
-    espera_pedido: 'Espera de pedido',
-    en_fabricacion: 'Fabricación',
+    activo: 'Activo (Preparando cotización)',
+    espera_pedido: 'Esperando orden de compra',
+    en_fabricacion: 'Fabricando',
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
   };
@@ -286,7 +288,7 @@
     if (project.quote_number) metaItems.push(['N° de cotización', project.quote_number]);
     if (project.po_number) metaItems.push(['N° de orden de compra', project.po_number]);
     if (project.product_service) metaItems.push(['Producto / servicio', project.product_service + (project.quantity ? ' — ' + project.quantity : '')]);
-    if (project.estimated_delivery_date) metaItems.push(['Entrega estimada', formatDate(project.estimated_delivery_date)]);
+    if (project.estimated_delivery_date) metaItems.push(['Fecha de entrega comprometida', formatDate(project.estimated_delivery_date)]);
 
     const card = document.createElement('div');
     card.className = 'project-card';
@@ -294,7 +296,7 @@
     const head = document.createElement('div');
     head.className = 'project-head';
     head.innerHTML = `
-      <div class="project-name">${escapeHtml(project.name)}</div>
+      <div class="project-name">${project.folio ? escapeHtml(project.folio) + ' — ' : ''}${escapeHtml(project.name)}</div>
       ${project.description ? `<div class="project-desc">${escapeHtml(project.description)}</div>` : ''}
       ${renderStepper(project.status)}
       ${metaItems.length ? `<div class="meta-grid">${metaItems.map(([l, v]) => `<div class="meta-item"><div class="mlabel">${escapeHtml(l)}</div><div class="mvalue">${escapeHtml(v)}</div></div>`).join('')}</div>` : ''}
@@ -369,7 +371,7 @@
     // RLS ya limita esto a: mis proyectos + los de mis subordinados
     const { data: projects } = await supabaseClient
       .from('portal_projects')
-      .select('id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
+      .select('id, folio, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
       .order('created_at', { ascending: false });
     allProjects = projects || [];
 
@@ -418,8 +420,8 @@
     body.innerHTML = `
       <p class="section-label" style="margin-top:0;">Resumen</p>
       <div class="stat-grid">
-        <div class="stat-card"><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
-        ${STATUS_ORDER.map(s => `<div class="stat-card"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
+        <div class="stat-card clickable" data-stat-status=""><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
+        ${STATUS_ORDER.map(s => `<div class="stat-card clickable" data-stat-status="${s}"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
       </div>
       ${atencion.length > 0 ? `
         <p class="section-label">Requieren atención — entrega estimada vencida</p>
@@ -434,6 +436,21 @@
       ` : ''}
       ${total === 0 ? '<div class="empty-state">Todavía no hay proyectos registrados.</div>' : ''}
     `;
+    body.querySelectorAll('[data-stat-status]').forEach(el => {
+      el.addEventListener('click', () => goToMisProyectosFiltered(el.getAttribute('data-stat-status')));
+    });
+  }
+
+  // Los recuadros de "Inicio" son interactivos — llevan directo a "Mis
+  // proyectos" ya filtrado por ese estatus.
+  function goToMisProyectosFiltered(status) {
+    activeTab = 'proyectos';
+    renderTabs();
+    const sel = document.getElementById('projFilterStatus');
+    const ft = document.getElementById('projFilterText');
+    if (sel) sel.value = status || '';
+    if (ft) ft.value = '';
+    renderProjList();
   }
 
   // =====================================================================

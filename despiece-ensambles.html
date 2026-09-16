@@ -219,7 +219,7 @@
 
     let projQuery = supabaseClient
       .from('portal_projects')
-      .select('id, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date')
+      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date')
       .order('created_at', { ascending: false });
     if (currentRole === 'vendedor') projQuery = projQuery.eq('owner_vendedor_id', currentStaffId);
     const { data: projects } = await projQuery;
@@ -231,7 +231,7 @@
   async function reloadComponents() {
     const { data } = await supabaseClient
       .from('portal_project_components')
-      .select('id, project_id, component_name, status, provider, po_number_component, supplier_commitment_date, order_index, portal_projects(id, name, client_id, status)')
+      .select('id, project_id, component_name, status, provider, po_number_component, supplier_commitment_date, order_index, portal_projects(id, folio, name, client_id, status)')
       .order('created_at', { ascending: true });
     componentsCache = data || [];
   }
@@ -304,7 +304,7 @@
       if (status && status !== '__pending__' && c.status !== status) return false;
       if (clientId && (!proj || proj.client_id !== clientId)) return false;
       if (text) {
-        const haystack = [c.component_name, c.po_number_component, proj ? proj.name : '', proj ? clientName(proj.client_id) : ''].filter(Boolean).join(' ').toLowerCase();
+        const haystack = [c.component_name, c.po_number_component, proj ? proj.folio : '', proj ? proj.name : '', proj ? clientName(proj.client_id) : ''].filter(Boolean).join(' ').toLowerCase();
         if (!haystack.includes(text)) return false;
       }
       return true;
@@ -351,7 +351,7 @@
       <tr data-comp-row="${c.id}">
         <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
         <td>
-          <div class="r-main">${proj ? escapeHtml(proj.name) : '—'}</div>
+          <div class="r-main">${proj ? (proj.folio ? escapeHtml(proj.folio) + ' — ' : '') + escapeHtml(proj.name) : '—'}</div>
           <div class="r-meta">${proj ? escapeHtml(clientName(proj.client_id)) : ''}</div>
         </td>
         <td><select data-live-provider="${c.id}">${providerOptionsHtml(c.provider || '')}</select></td>
@@ -479,7 +479,7 @@
       return;
     }
     const matches = projectsCache.filter(p => {
-      const haystack = [p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
+      const haystack = [p.folio, p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(text);
     }).slice(0, 20);
     if (matches.length === 0) {
@@ -488,7 +488,7 @@
     }
     wrap.innerHTML = matches.map(p => `
       <div class="row-item" data-select-project="${p.id}">
-        <span class="r-main">${escapeHtml(p.name)}</span>
+        <span class="r-main">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</span>
         <span class="r-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.po_number ? ' — OC ' + escapeHtml(p.po_number) : ''}</span>
       </div>
     `).join('');
@@ -508,7 +508,7 @@
         <h2>Componentes de este ensamble</h2>
         <p class="panel-sub">Cada componente se pide a un proveedor distinto. La fecha compromiso y la fecha real de entrega del ensamble completo se editan en Administración de Proyectos → Editar.</p>
         <div class="ensamble-summary">
-          <div class="es-name">${escapeHtml(p.name)}</div>
+          <div class="es-name">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</div>
           <div class="es-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}</div>
         </div>
         <div id="existingCompWrap"></div>

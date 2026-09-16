@@ -86,6 +86,13 @@
   .verifying-note { color: var(--steel-300); }
   .admin-note { font-size: 13px; color: var(--steel-300); margin-bottom: 16px; }
 
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .stat-card { background: var(--gunmetal-900); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 14px 16px; text-align: center; }
+  .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--orange); line-height: 1.1; }
+  .stat-card .slabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--steel-300); margin-top: 6px; }
+  body.content-light .stat-card { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .stat-card .slabel { color: var(--ink-600); }
+
   body.content-light .admin-header { border-color: var(--paper-border); }
   body.content-light .admin-header h1 { color: var(--ink-900); }
   body.content-light .tools-back-link { color: var(--ink-600); }
@@ -217,10 +224,11 @@
 <script>
   const adminContent = document.getElementById('adminContent');
 
-  const STATUS_ORDER = ['espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
+  const STATUS_ORDER = ['activo', 'espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
   const STATUS_LABELS = {
+    activo: 'Activo',
     espera_pedido: 'Espera de pedido',
-    en_fabricacion: 'En fabricación',
+    en_fabricacion: 'Fabricación',
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
   };
@@ -246,11 +254,17 @@
   let editingProjectId = null;
   let currentRole = null; // 'admin' | 'vendedor'
   let currentStaffId = null;
+  let currentStaffFullName = null;
   let supplierRows = []; // [{provider, po_number_supplier}] — filas del formulario de proyecto en edición
 
   function setStaffIdentity(label) {
     const el = document.getElementById('staffIdentity');
     if (el) el.innerHTML = label;
+  }
+
+  async function denyInactive() {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'portal.html?inactive=1';
   }
 
   async function init() {
@@ -259,8 +273,9 @@
     currentStaffId = session.user.id;
     const sessionEmail = session.user.email || '';
 
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', currentStaffId).single();
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active').eq('id', currentStaffId).single();
     if (adminRow) {
+      if (adminRow.active === false) { await denyInactive(); return; }
       currentRole = 'admin';
       setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
       renderAdmin();
@@ -268,9 +283,11 @@
       return;
     }
 
-    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name').eq('id', currentStaffId).single();
+    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name, active').eq('id', currentStaffId).single();
     if (vendedorRow) {
+      if (vendedorRow.active === false) { await denyInactive(); return; }
       currentRole = 'vendedor';
+      currentStaffFullName = vendedorRow.full_name;
       setStaffIdentity(`<strong>${escapeHtml(vendedorRow.full_name)}</strong> — Vendedor`);
       renderVendedor(vendedorRow.full_name);
       await refreshAll();
@@ -286,6 +303,7 @@
   function quickNavHtml(role) {
     const adminLinks = [
       [ALL_TOOLS_TARGET, 'Todas las herramientas'],
+      ['#panel-dashboard', 'Dashboard'],
       ['#panel-empresa', 'Empresas'],
       ['#panel-crear-usuario', 'Crear usuario'],
       ['#panel-usuarios', 'Usuarios'],
@@ -296,6 +314,7 @@
     ];
     const vendedorLinks = [
       [ALL_TOOLS_TARGET, 'Todas las herramientas'],
+      ['#panel-dashboard', 'Dashboard'],
       ['#panel-proyecto', 'Crear proyecto'],
       ['#panel-mis-proyectos', 'Mis proyectos'],
       ['#panel-actualizacion', 'Actualizar estatus'],
@@ -346,9 +365,10 @@
   function renderAdmin() {
     adminContent.innerHTML = `
       ${quickNavHtml('admin')}
+      ${dashboardPanelHtml()}
       <div class="panel" id="panel-empresa">
-        <h2>Registrar empresa cliente</h2>
-        <p class="panel-sub">El primer paso — cada usuario que crees abajo pertenece a una de estas empresas.</p>
+        <h2>Empresas cliente</h2>
+        <p class="panel-sub">El primer paso — cada usuario que crees abajo pertenece a una de estas empresas. Puedes editar el nombre o desactivar una empresa más abajo.</p>
         <div id="clientMsg" class="msg"></div>
         <form id="clientForm">
           <div class="form-row single">
@@ -356,6 +376,7 @@
           </div>
           <button type="submit" class="submit-btn">Guardar empresa</button>
         </form>
+        <div id="clientsList" style="margin-top:18px;"></div>
       </div>
 
       <div class="panel" id="panel-crear-usuario">
@@ -384,7 +405,7 @@
 
       <div class="panel" id="panel-usuarios">
         <h2>Usuarios registrados</h2>
-        <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien.</p>
+        <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien, o desactivar su acceso.</p>
         <div id="usersList"></div>
       </div>
 
@@ -411,7 +432,7 @@
         <div id="vendedoresList" style="margin-top:18px;"></div>
       </div>
 
-      ${projectFormHtml()}
+      ${projectFormHtml('admin')}
 
       <div class="panel" id="panel-todos-proyectos">
         <h2>Todos los proyectos</h2>
@@ -420,7 +441,7 @@
           <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
           <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
           <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
-          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">Activos (no entregados)</option>${statusOptionsHtml('')}</select></div>
+          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
         </div>
         <div class="form-row single" style="margin-bottom:4px;">
           <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
@@ -467,8 +488,97 @@
     initPanelToggle();
   }
 
+  // ---- Dashboard: resumen de proyectos (compartido entre admin y vendedor;
+  // los datos ya vienen filtrados por rol desde loadProjects()) ----
+  function dashboardPanelHtml() {
+    return `
+      <div class="panel" id="panel-dashboard">
+        <h2>Dashboard</h2>
+        <p class="panel-sub">Resumen general de los proyectos que puedes ver.</p>
+        <div id="dashboardBody"></div>
+      </div>
+    `;
+  }
+
+  function todayIso() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function renderDashboard() {
+    const wrap = document.getElementById('dashboardBody');
+    if (!wrap) return;
+
+    const total = projectsCache.length;
+    const counts = {};
+    STATUS_ORDER.forEach(s => { counts[s] = 0; });
+    projectsCache.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
+
+    const byClient = {};
+    projectsCache.forEach(p => { byClient[p.client_id] = (byClient[p.client_id] || 0) + 1; });
+    const clientRows = Object.keys(byClient)
+      .map(cid => [clientName(cid), byClient[cid]])
+      .sort((a, b) => b[1] - a[1]);
+
+    const byResponsable = {};
+    projectsCache.forEach(p => {
+      const key = p.owner_vendedor_id || '__sin_asignar__';
+      byResponsable[key] = (byResponsable[key] || 0) + 1;
+    });
+    const responsableRows = Object.keys(byResponsable)
+      .map(vid => [vid === '__sin_asignar__' ? 'Sin asignar' : vendedorName(vid), byResponsable[vid]])
+      .sort((a, b) => b[1] - a[1]);
+
+    const today = todayIso();
+    const vencidos = projectsCache
+      .filter(p => p.status !== 'entregado' && p.estimated_delivery_date && p.estimated_delivery_date < today)
+      .sort((a, b) => a.estimated_delivery_date.localeCompare(b.estimated_delivery_date));
+    const sinOC = projectsCache.filter(p => p.status !== 'activo' && p.status !== 'espera_pedido' && p.status !== 'entregado' && !p.po_number);
+
+    wrap.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
+        ${STATUS_ORDER.map(s => `<div class="stat-card"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
+      </div>
+      <div class="form-row" style="align-items:start;">
+        <div>
+          <p class="field-note" style="margin-bottom:8px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--steel-300);">Proyectos por empresa</p>
+          ${clientRows.length ? clientRows.map(([n, c]) => `<div class="row-item" style="padding:8px 0;"><span class="r-main" style="min-width:auto;">${escapeHtml(n)}</span><span class="r-meta" style="margin-left:auto;">${c}</span></div>`).join('') : '<p class="empty-note">Sin datos todavía.</p>'}
+        </div>
+        <div>
+          <p class="field-note" style="margin-bottom:8px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--steel-300);">Proyectos por responsable de Avanta</p>
+          ${responsableRows.length ? responsableRows.map(([n, c]) => `<div class="row-item" style="padding:8px 0;"><span class="r-main" style="min-width:auto;">${escapeHtml(n)}</span><span class="r-meta" style="margin-left:auto;">${c}</span></div>`).join('') : '<p class="empty-note">Sin datos todavía.</p>'}
+        </div>
+      </div>
+      ${(vencidos.length || sinOC.length) ? `
+        <p class="field-note" style="margin:22px 0 8px; font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--steel-300);">Requieren atención</p>
+        ${vencidos.map(p => `
+          <div class="row-item">
+            <span class="r-main">${escapeHtml(p.name)}</span>
+            <span class="r-meta">${escapeHtml(clientName(p.client_id))} — entrega estimada ${formatDateShort(p.estimated_delivery_date)} (vencida) — ${escapeHtml(STATUS_LABELS[p.status] || p.status)}</span>
+            <span class="r-actions"><a data-dash-edit="${p.id}">Ver</a></span>
+          </div>
+        `).join('')}
+        ${sinOC.map(p => `
+          <div class="row-item">
+            <span class="r-main">${escapeHtml(p.name)}</span>
+            <span class="r-meta">${escapeHtml(clientName(p.client_id))} — sin OC del cliente, estatus ${escapeHtml(STATUS_LABELS[p.status] || p.status)}</span>
+            <span class="r-actions"><a data-dash-edit="${p.id}">Ver</a></span>
+          </div>
+        `).join('')}
+      ` : ''}
+    `;
+    wrap.querySelectorAll('[data-dash-edit]').forEach(a => {
+      a.addEventListener('click', () => {
+        activePanelTargets = new Set(['#panel-proyecto']);
+        applyPanelToggleState();
+        startProjectEdit(a.getAttribute('data-dash-edit'));
+      });
+    });
+  }
+
   // ---- Formulario de proyecto (compartido entre admin y vendedor) ----
-  function projectFormHtml() {
+  function projectFormHtml(role) {
     return `
       <div class="panel" id="panel-proyecto">
         <h2 id="projectFormTitle">Crear proyecto</h2>
@@ -479,6 +589,11 @@
             <div class="field"><label>Empresa</label><select id="projectClient" required><option value="">Seleccione...</option></select></div>
             <div class="field"><label>Usuario (dueño del proyecto)</label><select id="projectOwner" required><option value="">Seleccione una empresa primero...</option></select></div>
           </div>
+          ${role === 'admin' ? `
+          <div class="form-row single">
+            <div class="field"><label>Responsable de Avanta (opcional)</label><select id="projectResponsable"><option value="">Sin asignar</option></select></div>
+          </div>
+          ` : ''}
           <div class="form-row single">
             <div class="field"><label>Nombre del proyecto</label><input type="text" id="projectName" required></div>
           </div>
@@ -494,11 +609,11 @@
             <div class="field">
               <label>N° de orden de compra del cliente (OC)</label>
               <input type="text" id="projectPO">
-              <p class="field-note">Obligatorio en cuanto el proyecto ya tiene pedido confirmado (cualquier estatus distinto de "Espera de pedido").</p>
+              <p class="field-note">Obligatorio a partir de "Fabricación" ("Activo" y "Espera de pedido" son previos a tener el pedido confirmado).</p>
             </div>
           </div>
           <div class="form-row triple">
-            <div class="field"><label>Estatus</label><select id="projectStatus">${statusOptionsHtml('espera_pedido')}</select></div>
+            <div class="field"><label>Estatus</label><select id="projectStatus">${statusOptionsHtml('activo')}</select></div>
             <div class="field"><label>Entrega estimada (opcional)</label><input type="date" id="projectDate"></div>
             <div class="field"><label>Fecha real de entrega (opcional)</label><input type="date" id="projectActualDate"></div>
           </div>
@@ -588,6 +703,8 @@
       ${quickNavHtml('vendedor')}
       <p class="admin-note">Sesión de vendedor — ${escapeHtml(fullName)}. Aquí solo ves y editas los proyectos que tú cargaste.</p>
 
+      ${dashboardPanelHtml()}
+
       ${projectFormHtml()}
 
       <div class="panel" id="panel-mis-proyectos">
@@ -595,7 +712,7 @@
         <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
         <div class="form-row" style="margin-bottom:4px;">
           <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
-          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">Activos (no entregados)</option>${statusOptionsHtml('')}</select></div>
+          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
         </div>
         <div id="projectsList"></div>
       </div>
@@ -632,20 +749,79 @@
   }
 
   let vendedoresCache = [];
+  let adminsCache = [];
   async function loadVendedores() {
-    const { data } = await supabaseClient.from('portal_vendedores').select('id, full_name, email').order('full_name');
+    const { data } = await supabaseClient.from('portal_vendedores').select('id, full_name, email, active').order('full_name');
     vendedoresCache = data || [];
   }
-  function renderVendedoresList() {
+  async function loadAdmins() {
+    const { data } = await supabaseClient.from('portal_admins').select('id, full_name, email, active').order('full_name');
+    adminsCache = data || [];
+  }
+  async function toggleStaffActive(role, id, nextActive) {
+    const table = role === 'admin' ? 'portal_admins' : 'portal_vendedores';
+    const { error } = await supabaseClient.from(table).update({ active: nextActive }).eq('id', id);
+    if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+    await loadVendedores();
+    await loadAdmins();
+    renderStaffList();
+    refreshResponsableOptions();
+  }
+  async function renameStaff(role, id, currentName) {
+    const nuevo = prompt('Nuevo nombre:', currentName);
+    if (!nuevo || !nuevo.trim() || nuevo.trim() === currentName) return;
+    const table = role === 'admin' ? 'portal_admins' : 'portal_vendedores';
+    const { error } = await supabaseClient.from(table).update({ full_name: nuevo.trim() }).eq('id', id);
+    if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+    await loadVendedores();
+    await loadAdmins();
+    renderStaffList();
+    renderProjectsList();
+    refreshResponsableOptions();
+  }
+  function renderStaffList() {
     const wrap = document.getElementById('vendedoresList');
     if (!wrap) return;
-    if (vendedoresCache.length === 0) {
-      wrap.innerHTML = '<p class="empty-note">Todavía no hay vendedores registrados.</p>';
+    const staff = [
+      ...adminsCache.map(a => ({ ...a, role: 'admin' })),
+      ...vendedoresCache.map(v => ({ ...v, role: 'vendedor' })),
+    ];
+    if (staff.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay empleados registrados.</p>';
       return;
     }
-    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Vendedores con acceso:</p>' + vendedoresCache.map(v => `
-      <div class="row-item"><span class="r-main">${escapeHtml(v.full_name)}</span><span class="r-meta">${escapeHtml(v.email)}</span></div>
+    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Empleados de AVANTA con acceso (el correo no se puede editar aquí):</p>' + staff.map(s => `
+      <div class="row-item">
+        <span class="r-main">${escapeHtml(s.full_name)}${s.active === false ? ' <em style="color:var(--steel-300);">(desactivado)</em>' : ''}</span>
+        <span class="r-meta">${escapeHtml(s.email)} — ${s.role === 'admin' ? 'Administrador' : 'Vendedor'}</span>
+        <span class="r-actions">
+          <a data-staff-rename="${s.id}" data-staff-role="${s.role}">Editar nombre</a>
+          <a data-staff-toggle="${s.id}" data-staff-role="${s.role}" data-staff-active="${s.active !== false}">${s.active === false ? 'Activar' : 'Desactivar'}</a>
+        </span>
+      </div>
     `).join('');
+    wrap.querySelectorAll('[data-staff-rename]').forEach(a => {
+      a.addEventListener('click', () => {
+        const s = staff.find(x => x.id === a.getAttribute('data-staff-rename') && x.role === a.getAttribute('data-staff-role'));
+        if (s) renameStaff(s.role, s.id, s.full_name);
+      });
+    });
+    wrap.querySelectorAll('[data-staff-toggle]').forEach(a => {
+      a.addEventListener('click', () => {
+        const role = a.getAttribute('data-staff-role');
+        const id = a.getAttribute('data-staff-toggle');
+        const isActive = a.getAttribute('data-staff-active') === 'true';
+        toggleStaffActive(role, id, !isActive);
+      });
+    });
+  }
+  function refreshResponsableOptions() {
+    const sel = document.getElementById('projectResponsable');
+    if (!sel) return;
+    const current = sel.value;
+    const activos = vendedoresCache.filter(v => v.active !== false);
+    sel.innerHTML = '<option value="">Sin asignar</option>' + activos.map(v => `<option value="${v.id}">${escapeHtml(v.full_name)}</option>`).join('');
+    if (current) sel.value = current;
   }
 
   async function refreshAll() {
@@ -657,14 +833,18 @@
     refreshUpdateProjectSelect();
     if (currentRole === 'admin') {
       await loadVendedores();
+      await loadAdmins();
       refreshUserManagerOptions();
+      refreshResponsableOptions();
       renderUsersList();
-      renderVendedoresList();
+      renderClientsList();
+      renderStaffList();
       refreshFilterSelects();
     } else {
       refreshFilterSelects();
     }
     renderProjectsList();
+    renderDashboard();
   }
 
   function refreshFilterSelects() {
@@ -676,16 +856,66 @@
   }
 
   async function loadClients() {
-    const { data } = await supabaseClient.from('portal_clients').select('id, company_name').order('company_name');
+    const { data } = await supabaseClient.from('portal_clients').select('id, company_name, active').order('company_name');
     clientsCache = data || [];
   }
 
   async function loadUsers() {
     const { data } = await supabaseClient
       .from('portal_users')
-      .select('id, full_name, email, puesto, area, manager_id, client_id')
+      .select('id, full_name, email, puesto, area, manager_id, client_id, active')
       .order('full_name');
     usersCache = data || [];
+  }
+
+  async function toggleClientActive(id, nextActive) {
+    const { error } = await supabaseClient.from('portal_clients').update({ active: nextActive }).eq('id', id);
+    if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+    await loadClients();
+    renderClientsList();
+    refreshFilterSelects();
+    renderProjectsList();
+  }
+  async function renameClient(id, currentName) {
+    const nuevo = prompt('Nuevo nombre de la empresa:', currentName);
+    if (!nuevo || !nuevo.trim() || nuevo.trim() === currentName) return;
+    const { error } = await supabaseClient.from('portal_clients').update({ company_name: nuevo.trim() }).eq('id', id);
+    if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+    await loadClients();
+    renderClientsList();
+    refreshClientSelects();
+    refreshFilterSelects();
+    renderProjectsList();
+  }
+  function renderClientsList() {
+    const wrap = document.getElementById('clientsList');
+    if (!wrap) return;
+    if (clientsCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay empresas registradas.</p>';
+      return;
+    }
+    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Empresas registradas:</p>' + clientsCache.map(c => `
+      <div class="row-item">
+        <span class="r-main">${escapeHtml(c.company_name)}${c.active === false ? ' <em style="color:var(--steel-300);">(desactivada)</em>' : ''}</span>
+        <span class="r-actions">
+          <a data-client-rename="${c.id}">Editar nombre</a>
+          <a data-client-toggle="${c.id}" data-client-active="${c.active !== false}">${c.active === false ? 'Activar' : 'Desactivar'}</a>
+        </span>
+      </div>
+    `).join('');
+    wrap.querySelectorAll('[data-client-rename]').forEach(a => {
+      a.addEventListener('click', () => {
+        const c = clientsCache.find(x => x.id === a.getAttribute('data-client-rename'));
+        if (c) renameClient(c.id, c.company_name);
+      });
+    });
+    wrap.querySelectorAll('[data-client-toggle]').forEach(a => {
+      a.addEventListener('click', () => {
+        const id = a.getAttribute('data-client-toggle');
+        const isActive = a.getAttribute('data-client-active') === 'true';
+        toggleClientActive(id, !isActive);
+      });
+    });
   }
 
   async function loadProjects() {
@@ -705,6 +935,11 @@
   function userName(id) {
     const u = usersCache.find(u => u.id === id);
     return u ? u.full_name : '—';
+  }
+  function vendedorName(id) {
+    if (id === currentStaffId && currentStaffFullName) return currentStaffFullName;
+    const v = vendedoresCache.find(v => v.id === id);
+    return v ? v.full_name : '—';
   }
 
   function refreshClientSelects() {
@@ -850,9 +1085,12 @@
       return `
         <div class="row-item" data-user-row="${u.id}">
           <div class="r-wrap">
-            <span class="r-main">${escapeHtml(u.full_name)}</span>
+            <span class="r-main">${escapeHtml(u.full_name)}${u.active === false ? ' <em style="color:var(--steel-300);">(desactivado)</em>' : ''}</span>
             <span class="r-meta">${escapeHtml(clientName(u.client_id))}${rolePart ? ' — ' + escapeHtml(rolePart) : ''} — Jefe: ${escapeHtml(managerName)}</span>
-            <span class="r-actions"><a data-edit-user="${u.id}">Editar</a></span>
+            <span class="r-actions">
+              <a data-edit-user="${u.id}">Editar</a>
+              <a data-toggle-user="${u.id}" data-user-active="${u.active !== false}">${u.active === false ? 'Activar' : 'Desactivar'}</a>
+            </span>
           </div>
           <div class="inline-edit" id="edit-user-${u.id}">
             <div class="form-row triple">
@@ -871,7 +1109,17 @@
       document.querySelector(`[data-edit-user="${u.id}"]`).addEventListener('click', () => openUserEdit(u.id));
       document.querySelector(`[data-cancel-user="${u.id}"]`).addEventListener('click', () => closeUserEdit(u.id));
       document.querySelector(`[data-save-user="${u.id}"]`).addEventListener('click', () => saveUserEdit(u.id));
+      document.querySelector(`[data-toggle-user="${u.id}"]`).addEventListener('click', () => toggleUserActive(u.id, u.active === false));
     });
+  }
+
+  async function toggleUserActive(userId, nextActive) {
+    const { error } = await supabaseClient.from('portal_users').update({ active: nextActive }).eq('id', userId);
+    if (error) { alert('No se pudo actualizar: ' + error.message); return; }
+    await loadUsers();
+    refreshUserManagerOptions();
+    refreshProjectOwnerOptions();
+    renderUsersList();
   }
 
   function openUserEdit(userId) {
@@ -905,9 +1153,9 @@
     const status = document.getElementById('projectStatus').value;
     const poNumber = document.getElementById('projectPO').value.trim();
 
-    if (status !== 'espera_pedido' && !poNumber) {
+    if (status !== 'activo' && status !== 'espera_pedido' && !poNumber) {
       msg.className = 'msg error';
-      msg.textContent = 'Falta el número de pedido (OC) del cliente — es obligatorio en cuanto el proyecto ya tiene pedido (cualquier estatus distinto de "Espera de pedido").';
+      msg.textContent = 'Falta el número de pedido (OC) del cliente — es obligatorio a partir de "Fabricación" (los estatus "Activo" y "Espera de pedido" son previos a tener el pedido confirmado).';
       return;
     }
 
@@ -928,6 +1176,9 @@
     };
     if (currentRole === 'vendedor' && !editingProjectId) {
       payload.owner_vendedor_id = currentStaffId;
+    } else if (currentRole === 'admin') {
+      const responsableSel = document.getElementById('projectResponsable');
+      if (responsableSel) payload.owner_vendedor_id = responsableSel.value || null;
     }
 
     const validSuppliers = supplierRows.filter(r => r.provider);
@@ -984,6 +1235,8 @@
     document.getElementById('projectDate').value = p.estimated_delivery_date || '';
     document.getElementById('projectActualDate').value = p.actual_delivery_date || '';
     document.getElementById('projectNotes').value = p.notes || '';
+    const responsableSel = document.getElementById('projectResponsable');
+    if (responsableSel) responsableSel.value = p.owner_vendedor_id || '';
     supplierRows = (p.portal_project_suppliers || []).map(s => ({ provider: s.provider, po_number_supplier: s.po_number_supplier || '' }));
     renderSupplierRows();
     document.getElementById('projectSubmitBtn').textContent = 'Guardar cambios';
@@ -997,7 +1250,9 @@
     document.getElementById('projectFormTitle').textContent = 'Crear proyecto';
     document.getElementById('projectFormSub').textContent = 'Registra un pedido o proyecto para un usuario específico.';
     document.getElementById('projectOwner').innerHTML = '<option value="">Seleccione una empresa primero...</option>';
-    document.getElementById('projectStatus').value = 'espera_pedido';
+    document.getElementById('projectStatus').value = 'activo';
+    const responsableSel = document.getElementById('projectResponsable');
+    if (responsableSel) responsableSel.value = '';
     document.getElementById('projectSubmitBtn').textContent = 'Crear proyecto';
     document.getElementById('projectCancelBtn').classList.add('hidden');
     supplierRows = [];
@@ -1079,16 +1334,21 @@
       const suppliers = p.portal_project_suppliers || [];
       const supplierMeta = suppliers.map(s => `${PROVIDER_LABELS[s.provider] || s.provider}${s.po_number_supplier ? ' (OC ' + escapeHtml(s.po_number_supplier) + ')' : ''}`).join(', ');
       const isDelivered = p.status === 'entregado';
+      const responsableMeta = p.owner_vendedor_id ? ' — Responsable AVANTA: ' + escapeHtml(vendedorName(p.owner_vendedor_id)) : '';
       html += `
       <div class="row-item">
-        <span class="r-main">${escapeHtml(p.name)}</span>
-        <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}</span>
-        ${supplierMeta ? `<span class="r-meta">Proveedores (interno): ${supplierMeta}</span>` : ''}
-        <span class="status-pill-sm${isDelivered ? ' delivered' : ''}">${STATUS_LABELS[p.status] || p.status}</span>
-        <span class="r-actions">
-          <a data-edit-project="${p.id}">Editar</a>
-          ${currentRole === 'admin' ? `<a class="danger" data-delete-project="${p.id}">Eliminar</a>` : ''}
-        </span>
+        <div class="r-wrap">
+          <span class="r-main">${escapeHtml(p.name)}</span>
+          <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}${responsableMeta}</span>
+          ${supplierMeta ? `<span class="r-meta">Proveedores (interno): ${supplierMeta}</span>` : ''}
+          <span class="status-pill-sm${isDelivered ? ' delivered' : ''}">${STATUS_LABELS[p.status] || p.status}</span>
+          <span class="r-actions">
+            <a data-edit-project="${p.id}">Editar</a>
+            <a data-history-project="${p.id}">Ver historial</a>
+            ${currentRole === 'admin' ? `<a class="danger" data-delete-project="${p.id}">Eliminar</a>` : ''}
+          </span>
+        </div>
+        <div class="inline-edit" id="history-${p.id}"></div>
       </div>
     `;
     });
@@ -1096,9 +1356,40 @@
 
     sorted.forEach(p => {
       document.querySelector(`[data-edit-project="${p.id}"]`).addEventListener('click', () => startProjectEdit(p.id));
+      document.querySelector(`[data-history-project="${p.id}"]`).addEventListener('click', () => toggleProjectHistory(p.id));
       const delLink = document.querySelector(`[data-delete-project="${p.id}"]`);
       if (delLink) delLink.addEventListener('click', () => deleteProject(p.id));
     });
+  }
+
+  async function toggleProjectHistory(projectId) {
+    const box = document.getElementById(`history-${projectId}`);
+    if (!box) return;
+    if (box.classList.contains('open')) {
+      box.classList.remove('open');
+      return;
+    }
+    box.innerHTML = '<p class="empty-note">Cargando historial...</p>';
+    box.classList.add('open');
+    const { data, error } = await supabaseClient
+      .from('portal_project_updates')
+      .select('status, note, created_at')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      box.innerHTML = `<p class="empty-note">No se pudo cargar el historial: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
+    if (!data || data.length === 0) {
+      box.innerHTML = '<p class="empty-note">Sin actualizaciones de estatus registradas todavía.</p>';
+      return;
+    }
+    box.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Historial de cambios de estatus:</p>' + data.map(u => `
+      <div class="row-item" style="border-bottom:1px dashed var(--gunmetal-600);">
+        <span class="r-main">${escapeHtml(STATUS_LABELS[u.status] || u.status)}</span>
+        <span class="r-meta">${formatDateShort((u.created_at || '').slice(0, 10))}${u.note ? ' — ' + escapeHtml(u.note) : ''}</span>
+      </div>
+    `).join('');
   }
 
   // ---- Agregar actualización de estatus ----
@@ -1109,7 +1400,7 @@
     const status = document.getElementById('updateStatus').value;
 
     const projectForUpdate = projectsCache.find(p => p.id === projectId);
-    if (status !== 'espera_pedido' && projectForUpdate && !projectForUpdate.po_number) {
+    if (status !== 'activo' && status !== 'espera_pedido' && projectForUpdate && !projectForUpdate.po_number) {
       msg.className = 'msg error';
       msg.textContent = 'Este proyecto no tiene número de pedido (OC) del cliente todavía — agrégalo editando el proyecto (panel "Todos los proyectos" / "Mis proyectos") antes de avanzar su estatus.';
       return;

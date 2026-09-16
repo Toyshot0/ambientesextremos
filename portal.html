@@ -173,6 +173,13 @@
   const errorMsg = document.getElementById('errorMsg');
   const loginBtn = document.getElementById('loginBtn');
 
+  // Si venimos de un cierre de sesión forzado por cuenta desactivada
+  // (dashboard.html/admin.html/etc. redirigen aquí con ?inactive=1).
+  if (new URLSearchParams(window.location.search).get('inactive')) {
+    errorMsg.textContent = 'Esta cuenta fue desactivada. Contacte a AVANTA si cree que esto es un error.';
+    errorMsg.className = 'error-msg error';
+  }
+
   // Si ya hay sesión activa: si le falta cambiar la contraseña temporal, mostrar
   // ese formulario aquí mismo; si no, ir directo al dashboard.
   supabaseClient.auth.getSession().then(async ({ data }) => {
@@ -182,12 +189,25 @@
 
   let pendingRole = null; // 'vendedor' | 'cliente' — a cuál tabla marcarle el cambio de contraseña
 
-  async function routeAfterLogin(userId) {
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', userId).single();
-    if (adminRow) { window.location.href = 'admin.html'; return; }
+  async function denyInactive() {
+    errorMsg.textContent = 'Esta cuenta fue desactivada. Contacte a AVANTA si cree que esto es un error.';
+    errorMsg.className = 'error-msg error';
+    loginCard.classList.remove('hidden');
+    pwCard.classList.add('hidden');
+    await supabaseClient.auth.signOut();
+  }
 
-    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('must_change_password').eq('id', userId).single();
+  async function routeAfterLogin(userId) {
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active').eq('id', userId).single();
+    if (adminRow) {
+      if (adminRow.active === false) { await denyInactive(); return; }
+      window.location.href = 'admin.html';
+      return;
+    }
+
+    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('must_change_password, active').eq('id', userId).single();
     if (vendedorRow) {
+      if (vendedorRow.active === false) { await denyInactive(); return; }
       if (vendedorRow.must_change_password) {
         pendingRole = 'vendedor';
         loginCard.classList.add('hidden');
@@ -200,10 +220,11 @@
 
     const { data: userRow } = await supabaseClient
       .from('portal_users')
-      .select('must_change_password')
+      .select('must_change_password, active')
       .eq('id', userId)
       .single();
 
+    if (userRow && userRow.active === false) { await denyInactive(); return; }
     if (userRow && userRow.must_change_password) {
       pendingRole = 'cliente';
       loginCard.classList.add('hidden');

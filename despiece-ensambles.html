@@ -182,8 +182,9 @@
     currentStaffId = session.user.id;
     const sessionEmail = session.user.email || '';
 
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', currentStaffId).single();
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active').eq('id', currentStaffId).single();
     if (adminRow) {
+      if (adminRow.active === false) { await denyInactive(); return; }
       currentRole = 'admin';
       setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
       await loadAll();
@@ -191,8 +192,9 @@
       return;
     }
 
-    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name').eq('id', currentStaffId).single();
+    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name, active').eq('id', currentStaffId).single();
     if (vendedorRow) {
+      if (vendedorRow.active === false) { await denyInactive(); return; }
       currentRole = 'vendedor';
       setStaffIdentity(`<strong>${escapeHtml(vendedorRow.full_name)}</strong> — Vendedor`);
       await loadAll();
@@ -201,6 +203,11 @@
     }
 
     adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
+  }
+
+  async function denyInactive() {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'portal.html?inactive=1';
   }
 
   async function loadAll() {

@@ -197,10 +197,11 @@
 <script>
   const vcContent = document.getElementById('vcContent');
 
-  const STATUS_ORDER = ['espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
+  const STATUS_ORDER = ['activo', 'espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
   const STATUS_LABELS = {
+    activo: 'Activo',
     espera_pedido: 'Espera de pedido',
-    en_fabricacion: 'En fabricación',
+    en_fabricacion: 'Fabricación',
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
   };
@@ -218,9 +219,14 @@
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { window.location.href = 'portal.html'; return; }
 
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id').eq('id', session.user.id).single();
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active').eq('id', session.user.id).single();
     if (!adminRow) {
       vcContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
+      return;
+    }
+    if (adminRow.active === false) {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'portal.html?inactive=1';
       return;
     }
     setStaffIdentity(`<strong>${escapeHtml(session.user.email || '')}</strong> — Administrador`);

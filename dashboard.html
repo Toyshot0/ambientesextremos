@@ -17,6 +17,12 @@
   .dash-content { padding: 32px 48px 64px; max-width: 980px; }
   .empty-state { text-align: center; padding: 80px 24px; color: var(--steel-300); }
 
+  .tabs { display: flex; gap: 8px; margin-bottom: 26px; }
+  .tab-btn { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 9px 18px; cursor: pointer; }
+  .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  body.content-light .tab-btn { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+
   .section-label { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange); margin: 36px 0 14px; }
   .section-label:first-child { margin-top: 0; }
 
@@ -67,6 +73,35 @@
   .loading-note { color: var(--steel-300); }
   .no-updates-note { color: var(--steel-300); font-size: 13px; padding-top: 16px; }
 
+  /* Inicio — resumen */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 30px; }
+  .stat-card { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 18px 20px; }
+  .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--orange); }
+  .stat-card .slabel { font-size: 12px; color: var(--steel-300); margin-top: 4px; }
+  .attn-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 13px; }
+  .attn-item:last-child { border-bottom: none; }
+  .attn-item .a-meta { color: var(--steel-300); font-size: 12px; }
+
+  /* Mis proyectos — filtros */
+  .filters-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 26px; }
+  .filters-row input, .filters-row select { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
+  .filters-row input:focus, .filters-row select:focus { outline: none; border-color: var(--orange); }
+
+  /* Usuario */
+  .profile-box { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 22px 26px; margin-bottom: 24px; }
+  .profile-box .pf-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 14px; }
+  .profile-box .pf-row:last-child { border-bottom: none; }
+  .profile-box .pf-label { color: var(--steel-300); }
+  .profile-box .pf-value { color: var(--white); font-weight: 500; }
+  .pw-field { margin-bottom: 14px; max-width: 340px; }
+  .pw-field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
+  .pw-field input { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
+  .msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; max-width: 340px; }
+  .msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
+  .msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
+  .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; }
+  .submit-btn:hover { background: #d0531a; }
+
   body.content-light .dash-header { border-color: var(--paper-border); }
   body.content-light .dash-header h1 { color: var(--ink-900); }
   body.content-light .dash-header .sub { color: var(--ink-600); }
@@ -96,6 +131,19 @@
   body.content-light .timeline-body .tdate { color: var(--ink-600); }
   body.content-light .loading-note { color: var(--ink-600); }
   body.content-light .no-updates-note { color: var(--ink-600); }
+  body.content-light .stat-card { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .stat-card .slabel { color: var(--ink-600); }
+  body.content-light .attn-item { border-color: var(--paper-border); }
+  body.content-light .attn-item .a-meta { color: var(--ink-600); }
+  body.content-light .filters-row input, body.content-light .filters-row select { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .profile-box { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .profile-box .pf-row { border-color: var(--paper-border); }
+  body.content-light .profile-box .pf-label { color: var(--ink-600); }
+  body.content-light .profile-box .pf-value { color: var(--ink-900); }
+  body.content-light .pw-field label { color: var(--ink-600); }
+  body.content-light .pw-field input { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .msg.success { color: #1f7a45; }
+  body.content-light .msg.error { color: #a63232; }
 </style>
 </head>
 <body class="content-light">
@@ -116,7 +164,7 @@
 
 <div class="dash-header">
   <div>
-    <h1>Mis Proyectos</h1>
+    <h1>Portal de Clientes</h1>
     <p class="sub" id="whoami">Cargando...</p>
   </div>
   <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
@@ -200,13 +248,19 @@
   const dashContent = document.getElementById('dashContent');
   const whoamiEl = document.getElementById('whoami');
 
-  const STATUS_ORDER = ['espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
+  const STATUS_ORDER = ['activo', 'espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
   const STATUS_LABELS = {
+    activo: 'Activo',
     espera_pedido: 'Espera de pedido',
-    en_fabricacion: 'En fabricación',
+    en_fabricacion: 'Fabricación',
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
   };
+
+  let activeTab = 'inicio'; // 'inicio' | 'proyectos' | 'usuario'
+  let meData = null;
+  let allProjects = []; // mías + de mi equipo, tal cual las entrega RLS
+  let currentUserId = null;
 
   function renderStepper(status) {
     const currentIdx = STATUS_ORDER.indexOf(status);
@@ -278,18 +332,27 @@
       window.location.href = 'portal.html';
       return;
     }
-    const userId = session.user.id;
+    currentUserId = session.user.id;
 
     const { data: me } = await supabaseClient
       .from('portal_users')
-      .select('full_name, puesto, area, client_id, must_change_password, portal_clients(company_name)')
-      .eq('id', userId)
+      .select('full_name, puesto, area, client_id, must_change_password, active, portal_clients(company_name)')
+      .eq('id', currentUserId)
       .single();
+
+    if (me && me.active === false) {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'portal.html?inactive=1';
+      return;
+    }
 
     if (me && me.must_change_password) {
       window.location.href = 'portal.html';
       return;
     }
+
+    meData = me;
+    meData.email = session.user.email;
 
     const empresa = me && me.portal_clients ? me.portal_clients.company_name : '';
     const rolePart = me && (me.puesto || me.area) ? [me.puesto, me.area].filter(Boolean).join(' · ') : '';
@@ -301,64 +364,227 @@
     const { data: visibleUsers } = await supabaseClient
       .from('portal_users')
       .select('id, full_name, puesto, area, manager_id');
-
-    const usersById = {};
-    (visibleUsers || []).forEach(u => { usersById[u.id] = u; });
-    const teamMembers = (visibleUsers || []).filter(u => u.id !== userId);
+    meData.teamMembers = (visibleUsers || []).filter(u => u.id !== currentUserId);
 
     // RLS ya limita esto a: mis proyectos + los de mis subordinados
-    const { data: projects, error } = await supabaseClient
+    const { data: projects } = await supabaseClient
       .from('portal_projects')
       .select('id, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
       .order('created_at', { ascending: false });
+    allProjects = projects || [];
 
-    dashContent.innerHTML = '';
+    renderShell();
+  }
 
-    const myProjects = (projects || []).filter(p => p.owner_user_id === userId);
+  function renderShell() {
+    dashContent.innerHTML = `
+      <div class="tabs">
+        <button type="button" class="tab-btn" data-tab="inicio">Inicio</button>
+        <button type="button" class="tab-btn" data-tab="proyectos">Mis proyectos</button>
+        <button type="button" class="tab-btn" data-tab="usuario">Usuario</button>
+      </div>
+      <div id="tabBody"></div>
+    `;
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => { activeTab = btn.getAttribute('data-tab'); renderTabs(); });
+    });
+    renderTabs();
+  }
+
+  function renderTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === activeTab));
+    if (activeTab === 'inicio') renderInicio();
+    else if (activeTab === 'proyectos') renderMisProyectos();
+    else renderUsuario();
+  }
+
+  // =====================================================================
+  // Inicio — resumen de todo lo que este usuario puede ver (sus proyectos
+  // + los de su equipo, si tiene subordinados).
+  // =====================================================================
+  function renderInicio() {
+    const body = document.getElementById('tabBody');
+    const total = allProjects.length;
+    const counts = {};
+    STATUS_ORDER.forEach(s => { counts[s] = 0; });
+    allProjects.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const atencion = allProjects.filter(p => {
+      if (p.status === 'entregado' || !p.estimated_delivery_date) return false;
+      return new Date(p.estimated_delivery_date + 'T00:00:00') < today;
+    }).sort((a, b) => new Date(a.estimated_delivery_date) - new Date(b.estimated_delivery_date));
+
+    body.innerHTML = `
+      <p class="section-label" style="margin-top:0;">Resumen</p>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
+        ${STATUS_ORDER.map(s => `<div class="stat-card"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
+      </div>
+      ${atencion.length > 0 ? `
+        <p class="section-label">Requieren atención — entrega estimada vencida</p>
+        <div class="attn-list">
+          ${atencion.map(p => `
+            <div class="attn-item">
+              <span>${escapeHtml(p.name)}</span>
+              <span class="a-meta">Entrega estimada ${formatDate(p.estimated_delivery_date)} — ${escapeHtml(STATUS_LABELS[p.status] || p.status)}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${total === 0 ? '<div class="empty-state">Todavía no hay proyectos registrados.</div>' : ''}
+    `;
+  }
+
+  // =====================================================================
+  // Mis proyectos — el listado de siempre (mías + equipo), con buscador y
+  // filtro de estatus nuevos.
+  // =====================================================================
+  function renderMisProyectos() {
+    const body = document.getElementById('tabBody');
+    body.innerHTML = `
+      <div class="filters-row">
+        <input type="text" id="projFilterText" placeholder="Buscar por nombre, cotización u OC...">
+        <select id="projFilterStatus"><option value="">Todos los estatus</option>${STATUS_ORDER.map(s => `<option value="${s}">${STATUS_LABELS[s]}</option>`).join('')}</select>
+      </div>
+      <div id="projListWrap"></div>
+    `;
+    document.getElementById('projFilterText').addEventListener('input', renderProjList);
+    document.getElementById('projFilterStatus').addEventListener('change', renderProjList);
+    renderProjList();
+  }
+
+  function matchesFilter(p) {
+    const text = (document.getElementById('projFilterText').value || '').trim().toLowerCase();
+    const status = document.getElementById('projFilterStatus').value;
+    if (status && p.status !== status) return false;
+    if (text) {
+      const haystack = [p.name, p.quote_number, p.po_number].filter(Boolean).join(' ').toLowerCase();
+      if (!haystack.includes(text)) return false;
+    }
+    return true;
+  }
+
+  function renderProjList() {
+    const wrap = document.getElementById('projListWrap');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    const myProjects = allProjects.filter(p => p.owner_user_id === currentUserId && matchesFilter(p));
+    const teamMembers = meData.teamMembers || [];
+
     if (teamMembers.length > 0) {
       const lbl = document.createElement('div');
       lbl.className = 'section-label';
       lbl.textContent = 'Mis proyectos';
-      dashContent.appendChild(lbl);
+      wrap.appendChild(lbl);
     }
 
-    if (error || myProjects.length === 0) {
+    if (myProjects.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
-      empty.textContent = 'Todavía no hay proyectos registrados a su nombre.';
-      dashContent.appendChild(empty);
+      empty.textContent = allProjects.filter(p => p.owner_user_id === currentUserId).length === 0
+        ? 'Todavía no hay proyectos registrados a su nombre.'
+        : 'Ningún proyecto coincide con el filtro.';
+      wrap.appendChild(empty);
     } else {
-      myProjects.forEach(p => dashContent.appendChild(renderProjectCard(p)));
+      myProjects.forEach(p => wrap.appendChild(renderProjectCard(p)));
     }
 
     if (teamMembers.length > 0) {
       const teamLbl = document.createElement('div');
       teamLbl.className = 'section-label';
       teamLbl.textContent = 'Proyectos de mi equipo';
-      dashContent.appendChild(teamLbl);
+      wrap.appendChild(teamLbl);
 
       teamMembers.forEach(member => {
-        const memberProjects = (projects || []).filter(p => p.owner_user_id === member.id);
-        const wrap = document.createElement('div');
-        wrap.className = 'team-member';
+        const memberProjects = allProjects.filter(p => p.owner_user_id === member.id && matchesFilter(p));
+        const mWrap = document.createElement('div');
+        mWrap.className = 'team-member';
 
         const head = document.createElement('div');
         head.className = 'team-member-head';
         const rolePart = [member.puesto, member.area].filter(Boolean).join(' · ');
         head.innerHTML = `<span class="tm-name">${escapeHtml(member.full_name)}</span>${rolePart ? `<span class="tm-role">${escapeHtml(rolePart)}</span>` : ''}`;
-        wrap.appendChild(head);
+        mWrap.appendChild(head);
 
         if (memberProjects.length === 0) {
           const empty = document.createElement('p');
           empty.className = 'team-empty';
-          empty.textContent = 'Sin proyectos registrados.';
-          wrap.appendChild(empty);
+          empty.textContent = 'Sin proyectos registrados (o ninguno coincide con el filtro).';
+          mWrap.appendChild(empty);
         } else {
-          memberProjects.forEach(p => wrap.appendChild(renderProjectCard(p)));
+          memberProjects.forEach(p => mWrap.appendChild(renderProjectCard(p)));
         }
-        dashContent.appendChild(wrap);
+        wrap.appendChild(mWrap);
       });
     }
+  }
+
+  // =====================================================================
+  // Usuario — mi perfil, cambiar contraseña, cerrar sesión.
+  // =====================================================================
+  function renderUsuario() {
+    const body = document.getElementById('tabBody');
+    const empresa = meData.portal_clients ? meData.portal_clients.company_name : '—';
+    const rolePart = [meData.puesto, meData.area].filter(Boolean).join(' · ');
+    body.innerHTML = `
+      <p class="section-label" style="margin-top:0;">Mi perfil</p>
+      <div class="profile-box">
+        <div class="pf-row"><span class="pf-label">Nombre</span><span class="pf-value">${escapeHtml(meData.full_name || '—')}</span></div>
+        <div class="pf-row"><span class="pf-label">Correo</span><span class="pf-value">${escapeHtml(meData.email || '—')}</span></div>
+        <div class="pf-row"><span class="pf-label">Empresa</span><span class="pf-value">${escapeHtml(empresa)}</span></div>
+        <div class="pf-row"><span class="pf-label">Puesto / área</span><span class="pf-value">${escapeHtml(rolePart || '—')}</span></div>
+      </div>
+      <p class="field-note" style="font-size:12px; color:var(--steel-300); margin-bottom:24px; margin-top:-14px;">Para corregir estos datos, contacte a AVANTA.</p>
+
+      <p class="section-label">Cambiar contraseña</p>
+      <div id="pwMsg" class="msg"></div>
+      <form id="changePwForm">
+        <div class="pw-field"><label>Nueva contraseña</label><input type="password" id="newPw" required minlength="8" autocomplete="new-password"></div>
+        <div class="pw-field"><label>Confirmar contraseña</label><input type="password" id="confirmPw" required minlength="8" autocomplete="new-password"></div>
+        <button type="submit" class="submit-btn" id="changePwBtn">Guardar contraseña</button>
+      </form>
+
+      <p class="section-label">Sesión</p>
+      <button type="button" class="logout-btn" id="logoutBtn2">Cerrar sesión</button>
+    `;
+    document.getElementById('changePwForm').addEventListener('submit', submitChangePassword);
+    document.getElementById('logoutBtn2').addEventListener('click', doLogout);
+  }
+
+  async function submitChangePassword(e) {
+    e.preventDefault();
+    const msg = document.getElementById('pwMsg');
+    const btn = document.getElementById('changePwBtn');
+    const newPw = document.getElementById('newPw').value;
+    const confirmPw = document.getElementById('confirmPw').value;
+
+    if (newPw !== confirmPw) {
+      msg.className = 'msg error';
+      msg.textContent = 'Las dos contraseñas no coinciden.';
+      return;
+    }
+    if (newPw.length < 8) {
+      msg.className = 'msg error';
+      msg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    const { error } = await supabaseClient.auth.updateUser({ password: newPw });
+    btn.disabled = false;
+    btn.textContent = 'Guardar contraseña';
+
+    msg.className = error ? 'msg error' : 'msg success';
+    msg.textContent = error ? 'No se pudo actualizar: ' + error.message : 'Contraseña actualizada correctamente.';
+    if (!error) document.getElementById('changePwForm').reset();
+  }
+
+  async function doLogout() {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'portal.html';
   }
 
   function escapeHtml(str) {
@@ -367,10 +593,7 @@
     return div.innerHTML;
   }
 
-  document.getElementById('logoutBtn').addEventListener('click', async () => {
-    await supabaseClient.auth.signOut();
-    window.location.href = 'portal.html';
-  });
+  document.getElementById('logoutBtn').addEventListener('click', doLogout);
 
   init();
 

@@ -24,6 +24,12 @@
   .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
 
   .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; scroll-margin-top: 76px; }
+  .tool-section { scroll-margin-top: 76px; }
+  .section-title { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--orange); margin: 8px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--gunmetal-700); }
+  body.content-light .section-title { border-color: var(--paper-border); }
+  .pw-field { margin-bottom: 14px; max-width: 340px; }
+  .pw-field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
+  body.content-light .pw-field label { color: var(--ink-600); }
 
   .quick-nav { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 20px; background: var(--gunmetal-900); }
   .quick-nav a { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 8px 16px; text-decoration: none; white-space: nowrap; transition: border-color 0.15s, color 0.15s; }
@@ -303,21 +309,17 @@
   function quickNavHtml(role) {
     const adminLinks = [
       [ALL_TOOLS_TARGET, 'Todas las herramientas'],
-      ['#panel-dashboard', 'Dashboard'],
-      ['#panel-empresa', 'Empresas'],
-      ['#panel-crear-usuario', 'Crear usuario'],
-      ['#panel-usuarios', 'Usuarios'],
-      ['#panel-personal', 'Personal AVANTA'],
-      ['#panel-proyecto', 'Crear proyecto'],
-      ['#panel-todos-proyectos', 'Todos los proyectos'],
-      ['#panel-actualizacion', 'Actualizar estatus'],
+      ['#section-clientes', '1. Clientes y usuarios'],
+      ['#section-proyectos', '2. Proyectos'],
+      ['#section-empleados', '3. Empleados AVANTA'],
+      ['#section-dashboard', '4. Dashboard'],
+      ['#section-configuracion', '5. Configuración y seguridad'],
     ];
     const vendedorLinks = [
       [ALL_TOOLS_TARGET, 'Todas las herramientas'],
-      ['#panel-dashboard', 'Dashboard'],
-      ['#panel-proyecto', 'Crear proyecto'],
-      ['#panel-mis-proyectos', 'Mis proyectos'],
-      ['#panel-actualizacion', 'Actualizar estatus'],
+      ['#section-proyectos', 'Proyectos'],
+      ['#section-dashboard', 'Dashboard'],
+      ['#section-configuracion', 'Mi cuenta'],
     ];
     const links = role === 'admin' ? adminLinks : vendedorLinks;
     return `<nav class="quick-nav" id="quickNav">${links.map(([href, label]) => `<a href="${href}" data-nav-target="${href}">${label}</a>`).join('')}</nav>`;
@@ -357,114 +359,136 @@
       const target = a.getAttribute('data-nav-target');
       a.classList.toggle('active', showAll ? target === ALL_TOOLS_TARGET : activePanelTargets.has(target));
     });
-    document.querySelectorAll('.admin-content .panel').forEach(panel => {
-      panel.classList.toggle('hidden', !showAll && !activePanelTargets.has('#' + panel.id));
+    document.querySelectorAll('.admin-content .tool-section').forEach(section => {
+      section.classList.toggle('hidden', !showAll && !activePanelTargets.has('#' + section.id));
     });
   }
 
   function renderAdmin() {
     adminContent.innerHTML = `
       ${quickNavHtml('admin')}
-      ${dashboardPanelHtml()}
-      <div class="panel" id="panel-empresa">
-        <h2>Empresas cliente</h2>
-        <p class="panel-sub">El primer paso — cada usuario que crees abajo pertenece a una de estas empresas. Puedes editar el nombre o desactivar una empresa más abajo.</p>
-        <div id="clientMsg" class="msg"></div>
-        <form id="clientForm">
-          <div class="form-row single">
-            <div class="field"><label>Nombre de la empresa</label><input type="text" id="clientCompany" required placeholder="Ej. Ternium"></div>
-          </div>
-          <button type="submit" class="submit-btn">Guardar empresa</button>
-        </form>
-        <div id="clientsList" style="margin-top:18px;"></div>
-      </div>
 
-      <div class="panel" id="panel-crear-usuario">
-        <h2>Crear usuario</h2>
-        <p class="panel-sub">Crea el acceso de una persona dentro de una empresa cliente. Se genera una contraseña temporal que la persona debe cambiar en su primer ingreso.</p>
-        <div id="userMsg" class="msg"></div>
-        <div id="credentialBox"></div>
-        <form id="userForm">
-          <div class="form-row">
-            <div class="field"><label>Empresa</label><select id="userClient" required><option value="">Seleccione...</option></select></div>
-            <div class="field"><label>Correo electrónico</label><input type="email" id="userEmail" required></div>
-          </div>
-          <div class="form-row">
-            <div class="field"><label>Nombre completo</label><input type="text" id="userFullName" required></div>
-            <div class="field"><label>Jefe (opcional)</label><select id="userManager"><option value="">Sin jefe (nivel más alto)</option></select><p class="field-note" id="userManagerNote"></p></div>
-          </div>
-          <div class="form-row triple">
-            <div class="field"><label>Puesto (opcional)</label><input type="text" id="userPuesto" placeholder="Ej. Jefe de Compras"></div>
-            <div class="field"><label>Área (opcional)</label><input type="text" id="userArea" placeholder="Ej. Mantenimiento"></div>
-            <div class="field"><label>Cumpleaños (opcional)</label><input type="text" id="userBirthday" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10"></div>
-          </div>
-          <p class="field-note">El cumpleaños es solo para felicitarlo(a) — nunca se usa como contraseña. Escríbelo como día/mes/año, ej. 12/04/1965.</p>
-          <button type="submit" class="submit-btn" id="userSubmitBtn">Crear usuario</button>
-        </form>
-      </div>
-
-      <div class="panel" id="panel-usuarios">
-        <h2>Usuarios registrados</h2>
-        <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien, o desactivar su acceso.</p>
-        <div id="usersList"></div>
-      </div>
-
-      <div class="panel" id="panel-personal">
-        <h2>Personal interno de AVANTA</h2>
-        <p class="panel-sub">Da de alta a tu jefe (mismo acceso que tú) o a un vendedor (solo carga y edita sus propios proyectos). Se genera una contraseña temporal.</p>
-        <div id="staffMsg" class="msg"></div>
-        <div id="staffCredentialBox"></div>
-        <form id="staffForm">
-          <div class="form-row">
-            <div class="field"><label>Correo electrónico</label><input type="email" id="staffEmail" required></div>
-            <div class="field"><label>Nombre completo</label><input type="text" id="staffFullName" required></div>
-          </div>
-          <div class="form-row single">
-            <div class="field"><label>Nivel de acceso</label>
-              <select id="staffRole" required>
-                <option value="vendedor">Vendedor — solo sus propios proyectos</option>
-                <option value="admin">Administrador — mismo acceso que tú</option>
-              </select>
+      <div class="tool-section" id="section-clientes">
+        <h1 class="section-title">1. Clientes y usuarios</h1>
+        <div class="panel" id="panel-empresa">
+          <h2>Empresas cliente</h2>
+          <p class="panel-sub">El primer paso — cada usuario que crees abajo pertenece a una de estas empresas. Puedes editar el nombre o desactivar una empresa más abajo.</p>
+          <div id="clientMsg" class="msg"></div>
+          <form id="clientForm">
+            <div class="form-row single">
+              <div class="field"><label>Nombre de la empresa</label><input type="text" id="clientCompany" required placeholder="Ej. Ternium"></div>
             </div>
-          </div>
-          <button type="submit" class="submit-btn" id="staffSubmitBtn">Crear acceso</button>
-        </form>
-        <div id="vendedoresList" style="margin-top:18px;"></div>
+            <button type="submit" class="submit-btn">Guardar empresa</button>
+          </form>
+          <div id="clientsList" style="margin-top:18px;"></div>
+        </div>
+
+        <div class="panel" id="panel-crear-usuario">
+          <h2>Crear usuario</h2>
+          <p class="panel-sub">Crea el acceso de una persona dentro de una empresa cliente. Se genera una contraseña temporal que la persona debe cambiar en su primer ingreso.</p>
+          <div id="userMsg" class="msg"></div>
+          <div id="credentialBox"></div>
+          <form id="userForm">
+            <div class="form-row">
+              <div class="field"><label>Empresa</label><select id="userClient" required><option value="">Seleccione...</option></select></div>
+              <div class="field"><label>Correo electrónico</label><input type="email" id="userEmail" required></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label>Nombre completo</label><input type="text" id="userFullName" required></div>
+              <div class="field"><label>Jefe (opcional)</label><select id="userManager"><option value="">Sin jefe (nivel más alto)</option></select><p class="field-note" id="userManagerNote"></p></div>
+            </div>
+            <div class="form-row triple">
+              <div class="field"><label>Puesto (opcional)</label><input type="text" id="userPuesto" placeholder="Ej. Jefe de Compras"></div>
+              <div class="field"><label>Área (opcional)</label><input type="text" id="userArea" placeholder="Ej. Mantenimiento"></div>
+              <div class="field"><label>Cumpleaños (opcional)</label><input type="text" id="userBirthday" placeholder="DD/MM/AAAA" inputmode="numeric" maxlength="10"></div>
+            </div>
+            <p class="field-note">El cumpleaños es solo para felicitarlo(a) — nunca se usa como contraseña. Escríbelo como día/mes/año, ej. 12/04/1965.</p>
+            <button type="submit" class="submit-btn" id="userSubmitBtn">Crear usuario</button>
+          </form>
+        </div>
+
+        <div class="panel" id="panel-usuarios">
+          <h2>Usuarios registrados</h2>
+          <p class="panel-sub">Puedes editar el puesto, área o jefe de cada quien, o desactivar su acceso.</p>
+          <div id="usersList"></div>
+        </div>
       </div>
 
-      ${projectFormHtml('admin')}
+      <div class="tool-section" id="section-proyectos">
+        <h1 class="section-title">2. Proyectos</h1>
+        ${projectFormHtml('admin')}
 
-      <div class="panel" id="panel-todos-proyectos">
-        <h2>Todos los proyectos</h2>
-        <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
-        <div class="form-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:18px;">
-          <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
-          <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
-          <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
-          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
+        <div class="panel" id="panel-todos-proyectos">
+          <h2>Todos los proyectos</h2>
+          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
+          <div class="form-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:18px;">
+            <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
+            <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
+            <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
+            <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
+          </div>
+          <div class="form-row single" style="margin-bottom:4px;">
+            <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+          </div>
+          <div id="projectsList"></div>
         </div>
-        <div class="form-row single" style="margin-bottom:4px;">
-          <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+
+        <div class="panel" id="panel-actualizacion">
+          <h2>Agregar actualización de estatus</h2>
+          <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
+          <div id="updateMsg" class="msg"></div>
+          <form id="updateForm">
+            <div class="form-row single">
+              <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
+            </div>
+            <div class="form-row single">
+              <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
+            </div>
+            <div class="form-row single">
+              <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
+            </div>
+            <button type="submit" class="submit-btn">Publicar actualización</button>
+          </form>
         </div>
-        <div id="projectsList"></div>
       </div>
 
-      <div class="panel" id="panel-actualizacion">
-        <h2>Agregar actualización de estatus</h2>
-        <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
-        <div id="updateMsg" class="msg"></div>
-        <form id="updateForm">
-          <div class="form-row single">
-            <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
-          </div>
-          <div class="form-row single">
-            <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
-          </div>
-          <div class="form-row single">
-            <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
-          </div>
-          <button type="submit" class="submit-btn">Publicar actualización</button>
-        </form>
+      <div class="tool-section" id="section-empleados">
+        <h1 class="section-title">3. Empleados AVANTA</h1>
+        <div class="panel" id="panel-personal">
+          <h2>Personal interno de AVANTA</h2>
+          <p class="panel-sub">Da de alta a tu jefe (mismo acceso que tú) o a un vendedor (solo carga y edita sus propios proyectos). Se genera una contraseña temporal.</p>
+          <div id="staffMsg" class="msg"></div>
+          <div id="staffCredentialBox"></div>
+          <form id="staffForm">
+            <div class="form-row">
+              <div class="field"><label>Correo electrónico</label><input type="email" id="staffEmail" required></div>
+              <div class="field"><label>Nombre completo</label><input type="text" id="staffFullName" required></div>
+            </div>
+            <div class="form-row single">
+              <div class="field"><label>Nivel de acceso</label>
+                <select id="staffRole" required>
+                  <option value="vendedor">Vendedor — solo sus propios proyectos</option>
+                  <option value="admin">Administrador — mismo acceso que tú</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="submit-btn" id="staffSubmitBtn">Crear acceso</button>
+          </form>
+          <div id="vendedoresList" style="margin-top:18px;"></div>
+        </div>
+      </div>
+
+      <div class="tool-section" id="section-dashboard">
+        <h1 class="section-title">4. Dashboard</h1>
+        ${dashboardPanelHtml()}
+      </div>
+
+      <div class="tool-section" id="section-configuracion">
+        <h1 class="section-title">5. Configuración y seguridad</h1>
+        ${miCuentaPanelHtml()}
+        ${rolesInfoPanelHtml()}
+        ${auditoriaPanelHtml()}
+        ${controlAccesoPanelHtml()}
       </div>
     `;
 
@@ -483,6 +507,7 @@
     document.getElementById('filterProvider').addEventListener('change', renderProjectsList);
     document.getElementById('filterStatus').addEventListener('change', renderProjectsList);
     document.getElementById('filterText').addEventListener('input', renderProjectsList);
+    document.getElementById('staffPwForm').addEventListener('submit', submitStaffChangePassword);
     supplierRows = [];
     renderSupplierRows();
     initPanelToggle();
@@ -503,6 +528,116 @@
   function todayIso() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  // ---- 5. Configuración y seguridad ----
+  function miCuentaPanelHtml() {
+    return `
+      <div class="panel" id="panel-mi-cuenta">
+        <h2>Mi cuenta</h2>
+        <p class="panel-sub">Cambia tu contraseña cuando quieras — no hace falta esperar a que te la pida el sistema.</p>
+        <div id="staffPwMsg" class="msg"></div>
+        <form id="staffPwForm">
+          <div class="form-row">
+            <div class="field pw-field"><label>Nueva contraseña</label><input type="password" id="staffNewPw" required minlength="8" autocomplete="new-password"></div>
+            <div class="field pw-field"><label>Confirmar contraseña</label><input type="password" id="staffConfirmPw" required minlength="8" autocomplete="new-password"></div>
+          </div>
+          <button type="submit" class="submit-btn" id="staffPwBtn">Guardar contraseña</button>
+        </form>
+      </div>
+    `;
+  }
+
+  async function submitStaffChangePassword(e) {
+    e.preventDefault();
+    const msg = document.getElementById('staffPwMsg');
+    const btn = document.getElementById('staffPwBtn');
+    const newPw = document.getElementById('staffNewPw').value;
+    const confirmPw = document.getElementById('staffConfirmPw').value;
+
+    if (newPw !== confirmPw) {
+      msg.className = 'msg error';
+      msg.textContent = 'Las dos contraseñas no coinciden.';
+      return;
+    }
+    if (newPw.length < 8) {
+      msg.className = 'msg error';
+      msg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    const { error } = await supabaseClient.auth.updateUser({ password: newPw });
+    btn.disabled = false;
+    btn.textContent = 'Guardar contraseña';
+
+    msg.className = error ? 'msg error' : 'msg success';
+    msg.textContent = error ? 'Error: ' + error.message : 'Contraseña actualizada correctamente.';
+    if (!error) document.getElementById('staffPwForm').reset();
+  }
+
+  function rolesInfoPanelHtml() {
+    return `
+      <div class="panel" id="panel-roles-info">
+        <h2>Roles y permisos</h2>
+        <p class="panel-sub">Por ahora el portal maneja 2 niveles de acceso interno.</p>
+        <div class="row-item"><span class="r-main">Administrador</span><span class="r-meta">Acceso completo: ve y edita todos los clientes, usuarios, proyectos y empleados. Puede dar de alta a otros administradores o vendedores.</span></div>
+        <div class="row-item"><span class="r-main">Vendedor</span><span class="r-meta">Ve y edita únicamente los proyectos que él mismo cargó, o que un administrador le asignó como Responsable de Avanta. No puede crear empresas, usuarios ni otros empleados.</span></div>
+      </div>
+    `;
+  }
+
+  function controlAccesoPanelHtml() {
+    return `
+      <div class="panel" id="panel-control-acceso">
+        <h2>Control de acceso</h2>
+        <p class="panel-sub">Así se decide automáticamente qué ve cada quien — no requiere configuración manual.</p>
+        <div class="row-item"><span class="r-main">Clientes</span><span class="r-meta">Cada usuario cliente ve solo sus propios proyectos, más los de las personas debajo de él en el organigrama de su empresa (jefe → subordinado, cualquier nivel).</span></div>
+        <div class="row-item"><span class="r-main">Vendedores</span><span class="r-meta">Ven solo los proyectos donde son el Responsable de Avanta.</span></div>
+        <div class="row-item"><span class="r-main">Administradores</span><span class="r-meta">Ven todo, sin restricción.</span></div>
+        <p class="field-note" style="margin-top:12px;">Una cuenta desactivada (empresa, usuario, vendedor o administrador) pierde el acceso al iniciar sesión o en su siguiente carga de página — ver secciones "1. Clientes y usuarios" y "3. Empleados AVANTA".</p>
+      </div>
+    `;
+  }
+
+  function auditoriaPanelHtml() {
+    return `
+      <div class="panel" id="panel-auditoria">
+        <h2>Historial / auditoría de cambios</h2>
+        <p class="panel-sub">Últimas actualizaciones de estatus publicadas en cualquier proyecto, de más reciente a más antigua.</p>
+        <div id="auditoriaList"></div>
+      </div>
+    `;
+  }
+
+  let auditoriaCache = [];
+  async function loadAuditoria() {
+    const { data, error } = await supabaseClient
+      .from('portal_project_updates')
+      .select('id, status, note, created_at, portal_projects(name, client_id)')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    auditoriaCache = error ? [] : (data || []);
+  }
+  function renderAuditoria() {
+    const wrap = document.getElementById('auditoriaList');
+    if (!wrap) return;
+    if (auditoriaCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Sin actualizaciones registradas todavía.</p>';
+      return;
+    }
+    wrap.innerHTML = auditoriaCache.map(u => {
+      const proj = u.portal_projects;
+      const projName = proj ? proj.name : '—';
+      const cliente = proj ? clientName(proj.client_id) : '—';
+      return `
+        <div class="row-item">
+          <span class="r-main">${escapeHtml(projName)}</span>
+          <span class="r-meta">${escapeHtml(cliente)} — ${escapeHtml(STATUS_LABELS[u.status] || u.status)} — ${formatDateShort((u.created_at || '').slice(0, 10))}${u.note ? ' — ' + escapeHtml(u.note) : ''}</span>
+        </div>
+      `;
+    }).join('');
   }
 
   function renderDashboard() {
@@ -570,7 +705,7 @@
     `;
     wrap.querySelectorAll('[data-dash-edit]').forEach(a => {
       a.addEventListener('click', () => {
-        activePanelTargets = new Set(['#panel-proyecto']);
+        activePanelTargets = new Set(['#section-proyectos']);
         applyPanelToggleState();
         startProjectEdit(a.getAttribute('data-dash-edit'));
       });
@@ -703,36 +838,47 @@
       ${quickNavHtml('vendedor')}
       <p class="admin-note">Sesión de vendedor — ${escapeHtml(fullName)}. Aquí solo ves y editas los proyectos que tú cargaste.</p>
 
-      ${dashboardPanelHtml()}
+      <div class="tool-section" id="section-proyectos">
+        <h1 class="section-title">Proyectos</h1>
+        ${projectFormHtml()}
 
-      ${projectFormHtml()}
-
-      <div class="panel" id="panel-mis-proyectos">
-        <h2>Mis proyectos</h2>
-        <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
-        <div class="form-row" style="margin-bottom:4px;">
-          <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
-          <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
+        <div class="panel" id="panel-mis-proyectos">
+          <h2>Mis proyectos</h2>
+          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido.</p>
+          <div class="form-row" style="margin-bottom:4px;">
+            <div class="field"><label>Buscar (nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. COT-4821 o Ternium"></div>
+            <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
+          </div>
+          <div id="projectsList"></div>
         </div>
-        <div id="projectsList"></div>
+
+        <div class="panel" id="panel-actualizacion">
+          <h2>Agregar actualización de estatus</h2>
+          <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
+          <div id="updateMsg" class="msg"></div>
+          <form id="updateForm">
+            <div class="form-row single">
+              <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
+            </div>
+            <div class="form-row single">
+              <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
+            </div>
+            <div class="form-row single">
+              <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
+            </div>
+            <button type="submit" class="submit-btn">Publicar actualización</button>
+          </form>
+        </div>
       </div>
 
-      <div class="panel" id="panel-actualizacion">
-        <h2>Agregar actualización de estatus</h2>
-        <p class="panel-sub">Publica un nuevo paso del estatus con una nota — el usuario dueño (y su jefe) lo ven de inmediato.</p>
-        <div id="updateMsg" class="msg"></div>
-        <form id="updateForm">
-          <div class="form-row single">
-            <div class="field"><label>Proyecto</label><select id="updateProject" required><option value="">Seleccione...</option></select></div>
-          </div>
-          <div class="form-row single">
-            <div class="field"><label>Nuevo estatus</label><select id="updateStatus" required>${statusOptionsHtml('')}</select></div>
-          </div>
-          <div class="form-row single">
-            <div class="field"><label>Nota (opcional)</label><textarea id="updateNote" placeholder="Detalle visible para el cliente"></textarea></div>
-          </div>
-          <button type="submit" class="submit-btn">Publicar actualización</button>
-        </form>
+      <div class="tool-section" id="section-dashboard">
+        <h1 class="section-title">Dashboard</h1>
+        ${dashboardPanelHtml()}
+      </div>
+
+      <div class="tool-section" id="section-configuracion">
+        <h1 class="section-title">Mi cuenta</h1>
+        ${miCuentaPanelHtml()}
       </div>
     `;
 
@@ -743,6 +889,7 @@
     document.getElementById('updateForm').addEventListener('submit', submitUpdate);
     document.getElementById('filterText').addEventListener('input', renderProjectsList);
     document.getElementById('filterStatus').addEventListener('change', renderProjectsList);
+    document.getElementById('staffPwForm').addEventListener('submit', submitStaffChangePassword);
     supplierRows = [];
     renderSupplierRows();
     initPanelToggle();
@@ -839,6 +986,8 @@
       renderUsersList();
       renderClientsList();
       renderStaffList();
+      await loadAuditoria();
+      renderAuditoria();
       refreshFilterSelects();
     } else {
       refreshFilterSelects();

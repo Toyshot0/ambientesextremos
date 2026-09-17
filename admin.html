@@ -56,7 +56,8 @@
   .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
   .submit-btn:hover { background: #d0531a; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .cancel-btn { background: transparent; color: var(--steel-300); border: 1px solid var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; margin-left: 10px; }
+  .cancel-btn { background: transparent; color: var(--steel-300); border: 1px solid var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; margin-left: 10px; text-decoration: none; display: inline-block; }
+  .cancel-btn.danger { color: #e05a5a; border-color: #e05a5a; }
 
   .msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
   .msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
@@ -267,6 +268,7 @@
   let clientsCache = [];
   let usersCache = [];
   let projectsCache = [];
+  let checklistCountsCache = {}; // project_id -> { open, total } — para la insignia "⚠" del listado
   let editingProjectId = null;
   let currentRole = null; // 'admin' | 'vendedor'
   let currentStaffId = null;
@@ -296,6 +298,7 @@
       setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
       renderAdmin();
       await refreshAll();
+      maybeOpenEditFromQuery();
       return;
     }
 
@@ -307,10 +310,28 @@
       setStaffIdentity(`<strong>${escapeHtml(vendedorRow.full_name)}</strong> — Vendedor`);
       renderVendedor(vendedorRow.full_name);
       await refreshAll();
+      maybeOpenEditFromQuery();
       return;
     }
 
     adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
+  }
+
+  // ---- Si se llega aquí desde proyecto-detalle.html con "?edit=<id>" (el
+  // botón "Editar" de esa pantalla), abrimos directo el formulario de
+  // edición de ese proyecto, igual que hacía el viejo botón "Editar" por
+  // fila del listado. ----
+  function maybeOpenEditFromQuery() {
+    const editId = new URLSearchParams(window.location.search).get('edit');
+    if (!editId) return;
+    const exists = projectsCache.find(p => p.id === editId);
+    if (!exists) return;
+    activePanelTargets = new Set(['#section-proyectos']);
+    applyPanelToggleState();
+    startProjectEdit(editId);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('edit');
+    window.history.replaceState({}, '', url);
   }
 
   const ALL_TOOLS_TARGET = '#all-tools';
@@ -462,7 +483,7 @@
         ${subNavHtml([['panel-todos-proyectos', 'Todos los proyectos'], ['panel-proyecto', 'Crear proyecto']])}
         <div class="panel" id="panel-todos-proyectos">
           <h2>Todos los proyectos</h2>
-          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido. Para cambiar el estatus de un proyecto, dale "Editar".</p>
+          <p class="panel-sub">Agrupados por empresa/planta. Dale clic a cualquier proyecto para ver su detalle completo — desde ahí puedes editarlo, ver su historial, sus pendientes y sus comentarios.</p>
           <div class="form-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom:18px;">
             <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
             <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
@@ -522,6 +543,8 @@
     document.getElementById('projectForm').addEventListener('submit', submitProject);
     document.getElementById('projectClient').addEventListener('change', refreshProjectOwnerOptions);
     document.getElementById('projectCancelBtn').addEventListener('click', cancelProjectEdit);
+    const projectDeleteLink = document.getElementById('projectDeleteLink');
+    if (projectDeleteLink) projectDeleteLink.addEventListener('click', () => { if (editingProjectId) deleteProject(editingProjectId); });
     document.getElementById('projectPO').addEventListener('input', updateProjectDateAvailability);
     document.getElementById('addSupplierRowBtn').addEventListener('click', () => { addSupplierRow(); renderSupplierRows(); });
     document.getElementById('filterClient').addEventListener('change', renderProjectsList);
@@ -555,6 +578,25 @@
   function todayIso() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function addDaysIso(iso, days) {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  // ---- Cuenta de alertas automáticas por proyecto (vencido / próximo a
+  // vencer / sin OC en fabricación) — mismo criterio que usa la nueva
+  // pantalla de detalle (proyecto-detalle.html), para la insignia "⚠" del
+  // listado. Los pendientes manuales (checklist) se suman aparte. ----
+  function projectAutoAlertCount(p) {
+    let n = 0;
+    if (p.status !== 'entregado' && p.estimated_delivery_date) {
+      const today = todayIso();
+      if (p.estimated_delivery_date < today) n++;
+      else if (p.estimated_delivery_date <= addDaysIso(today, 7)) n++;
+    }
+    if ((p.status === 'en_fabricacion' || p.status === 'entrega_programada') && !p.po_number) n++;
+    return n;
   }
 
   // ---- 5. Configuración y seguridad ----
@@ -936,10 +978,7 @@
     wrap.querySelectorAll('[data-dash-edit]').forEach(a => {
       a.addEventListener('click', (e) => {
         e.stopPropagation();
-        activePanelTargets = new Set(['#section-proyectos']);
-        applyPanelToggleState();
-        // startProjectEdit() ya salta al sub-panel del formulario por su cuenta.
-        startProjectEdit(a.getAttribute('data-dash-edit'));
+        window.location.href = 'proyecto-detalle.html?id=' + a.getAttribute('data-dash-edit');
       });
     });
   }
@@ -1010,6 +1049,7 @@
           </div>
           <button type="submit" class="submit-btn" id="projectSubmitBtn">Crear proyecto</button>
           <button type="button" class="cancel-btn hidden" id="projectCancelBtn">Cancelar edición</button>
+          ${role === 'admin' ? `<a class="cancel-btn danger hidden" id="projectDeleteLink" style="cursor:pointer;">Eliminar este proyecto</a>` : ''}
         </form>
       </div>
     `;
@@ -1108,7 +1148,7 @@
         ${subNavHtml([['panel-mis-proyectos', 'Mis proyectos'], ['panel-proyecto', 'Crear proyecto']])}
         <div class="panel" id="panel-mis-proyectos">
           <h2>Mis proyectos</h2>
-          <p class="panel-sub">Agrupados por empresa/planta — incluye fecha de entrega y los proveedores/OC internos de cada pedido. Para cambiar el estatus de un proyecto, dale "Editar".</p>
+          <p class="panel-sub">Agrupados por empresa/planta. Dale clic a cualquier proyecto para ver su detalle completo — desde ahí puedes editarlo, ver su historial, sus pendientes y sus comentarios.</p>
           <div class="form-row" style="margin-bottom:4px;">
             <div class="field"><label>Buscar (folio, nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. AVT-0012, COT-4821 o Ternium"></div>
             <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
@@ -1221,6 +1261,7 @@
     await loadClients();
     await loadUsers();
     await loadProjects();
+    await loadChecklistCounts();
     refreshClientSelects();
     refreshProjectOwnerOptions();
     if (currentRole === 'admin') {
@@ -1331,6 +1372,21 @@
     if (currentRole === 'vendedor') query = query.eq('owner_vendedor_id', currentStaffId);
     const { data } = await query;
     projectsCache = data || [];
+  }
+
+  // ---- Pendientes manuales (checklist) de cada proyecto — solo se cargan
+  // los conteos (no el texto) para la insignia del listado; el detalle
+  // completo vive en proyecto-detalle.html. RLS ya limita esto a los
+  // proyectos que este rol puede ver (igual que portal_projects). ----
+  async function loadChecklistCounts() {
+    const { data } = await supabaseClient.from('portal_project_checklist').select('project_id, done');
+    checklistCountsCache = {};
+    (data || []).forEach(c => {
+      const cur = checklistCountsCache[c.project_id] || { open: 0, total: 0 };
+      cur.total++;
+      if (!c.done) cur.open++;
+      checklistCountsCache[c.project_id] = cur;
+    });
   }
 
   function clientName(id) {
@@ -1631,7 +1687,16 @@
     msg.textContent = error ? 'Error: ' + error.message : (editingProjectId ? 'Proyecto actualizado correctamente.' : 'Proyecto creado correctamente.');
 
     if (!error) {
+      const wasEditing = !!editingProjectId;
+      const savedId = projectId;
       cancelProjectEdit();
+      // Si se trataba de una edición, regresamos directo al detalle del
+      // proyecto (donde el usuario probablemente venía) en vez de dejarlo
+      // en el listado — si era un proyecto nuevo, se queda en el listado.
+      if (wasEditing && savedId) {
+        window.location.href = 'proyecto-detalle.html?id=' + savedId;
+        return;
+      }
       await loadProjects();
       renderProjectsList();
     }
@@ -1676,6 +1741,8 @@
     updateProjectDateAvailability();
     document.getElementById('projectSubmitBtn').textContent = 'Guardar cambios';
     document.getElementById('projectCancelBtn').classList.remove('hidden');
+    const deleteLinkShow = document.getElementById('projectDeleteLink');
+    if (deleteLinkShow) deleteLinkShow.classList.remove('hidden');
     document.getElementById('projectForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -1691,6 +1758,8 @@
     if (responsableSel) responsableSel.value = '';
     document.getElementById('projectSubmitBtn').textContent = 'Crear proyecto';
     document.getElementById('projectCancelBtn').classList.add('hidden');
+    const deleteLinkHide = document.getElementById('projectDeleteLink');
+    if (deleteLinkHide) deleteLinkHide.classList.add('hidden');
     supplierRows = [];
     renderSupplierRows();
     updateProjectDateAvailability();
@@ -1771,66 +1840,30 @@
         html += `<div class="client-group-header">${escapeHtml(clientName(p.client_id))}</div>`;
         lastClientId = p.client_id;
       }
-      const suppliers = p.portal_project_suppliers || [];
-      const supplierMeta = suppliers.map(s => `${PROVIDER_LABELS[s.provider] || s.provider}${s.po_number_supplier ? ' (OC ' + escapeHtml(s.po_number_supplier) + ')' : ''}`).join(', ');
       const isDelivered = p.status === 'entregado';
       const responsableMeta = p.owner_vendedor_id ? ' — Responsable AVANTA: ' + escapeHtml(vendedorName(p.owner_vendedor_id)) : '';
+      const pend = checklistCountsCache[p.id] || { open: 0, total: 0 };
+      const badgeCount = projectAutoAlertCount(p) + pend.open;
       html += `
-      <div class="row-item">
+      <div class="row-item clickable" data-view-project="${p.id}">
         <div class="r-wrap">
           <span class="r-main">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</span>
-          <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Compromiso con cliente ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}${responsableMeta}</span>
-          ${p.internal_estimated_date ? `<span class="r-meta">Fecha estimada interna (uso interno): ${formatDateShort(p.internal_estimated_date)}</span>` : ''}
-          ${supplierMeta ? `<span class="r-meta">Proveedores (interno): ${supplierMeta}</span>` : ''}
+          <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.estimated_delivery_date ? ' — Compromiso con cliente ' + formatDateShort(p.estimated_delivery_date) : ''}${responsableMeta}</span>
           <span class="status-pill-sm${isDelivered ? ' delivered' : ''}">${STATUS_LABELS[p.status] || p.status}</span>
-          <span class="r-actions">
-            <a data-edit-project="${p.id}">Editar</a>
-            <a data-history-project="${p.id}">Ver historial</a>
-            ${currentRole === 'admin' ? `<a class="danger" data-delete-project="${p.id}">Eliminar</a>` : ''}
-          </span>
+          ${badgeCount ? `<span class="r-meta" style="color:#e05a5a; font-weight:600;">⚠ ${badgeCount} pendiente${badgeCount === 1 ? '' : 's'}</span>` : ''}
+          <span class="r-actions"><a data-view-project="${p.id}">Ver proyecto →</a></span>
         </div>
-        <div class="inline-edit" id="history-${p.id}"></div>
       </div>
     `;
     });
     wrap.innerHTML = html;
 
-    sorted.forEach(p => {
-      document.querySelector(`[data-edit-project="${p.id}"]`).addEventListener('click', () => startProjectEdit(p.id));
-      document.querySelector(`[data-history-project="${p.id}"]`).addEventListener('click', () => toggleProjectHistory(p.id));
-      const delLink = document.querySelector(`[data-delete-project="${p.id}"]`);
-      if (delLink) delLink.addEventListener('click', () => deleteProject(p.id));
+    wrap.querySelectorAll('[data-view-project]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.location.href = 'proyecto-detalle.html?id=' + el.getAttribute('data-view-project');
+      });
     });
-  }
-
-  async function toggleProjectHistory(projectId) {
-    const box = document.getElementById(`history-${projectId}`);
-    if (!box) return;
-    if (box.classList.contains('open')) {
-      box.classList.remove('open');
-      return;
-    }
-    box.innerHTML = '<p class="empty-note">Cargando historial...</p>';
-    box.classList.add('open');
-    const { data, error } = await supabaseClient
-      .from('portal_project_updates')
-      .select('status, note, created_at')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: false });
-    if (error) {
-      box.innerHTML = `<p class="empty-note">No se pudo cargar el historial: ${escapeHtml(error.message)}</p>`;
-      return;
-    }
-    if (!data || data.length === 0) {
-      box.innerHTML = '<p class="empty-note">Sin actualizaciones de estatus registradas todavía.</p>';
-      return;
-    }
-    box.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Historial de cambios de estatus:</p>' + data.map(u => `
-      <div class="row-item" style="border-bottom:1px dashed var(--gunmetal-600);">
-        <span class="r-main">${escapeHtml(STATUS_LABELS[u.status] || u.status)}</span>
-        <span class="r-meta">${formatDateShort((u.created_at || '').slice(0, 10))}${u.note ? ' — ' + escapeHtml(u.note) : ''}</span>
-      </div>
-    `).join('');
   }
 
   function escapeHtml(str) {

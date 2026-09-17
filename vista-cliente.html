@@ -246,7 +246,18 @@
     allUsers = users || [];
     allProjects = projects || [];
 
-    renderPicker();
+    // Si se llega aquí desde el botón "Ver como cliente" del detalle de un
+    // proyecto (proyecto-detalle.html?user=...&highlight=...), saltamos
+    // directo a la vista de ese usuario y resaltamos ese proyecto, en vez
+    // de mostrar primero el selector.
+    const params = new URLSearchParams(window.location.search);
+    const preselectUserId = params.get('user');
+    const highlightProjectId = params.get('highlight');
+    if (preselectUserId && allUsers.find(u => u.id === preselectUserId)) {
+      renderClientView(preselectUserId, highlightProjectId);
+    } else {
+      renderPicker();
+    }
   }
 
   function clientName(id) {
@@ -324,7 +335,7 @@
     return result;
   }
 
-  function renderClientView(userId) {
+  function renderClientView(userId, highlightProjectId) {
     const me = allUsers.find(u => u.id === userId);
     if (!me) return;
 
@@ -342,7 +353,14 @@
       </div>
       <div id="clientProjectsWrap"></div>
     `;
-    document.getElementById('pickAnotherLink').addEventListener('click', (e) => { e.preventDefault(); renderPicker(); });
+    document.getElementById('pickAnotherLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      const url = new URL(window.location.href);
+      url.searchParams.delete('user');
+      url.searchParams.delete('highlight');
+      window.history.replaceState({}, '', url);
+      renderPicker();
+    });
 
     const dashWrap = document.getElementById('clientProjectsWrap');
 
@@ -359,7 +377,11 @@
       empty.textContent = 'Todavía no hay proyectos registrados a nombre de esta persona.';
       dashWrap.appendChild(empty);
     } else {
-      myProjects.forEach(p => dashWrap.appendChild(renderProjectCard(p)));
+      myProjects.forEach(p => {
+        const card = renderProjectCard(p);
+        card.dataset.projectId = p.id;
+        dashWrap.appendChild(card);
+      });
     }
 
     if (teamMembers.length > 0) {
@@ -385,13 +407,26 @@
           empty.textContent = 'Sin proyectos registrados.';
           wrap.appendChild(empty);
         } else {
-          memberProjects.forEach(p => wrap.appendChild(renderProjectCard(p)));
+          memberProjects.forEach(p => {
+            const card = renderProjectCard(p);
+            card.dataset.projectId = p.id;
+            wrap.appendChild(card);
+          });
         }
         dashWrap.appendChild(wrap);
       });
     }
 
-    dashWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Si venimos desde el botón "Ver como cliente" de un proyecto específico,
+    // lo resaltamos y hacemos scroll directo a él en vez de solo al inicio.
+    const highlightCard = highlightProjectId ? dashWrap.querySelector(`[data-project-id="${highlightProjectId}"]`) : null;
+    if (highlightCard) {
+      highlightCard.style.outline = '2px solid var(--orange)';
+      highlightCard.style.outlineOffset = '2px';
+      highlightCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      dashWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   // ---- Idénticas a dashboard.html, para que se vea pixel-a-pixel igual ----

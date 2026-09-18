@@ -8,22 +8,35 @@
 <link rel="stylesheet" href="main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  /* ---- Misma paleta navy/azul estructural del Portal de Clientes que
+     admin.html (ver ahí el comentario completo). ---- */
+  :root {
+    --paper-900: #0f1c30;
+    --paper-800: #16273f;
+    --paper-border: #28405f;
+    --ink-900: #eef2f6;
+    --ink-600: #93a8c2;
+    --p-input-bg: #1c3352;
+    --p-blue: #3e7bfa;
+    --p-blue-dim: rgba(62,123,250,0.16);
+  }
+
   .dash-header { padding: 32px 48px 24px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
   .dash-header h1 { font-size: 28px; font-weight: 600; margin-bottom: 6px; }
   .dash-header .sub { font-size: 14px; color: var(--steel-300); }
   .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
   .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
 
-  .dash-content { padding: 32px 48px 64px; max-width: 980px; }
+  .dash-content { padding: 32px 48px 64px; max-width: 980px; margin: 0 auto; }
   .empty-state { text-align: center; padding: 80px 24px; color: var(--steel-300); }
 
   .tabs { display: flex; gap: 8px; margin-bottom: 26px; }
   .tab-btn { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 9px 18px; cursor: pointer; }
-  .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  .tab-btn.active { background: var(--p-blue); border-color: var(--p-blue); color: var(--white); }
   body.content-light .tab-btn { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
-  body.content-light .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  body.content-light .tab-btn.active { background: var(--p-blue); border-color: var(--p-blue); color: var(--white); }
 
-  .section-label { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange); margin: 36px 0 14px; }
+  .section-label { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-blue); margin: 36px 0 14px; }
   .section-label:first-child { margin-top: 0; }
 
   .team-member { margin-bottom: 28px; }
@@ -43,8 +56,8 @@
   .status-stepper .step:first-child::before { display: none; }
   .status-stepper .dot { display: block; width: 14px; height: 14px; border-radius: 50%; background: var(--gunmetal-600); border: 2px solid var(--gunmetal-600); margin: 0 auto 8px; position: relative; z-index: 1; }
   .status-stepper .label { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-300); }
-  .status-stepper .step.done .dot, .status-stepper .step.current .dot { background: var(--orange); border-color: var(--orange); }
-  .status-stepper .step.done::before, .status-stepper .step.current::before { background: var(--orange); }
+  .status-stepper .step.done .dot, .status-stepper .step.current .dot { background: var(--p-blue); border-color: var(--p-blue); }
+  .status-stepper .step.done::before, .status-stepper .step.current::before { background: var(--p-blue); }
   .status-stepper .step.current .label { color: var(--white); }
   .status-stepper .step.done .label { color: var(--steel-100); }
   .stepper-current { display: none; }
@@ -65,7 +78,25 @@
   .timeline.open { display: block; }
   .timeline-item { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--gunmetal-700); }
   .timeline-item:last-child { border-bottom: none; }
-  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--orange); margin-top: 5px; flex-shrink: 0; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--p-blue); margin-top: 5px; flex-shrink: 0; }
+
+  /* ---- Pendientes / Comentarios visibles para el cliente (pedido por
+     Ric, 2026-09-18) — solo lo que AVANTA marcó como visible. ---- */
+  .client-sub-section { padding: 4px 26px 18px; border-top: 1px solid var(--gunmetal-700); margin-top: 4px; }
+  .client-sub-section h4 { font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--p-blue); margin: 16px 0 8px; }
+  .client-checklist-item { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; font-size: 13.5px; color: var(--white); }
+  .client-checklist-item.done { color: var(--steel-300); text-decoration: line-through; }
+  .client-checklist-item .ccb { width: 6px; height: 6px; border-radius: 50%; background: var(--p-blue); flex-shrink: 0; }
+  .client-comment-item { padding: 8px 0; border-bottom: 1px solid var(--gunmetal-700); }
+  .client-comment-item:last-child { border-bottom: none; }
+  .client-comment-item .ccmeta { font-size: 11px; color: var(--steel-300); margin-bottom: 2px; }
+  .client-comment-item .ccbody { font-size: 13.5px; color: var(--white); white-space: pre-wrap; }
+  body.content-light .client-sub-section { border-color: var(--paper-border); }
+  body.content-light .client-checklist-item { color: var(--ink-900); }
+  body.content-light .client-checklist-item.done { color: var(--ink-600); }
+  body.content-light .client-comment-item { border-color: var(--paper-border); }
+  body.content-light .client-comment-item .ccmeta { color: var(--ink-600); }
+  body.content-light .client-comment-item .ccbody { color: var(--ink-900); }
   .timeline-body .tstatus { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 3px; }
   .timeline-body .tnote { font-size: 13px; color: var(--steel-100); margin-bottom: 3px; }
   .timeline-body .tdate { font-size: 11px; color: var(--steel-300); }
@@ -76,10 +107,10 @@
   /* Inicio — resumen */
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 30px; }
   .stat-card { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 18px 20px; }
-  .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--orange); }
+  .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--p-blue); }
   .stat-card .slabel { font-size: 12px; color: var(--steel-300); margin-top: 4px; }
   .stat-card.clickable { cursor: pointer; transition: border-color 0.15s; }
-  .stat-card.clickable:hover { border-color: var(--orange); }
+  .stat-card.clickable:hover { border-color: var(--p-blue); }
   .attn-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 13px; }
   .attn-item:last-child { border-bottom: none; }
   .attn-item .a-meta { color: var(--steel-300); font-size: 12px; }
@@ -87,7 +118,7 @@
   /* Mis proyectos — filtros */
   .filters-row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 26px; }
   .filters-row input, .filters-row select { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
-  .filters-row input:focus, .filters-row select:focus { outline: none; border-color: var(--orange); }
+  .filters-row input:focus, .filters-row select:focus { outline: none; border-color: var(--p-blue); }
 
   /* Usuario */
   .profile-box { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 22px 26px; margin-bottom: 24px; }
@@ -124,7 +155,7 @@
   body.content-light .stepper-current { color: var(--ink-900); }
   body.content-light .meta-item .mlabel { color: var(--ink-600); }
   body.content-light .meta-item .mvalue { color: var(--ink-900); }
-  body.content-light .project-notes { background: var(--white); border: 1px solid var(--paper-border); color: var(--ink-600); }
+  body.content-light .project-notes { background: var(--p-input-bg); border: 1px solid var(--paper-border); color: var(--ink-600); }
   body.content-light .toggle-hint { color: var(--ink-600); }
   body.content-light .timeline { border-color: var(--paper-border); }
   body.content-light .timeline-item { border-color: var(--paper-border); }
@@ -137,15 +168,15 @@
   body.content-light .stat-card .slabel { color: var(--ink-600); }
   body.content-light .attn-item { border-color: var(--paper-border); }
   body.content-light .attn-item .a-meta { color: var(--ink-600); }
-  body.content-light .filters-row input, body.content-light .filters-row select { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .filters-row input, body.content-light .filters-row select { background: var(--p-input-bg); border-color: var(--paper-border); color: var(--ink-900); }
   body.content-light .profile-box { background: var(--paper-800); border-color: var(--paper-border); }
   body.content-light .profile-box .pf-row { border-color: var(--paper-border); }
   body.content-light .profile-box .pf-label { color: var(--ink-600); }
   body.content-light .profile-box .pf-value { color: var(--ink-900); }
   body.content-light .pw-field label { color: var(--ink-600); }
-  body.content-light .pw-field input { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
-  body.content-light .msg.success { color: #1f7a45; }
-  body.content-light .msg.error { color: #a63232; }
+  body.content-light .pw-field input { background: var(--p-input-bg); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .msg.success { color: #7fe0a5; }
+  body.content-light .msg.error { color: #ff8a8a; }
 </style>
 </head>
 <body class="content-light">
@@ -263,6 +294,8 @@
   let meData = null;
   let allProjects = []; // mías + de mi equipo, tal cual las entrega RLS
   let currentUserId = null;
+  let visibleChecklistByProject = {};
+  let visibleCommentsByProject = {};
 
   function renderStepper(status) {
     const currentIdx = STATUS_ORDER.indexOf(status);
@@ -321,6 +354,28 @@
       `).join('');
     }
 
+    const visibleChecklist = (visibleChecklistByProject[project.id] || []);
+    const visibleComments = (visibleCommentsByProject[project.id] || []);
+    if (visibleChecklist.length > 0) {
+      const sec = document.createElement('div');
+      sec.className = 'client-sub-section';
+      sec.innerHTML = `<h4>Pendientes</h4>` + visibleChecklist.map(c => `
+        <div class="client-checklist-item${c.done ? ' done' : ''}"><span class="ccb"></span>${escapeHtml(c.text)}</div>
+      `).join('');
+      timeline.appendChild(sec);
+    }
+    if (visibleComments.length > 0) {
+      const sec = document.createElement('div');
+      sec.className = 'client-sub-section';
+      sec.innerHTML = `<h4>Comentarios</h4>` + visibleComments.map(c => `
+        <div class="client-comment-item">
+          <div class="ccmeta">${escapeHtml(c.author_label || '—')} — ${new Date(c.created_at).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div class="ccbody">${escapeHtml(c.body)}</div>
+        </div>
+      `).join('');
+      timeline.appendChild(sec);
+    }
+
     head.addEventListener('click', () => timeline.classList.toggle('open'));
 
     card.appendChild(head);
@@ -374,6 +429,23 @@
       .select('id, folio, owner_user_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, notes, portal_project_updates(id, status, note, created_at)')
       .order('created_at', { ascending: false });
     allProjects = projects || [];
+
+    // ---- Pendientes/comentarios que AVANTA marcó como visibles para el
+    // cliente — RLS ya limita esto a visible_to_client=true y a proyectos
+    // que este usuario puede ver (portal_project_checklist_client_read /
+    // portal_project_comments_client_read), así que un select normal ya
+    // trae exactamente lo que corresponde. ----
+    const projectIds = allProjects.map(p => p.id);
+    if (projectIds.length > 0) {
+      const [{ data: checklist }, { data: comments }] = await Promise.all([
+        supabaseClient.from('portal_project_checklist').select('id, project_id, text, done, sort_order').in('project_id', projectIds).order('sort_order', { ascending: true }),
+        supabaseClient.from('portal_project_comments').select('id, project_id, body, author_label, created_at').in('project_id', projectIds).order('created_at', { ascending: true }),
+      ]);
+      visibleChecklistByProject = {};
+      (checklist || []).forEach(c => { (visibleChecklistByProject[c.project_id] = visibleChecklistByProject[c.project_id] || []).push(c); });
+      visibleCommentsByProject = {};
+      (comments || []).forEach(c => { (visibleCommentsByProject[c.project_id] = visibleCommentsByProject[c.project_id] || []).push(c); });
+    }
 
     renderShell();
   }

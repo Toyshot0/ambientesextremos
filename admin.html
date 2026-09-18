@@ -8,6 +8,27 @@
 <link rel="stylesheet" href="main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  /* ---- Paleta propia del Portal de Clientes (2026-09-18) — dashboard
+     oscuro, azul marino/eléctrico como color ESTRUCTURAL (navegación,
+     títulos, bordes activos, foco); el naranja de AVANTA se conserva
+     únicamente para botones de ACCIÓN y alertas. Redefine, solo dentro de
+     esta página, las mismas variables que ya usaba el tema "content-light"
+     (--paper-900/800/border, --ink-900/600) — así todas las reglas
+     "body.content-light ..." de abajo cambian de un gris claro a este
+     navy oscuro sin tener que reescribir cada una. No toca main.css: el
+     header/nav/footer del sitio siguen con la identidad naranja de
+     siempre. */
+  :root {
+    --paper-900: #0f1c30;
+    --paper-800: #16273f;
+    --paper-border: #28405f;
+    --ink-900: #eef2f6;
+    --ink-600: #93a8c2;
+    --p-input-bg: #1c3352;
+    --p-blue: #3e7bfa;
+    --p-blue-dim: rgba(62,123,250,0.16);
+  }
+
   .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
   .admin-header h1 { font-size: 22px; font-weight: 600; }
   .tools-back-link { display: inline-block; font-size: 12.5px; color: var(--steel-300); text-decoration: none; margin-bottom: 6px; }
@@ -20,12 +41,12 @@
   .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
   .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
 
-  .admin-content { padding: 32px 48px 64px; max-width: 1080px; }
+  .admin-content { padding: 32px 48px 64px; max-width: 1220px; margin: 0 auto; }
   .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
 
   .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; scroll-margin-top: 76px; }
   .tool-section { scroll-margin-top: 76px; }
-  .section-title { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--orange); margin: 8px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--gunmetal-700); }
+  .section-title { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--p-blue); margin: 8px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--gunmetal-700); }
   body.content-light .section-title { border-color: var(--paper-border); }
   .pw-field { margin-bottom: 14px; max-width: 340px; }
   .pw-field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
@@ -33,13 +54,13 @@
 
   .quick-nav { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 20px; background: var(--gunmetal-900); }
   .quick-nav a { font-family: 'Oswald', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 8px 16px; text-decoration: none; white-space: nowrap; transition: border-color 0.15s, color 0.15s; }
-  .quick-nav a:hover { border-color: var(--orange); color: var(--orange); }
-  .quick-nav a.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  .quick-nav a:hover { border-color: var(--p-blue); color: var(--p-blue); }
+  .quick-nav a.active { background: var(--p-blue); border-color: var(--p-blue); color: var(--white); }
   .quick-nav a.active:hover { color: var(--white); }
   body.content-light .quick-nav { background: var(--paper-900); }
   body.content-light .quick-nav a { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
-  body.content-light .quick-nav a:hover { border-color: var(--orange); color: var(--orange); }
-  body.content-light .quick-nav a.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  body.content-light .quick-nav a:hover { border-color: var(--p-blue); color: var(--p-blue); }
+  body.content-light .quick-nav a.active { background: var(--p-blue); border-color: var(--p-blue); color: var(--white); }
   body.content-light .quick-nav a.active:hover { color: var(--white); }
   .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
   .panel .panel-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 18px; }
@@ -50,7 +71,7 @@
   .field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
   .field input, .field select, .field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
   .field textarea { resize: vertical; min-height: 60px; }
-  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--orange); }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--p-blue); }
   .field-note { font-size: 11px; color: var(--steel-300); margin-top: 5px; }
 
   .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
@@ -73,12 +94,42 @@
   .row-item .r-main { font-weight: 600; min-width: 160px; }
   .row-item .r-meta { font-size: 12px; color: var(--steel-300); }
   .row-item .r-actions { margin-left: auto; display: flex; gap: 14px; flex-shrink: 0; }
-  .row-item .r-actions a { font-size: 12px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; color: var(--orange); cursor: pointer; text-decoration: none; }
+  .row-item .r-actions a { font-size: 12px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; color: var(--p-blue); cursor: pointer; text-decoration: none; }
   .row-item .r-actions a.danger { color: #e05a5a; }
   .row-item .r-wrap { width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
 
-  .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 14px; background: var(--orange); border: 1px solid var(--orange); color: #ffffff; white-space: nowrap; }
-  .status-pill-sm.delivered { background: #1f9d55; border-color: #1f9d55; color: #ffffff; }
+  /* ---- Estatus: un color distinto por estatus (pedido por Ric,
+     2026-09-18) — "Entregado" se queda en verde como ya estaba; los demás
+     ahora se distinguen de un vistazo en vez de ser todos naranja. ---- */
+  .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 14px; background: #6b7c93; border: 1px solid #6b7c93; color: #ffffff; white-space: nowrap; }
+  .status-pill-sm.status-activo { background: #6b7c93; border-color: #6b7c93; }
+  .status-pill-sm.status-espera_pedido { background: #c98a1f; border-color: #c98a1f; }
+  .status-pill-sm.status-en_fabricacion { background: var(--p-blue); border-color: var(--p-blue); }
+  .status-pill-sm.status-entrega_programada { background: #7d5fd6; border-color: #7d5fd6; }
+  .status-pill-sm.delivered, .status-pill-sm.status-entregado { background: #1f9d55; border-color: #1f9d55; color: #ffffff; }
+  .pend-badge { color: var(--orange); font-weight: 600; }
+
+  /* ---- Listado de proyectos como tabla (pedido por Ric, 2026-09-18) ----
+     Encabezado y renglones comparten la misma plantilla de columnas para
+     que alineen; cada renglón ES un enlace (target="_blank") que cubre
+     todo el ancho, así toda la fila es clickeable y abre el detalle en
+     una pestaña nueva sin perder el listado. */
+  .proj-table-head, .proj-table-row { display: grid; grid-template-columns: 2.1fr 1.3fr 1.3fr 1.3fr 1.1fr 1fr; gap: 10px 16px; align-items: center; }
+  .proj-table-head { padding: 0 14px 10px; font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-600); border-bottom: 1px solid var(--paper-border); margin-bottom: 4px; }
+  .proj-table-row { padding: 14px; border-radius: 5px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--paper-border); transition: background 0.12s; }
+  .proj-table-row:last-child { border-bottom: none; }
+  .proj-table-row:hover { background: var(--p-blue-dim); }
+  .proj-table-row:hover .ptr-name { color: var(--p-blue); }
+  .ptr-name { font-size: 14px; font-weight: 600; color: var(--ink-900); display: block; }
+  .ptr-folio { font-size: 11.5px; color: var(--ink-600); display: block; margin-top: 2px; }
+  .ptr-cell { font-size: 13px; color: var(--ink-900); }
+  .ptr-cell.muted { color: var(--ink-600); }
+  .ptr-pend { font-size: 12.5px; font-weight: 600; color: var(--orange); white-space: nowrap; }
+  .ptr-pend .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); margin-right: 5px; }
+  @media (max-width: 900px) {
+    .proj-table-head { display: none; }
+    .proj-table-row { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  }
 
   .client-group-header { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steel-300); margin: 22px 0 8px; padding-top: 14px; border-top: 1px solid var(--gunmetal-700); }
   .client-group-header:first-child { margin-top: 0; padding-top: 0; border-top: none; }
@@ -94,18 +145,18 @@
 
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 22px; }
   .stat-card { background: var(--gunmetal-900); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 14px 16px; text-align: center; }
-  .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--orange); line-height: 1.1; }
+  .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--p-blue); line-height: 1.1; }
   .stat-card .slabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--steel-300); margin-top: 6px; }
   body.content-light .stat-card { background: var(--paper-800); border-color: var(--paper-border); }
   body.content-light .stat-card .slabel { color: var(--ink-600); }
   .stat-card.clickable, .row-item.clickable { cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
-  .stat-card.clickable:hover { border-color: var(--orange); }
-  .row-item.clickable:hover .r-main { color: var(--orange); }
+  .stat-card.clickable:hover { border-color: var(--p-blue); }
+  .row-item.clickable:hover .r-main { color: var(--p-blue); }
 
   .sub-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 22px; }
   .sub-nav-btn { font-family: 'Oswald', sans-serif; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: transparent; border: 1px solid var(--gunmetal-600); border-radius: 16px; padding: 6px 14px; cursor: pointer; transition: border-color 0.15s, color 0.15s; }
-  .sub-nav-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .sub-nav-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .sub-nav-btn:hover { border-color: var(--p-blue); color: var(--p-blue); }
+  .sub-nav-btn.active { background: var(--p-blue); border-color: var(--p-blue); color: #fff; }
   body.content-light .sub-nav-btn { color: var(--ink-600); border-color: var(--paper-border); }
   body.content-light .sub-nav-btn.active { color: #fff; }
   .subpanel-hidden { display: none; }
@@ -120,13 +171,13 @@
   body.content-light .panel h2 { color: var(--ink-900); }
   body.content-light .panel .panel-sub { color: var(--ink-600); }
   body.content-light .field label { color: var(--ink-600); }
-  body.content-light .field input, body.content-light .field select, body.content-light .field textarea { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .field input, body.content-light .field select, body.content-light .field textarea { background: var(--p-input-bg); border-color: var(--paper-border); color: var(--ink-900); }
   body.content-light .field-note { color: var(--ink-600); }
   body.content-light .cancel-btn { border-color: var(--paper-border); color: var(--ink-600); }
-  body.content-light .msg.success { color: #1f7a45; }
-  body.content-light .msg.error { color: #a63232; }
-  body.content-light .credential-box { background: #fff4ec; }
-  body.content-light .credential-box .cred-pass { background: var(--white); border: 1px solid var(--paper-border); color: var(--ink-900); }
+  body.content-light .msg.success { color: #7fe0a5; }
+  body.content-light .msg.error { color: #ff8a8a; }
+  body.content-light .credential-box { background: rgba(232,94,28,0.12); }
+  body.content-light .credential-box .cred-pass { background: var(--p-input-bg); border: 1px solid var(--paper-border); color: var(--ink-900); }
   body.content-light .credential-box .cred-note { color: var(--ink-600); }
   body.content-light .row-item { border-color: var(--paper-border); }
   body.content-light .row-item .r-main { color: var(--ink-900); }
@@ -299,6 +350,7 @@
       renderAdmin();
       await refreshAll();
       maybeOpenEditFromQuery();
+      maybeScrollToHashSection();
       return;
     }
 
@@ -311,6 +363,7 @@
       renderVendedor(vendedorRow.full_name);
       await refreshAll();
       maybeOpenEditFromQuery();
+      maybeScrollToHashSection();
       return;
     }
 
@@ -332,6 +385,24 @@
     const url = new URL(window.location.href);
     url.searchParams.delete('edit');
     window.history.replaceState({}, '', url);
+  }
+
+  // ---- Si se llega aquí con un ancla tipo "admin.html#section-proyectos"
+  // (el enlace "← Volver a Proyectos" de proyecto-detalle.html), el
+  // navegador intenta hacer scroll a ese elemento ANTES de que este script
+  // termine de construir el contenido — como #section-proyectos todavía no
+  // existe en ese momento, el scroll nativo falla en silencio y la página
+  // se queda arriba del todo (el bug que reportó Ric: "no me regresa a
+  // proyectos"). Aquí lo hacemos a mano, ya con el contenido renderizado. ----
+  function maybeScrollToHashSection() {
+    const hash = window.location.hash;
+    if (!hash || hash.length < 2) return;
+    const id = hash.slice(1);
+    const el = document.getElementById(id);
+    if (!el) return;
+    activePanelTargets = new Set(['#' + id]);
+    applyPanelToggleState();
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   const ALL_TOOLS_TARGET = '#all-tools';
@@ -954,14 +1025,14 @@
           <div class="row-item">
             <span class="r-main">${escapeHtml(p.name)}</span>
             <span class="r-meta">${escapeHtml(clientName(p.client_id))} — entrega estimada ${formatDateShort(p.estimated_delivery_date)} (vencida) — ${escapeHtml(STATUS_LABELS[p.status] || p.status)}</span>
-            <span class="r-actions"><a data-dash-edit="${p.id}">Ver</a></span>
+            <span class="r-actions"><a href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver</a></span>
           </div>
         `).join('')}
         ${sinOC.map(p => `
           <div class="row-item">
             <span class="r-main">${escapeHtml(p.name)}</span>
             <span class="r-meta">${escapeHtml(clientName(p.client_id))} — sin OC del cliente, estatus ${escapeHtml(STATUS_LABELS[p.status] || p.status)}</span>
-            <span class="r-actions"><a data-dash-edit="${p.id}">Ver</a></span>
+            <span class="r-actions"><a href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver</a></span>
           </div>
         `).join('')}
       ` : ''}
@@ -974,12 +1045,6 @@
     });
     wrap.querySelectorAll('[data-dash-filter-responsable]').forEach(el => {
       el.addEventListener('click', () => goToProyectosFiltered({ responsableId: el.getAttribute('data-dash-filter-responsable') }));
-    });
-    wrap.querySelectorAll('[data-dash-edit]').forEach(a => {
-      a.addEventListener('click', (e) => {
-        e.stopPropagation();
-        window.location.href = 'proyecto-detalle.html?id=' + a.getAttribute('data-dash-edit');
-      });
     });
   }
 
@@ -1833,37 +1898,38 @@
       return aDelivered - bDelivered;
     });
 
-    let html = '';
+    // ---- Tabla moderna (pedido por Ric, 2026-09-18): un renglón por
+    // proyecto, agrupados por empresa/planta igual que antes, pero ahora
+    // cada renglón ES un <a target="_blank"> — toda la fila es clickeable
+    // y abre el detalle en una pestaña nueva sin perder el listado detrás. ----
+    let html = `
+      <div class="proj-table-head">
+        <span>Proyecto</span><span>Cliente / planta</span><span>Usuario</span><span>Responsable AVANTA</span><span>Estatus</span><span>Pendientes</span>
+      </div>
+    `;
     let lastClientId = null;
     sorted.forEach(p => {
       if (p.client_id !== lastClientId) {
         html += `<div class="client-group-header">${escapeHtml(clientName(p.client_id))}</div>`;
         lastClientId = p.client_id;
       }
-      const isDelivered = p.status === 'entregado';
-      const responsableMeta = p.owner_vendedor_id ? ' — Responsable AVANTA: ' + escapeHtml(vendedorName(p.owner_vendedor_id)) : '';
       const pend = checklistCountsCache[p.id] || { open: 0, total: 0 };
       const badgeCount = projectAutoAlertCount(p) + pend.open;
       html += `
-      <div class="row-item clickable" data-view-project="${p.id}">
-        <div class="r-wrap">
-          <span class="r-main">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</span>
-          <span class="r-meta">${escapeHtml(userName(p.owner_user_id))}${p.estimated_delivery_date ? ' — Compromiso con cliente ' + formatDateShort(p.estimated_delivery_date) : ''}${responsableMeta}</span>
-          <span class="status-pill-sm${isDelivered ? ' delivered' : ''}">${STATUS_LABELS[p.status] || p.status}</span>
-          ${badgeCount ? `<span class="r-meta" style="color:#e05a5a; font-weight:600;">⚠ ${badgeCount} pendiente${badgeCount === 1 ? '' : 's'}</span>` : ''}
-          <span class="r-actions"><a data-view-project="${p.id}">Ver proyecto →</a></span>
-        </div>
-      </div>
+      <a class="proj-table-row" href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">
+        <span>
+          <span class="ptr-name">${escapeHtml(p.name)}</span>
+          ${p.folio ? `<span class="ptr-folio">${escapeHtml(p.folio)}</span>` : ''}
+        </span>
+        <span class="ptr-cell">${escapeHtml(clientName(p.client_id))}</span>
+        <span class="ptr-cell">${escapeHtml(userName(p.owner_user_id))}</span>
+        <span class="ptr-cell${p.owner_vendedor_id ? '' : ' muted'}">${p.owner_vendedor_id ? escapeHtml(vendedorName(p.owner_vendedor_id)) : 'Sin asignar'}</span>
+        <span><span class="status-pill-sm status-${p.status}">${STATUS_LABELS[p.status] || p.status}</span></span>
+        <span class="ptr-pend">${badgeCount ? `<span class="dot"></span>${badgeCount} pendiente${badgeCount === 1 ? '' : 's'}` : '<span class="ptr-cell muted">—</span>'}</span>
+      </a>
     `;
     });
     wrap.innerHTML = html;
-
-    wrap.querySelectorAll('[data-view-project]').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        window.location.href = 'proyecto-detalle.html?id=' + el.getAttribute('data-view-project');
-      });
-    });
   }
 
   function escapeHtml(str) {

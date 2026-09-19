@@ -953,15 +953,13 @@
   // clickeables y llevan directo a "Proyectos" ya filtrado (goToProyectosFiltered). ----
   function goToProyectosFiltered(filters) {
     filters = filters || {};
-    // No "apagar" el Dashboard al navegar desde ahí (pedido por Ric,
-    // 2026-09-19) — se AGREGA Proyectos al conjunto de secciones activas en
-    // vez de reemplazarlo, así el Dashboard se queda visible/seleccionado
-    // junto con Proyectos. Si ya estaba en "Todas las herramientas" no hace
-    // falta tocar nada, ahí ya se ve todo.
-    if (!activePanelTargets.has(ALL_TOOLS_TARGET)) {
-      activePanelTargets.add('#section-dashboard');
-      activePanelTargets.add('#section-proyectos');
-    }
+    // Al navegar desde un recuadro del Dashboard (pedido por Ric,
+    // 2026-09-19, ajustado 2026-09-19): se REEMPLAZA el conjunto de
+    // secciones activas por exactamente Dashboard + Proyectos — así el
+    // Dashboard se queda visible/seleccionado (no se apaga a sí mismo, el
+    // bug original) Y cualquier otra herramienta que estuviera activa se
+    // desactiva (incluida "Todas las herramientas", si estaba seleccionada).
+    activePanelTargets = new Set(['#section-dashboard', '#section-proyectos']);
     applyPanelToggleState();
     goToSubPanel(currentRole === 'admin' ? 'panel-todos-proyectos' : 'panel-mis-proyectos');
 

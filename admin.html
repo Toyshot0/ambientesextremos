@@ -295,8 +295,8 @@
 
   const STATUS_ORDER = ['activo', 'espera_pedido', 'en_fabricacion', 'entrega_programada', 'entregado'];
   const STATUS_LABELS = {
-    activo: 'Activo (Preparando cotización)',
-    espera_pedido: 'Esperando orden de compra',
+    activo: 'Cotizando',
+    espera_pedido: 'Cotizado (esperando orden de compra)',
     en_fabricacion: 'Fabricando',
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
@@ -953,7 +953,15 @@
   // clickeables y llevan directo a "Proyectos" ya filtrado (goToProyectosFiltered). ----
   function goToProyectosFiltered(filters) {
     filters = filters || {};
-    activePanelTargets = new Set(['#section-proyectos']);
+    // No "apagar" el Dashboard al navegar desde ahí (pedido por Ric,
+    // 2026-09-19) — se AGREGA Proyectos al conjunto de secciones activas en
+    // vez de reemplazarlo, así el Dashboard se queda visible/seleccionado
+    // junto con Proyectos. Si ya estaba en "Todas las herramientas" no hace
+    // falta tocar nada, ahí ya se ve todo.
+    if (!activePanelTargets.has(ALL_TOOLS_TARGET)) {
+      activePanelTargets.add('#section-dashboard');
+      activePanelTargets.add('#section-proyectos');
+    }
     applyPanelToggleState();
     goToSubPanel(currentRole === 'admin' ? 'panel-todos-proyectos' : 'panel-mis-proyectos');
 
@@ -979,7 +987,7 @@
     const wrap = document.getElementById('dashboardBody');
     if (!wrap) return;
 
-    const total = projectsCache.length;
+    const totalActivos = projectsCache.filter(p => p.status !== 'entregado').length;
     const counts = {};
     STATUS_ORDER.forEach(s => { counts[s] = 0; });
     projectsCache.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
@@ -1010,7 +1018,7 @@
 
     wrap.innerHTML = `
       <div class="stat-grid">
-        <div class="stat-card clickable" data-dash-filter-status=""><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
+        <div class="stat-card clickable" data-dash-filter-status="__active__"><div class="snum">${totalActivos}</div><div class="slabel">Proyectos activos</div></div>
         <div class="stat-card clickable" data-dash-filter-status="__con_oc__"><div class="snum">${ocActivasCount}</div><div class="slabel">OC activas</div></div>
         ${STATUS_ORDER.map(s => `<div class="stat-card clickable" data-dash-filter-status="${s}"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
       </div>
@@ -1086,7 +1094,7 @@
             <div class="field">
               <label>N° de orden de compra del cliente (OC)</label>
               <input type="text" id="projectPO">
-              <p class="field-note">Obligatorio a partir de "Fabricando" ("Activo (Preparando cotización)" y "Esperando orden de compra" son previos a tener el pedido confirmado).</p>
+              <p class="field-note">Obligatorio a partir de "Fabricando" ("Cotizando" y "Cotizado" son previos a tener el pedido confirmado).</p>
             </div>
           </div>
           <div class="form-row triple">
@@ -1682,7 +1690,7 @@
 
     if (status !== 'activo' && status !== 'espera_pedido' && !poNumber) {
       msg.className = 'msg error';
-      msg.textContent = 'Falta el número de pedido (OC) del cliente — es obligatorio a partir de "Fabricando" (los estatus "Activo (Preparando cotización)" y "Esperando orden de compra" son previos a tener el pedido confirmado).';
+      msg.textContent = 'Falta el número de pedido (OC) del cliente — es obligatorio a partir de "Fabricando" (los estatus "Cotizando" y "Cotizado" son previos a tener el pedido confirmado).';
       return;
     }
     if (commitDate && !poNumber) {

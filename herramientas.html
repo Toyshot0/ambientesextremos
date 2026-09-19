@@ -8,6 +8,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="main.css">
 <style>
+  /* ---- Misma paleta navy/azul estructural del Portal de Clientes que
+     admin.html (ver ahí el comentario completo) — esta página es la
+     entrada a esas mismas herramientas, así que usa el mismo look. ---- */
+  :root {
+    --paper-900: #0f1c30;
+    --paper-800: #16273f;
+    --paper-border: #28405f;
+    --ink-900: #eef2f6;
+    --ink-600: #93a8c2;
+    --p-blue: #3e7bfa;
+  }
+
   .tools-wrap { max-width: 640px; margin: 0 auto; padding: 64px 24px 96px; }
   .tools-wrap h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; color: var(--ink-900); }
   .tools-wrap .sub { font-size: 14px; color: var(--ink-600); margin-bottom: 40px; }
@@ -23,16 +35,16 @@
   .tool-link .arrow { flex-shrink: 0; font-size: 18px; margin-left: 8px; }
 
   /* Primaria — Administración de Proyectos: la herramienta que se usa a diario */
-  .tool-link.primary { background: var(--paper-800); border: 1px solid var(--orange); }
+  .tool-link.primary { background: var(--paper-800); border: 1px solid var(--p-blue); }
   .tool-link.primary:hover { transform: translateY(-1px); }
-  .tool-link.primary .tool-icon { background: var(--orange); color: var(--white); }
+  .tool-link.primary .tool-icon { background: var(--p-blue); color: var(--white); }
   .tool-link.primary .tname { color: var(--ink-900); }
   .tool-link.primary .tdesc { color: var(--ink-600); }
-  .tool-link.primary .arrow { color: var(--orange); }
+  .tool-link.primary .arrow { color: var(--p-blue); }
 
   /* Secundaria — accesos y vistas de referencia, uso ocasional */
   .tool-link.secondary { background: transparent; border: 1px solid var(--paper-border); }
-  .tool-link.secondary:hover { border-color: var(--ink-600); }
+  .tool-link.secondary:hover { border-color: var(--p-blue); }
   .tool-link.secondary .tool-icon { background: var(--paper-800); border: 1px solid var(--paper-border); color: var(--ink-600); }
   .tool-link.secondary .tname { color: var(--ink-900); }
   .tool-link.secondary .tdesc { color: var(--ink-600); }

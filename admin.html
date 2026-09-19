@@ -111,9 +111,10 @@
 
   /* ---- Listado de proyectos como tabla (pedido por Ric, 2026-09-18) ----
      Encabezado y renglones comparten la misma plantilla de columnas para
-     que alineen; cada renglón ES un enlace (target="_blank") que cubre
-     todo el ancho, así toda la fila es clickeable y abre el detalle en
-     una pestaña nueva sin perder el listado. */
+     que alineen; cada renglón ES un enlace que cubre todo el ancho, así
+     toda la fila es clickeable y lleva al detalle (misma pestaña — pedido
+     explícito de Ric, 2026-09-19: el detalle de proyecto y "Ver como
+     cliente" ya no deben abrir pestaña nueva). */
   .proj-table-head, .proj-table-row { display: grid; grid-template-columns: 2.1fr 1.3fr 1.3fr 1.3fr 1.1fr 1fr; gap: 10px 16px; align-items: center; }
   .proj-table-head { padding: 0 14px 10px; font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-600); border-bottom: 1px solid var(--paper-border); margin-bottom: 4px; }
   .proj-table-row { padding: 14px; border-radius: 5px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--paper-border); transition: background 0.12s; }
@@ -1025,14 +1026,14 @@
           <div class="row-item">
             <span class="r-main">${escapeHtml(p.name)}</span>
             <span class="r-meta">${escapeHtml(clientName(p.client_id))} — entrega estimada ${formatDateShort(p.estimated_delivery_date)} (vencida) — ${escapeHtml(STATUS_LABELS[p.status] || p.status)}</span>
-            <span class="r-actions"><a href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver</a></span>
+            <span class="r-actions"><a href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}">Ver</a></span>
           </div>
         `).join('')}
         ${sinOC.map(p => `
           <div class="row-item">
             <span class="r-main">${escapeHtml(p.name)}</span>
             <span class="r-meta">${escapeHtml(clientName(p.client_id))} — sin OC del cliente, estatus ${escapeHtml(STATUS_LABELS[p.status] || p.status)}</span>
-            <span class="r-actions"><a href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver</a></span>
+            <span class="r-actions"><a href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}">Ver</a></span>
           </div>
         `).join('')}
       ` : ''}
@@ -1900,8 +1901,9 @@
 
     // ---- Tabla moderna (pedido por Ric, 2026-09-18): un renglón por
     // proyecto, agrupados por empresa/planta igual que antes, pero ahora
-    // cada renglón ES un <a target="_blank"> — toda la fila es clickeable
-    // y abre el detalle en una pestaña nueva sin perder el listado detrás. ----
+    // cada renglón ES un enlace — toda la fila es clickeable y lleva al
+    // detalle en la misma pestaña (revertido de pestaña nueva a pedido
+    // de Ric, 2026-09-19). ----
     let html = `
       <div class="proj-table-head">
         <span>Proyecto</span><span>Cliente / planta</span><span>Usuario</span><span>Responsable AVANTA</span><span>Estatus</span><span>Pendientes</span>
@@ -1916,7 +1918,7 @@
       const pend = checklistCountsCache[p.id] || { open: 0, total: 0 };
       const badgeCount = projectAutoAlertCount(p) + pend.open;
       html += `
-      <a class="proj-table-row" href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">
+      <a class="proj-table-row" href="proyecto-detalle.html?id=${encodeURIComponent(p.id)}">
         <span>
           <span class="ptr-name">${escapeHtml(p.name)}</span>
           ${p.folio ? `<span class="ptr-folio">${escapeHtml(p.folio)}</span>` : ''}

@@ -456,7 +456,7 @@
       <span class="status-pill-sm status-${p.status}">${STATUS_LABELS[p.status] || p.status}</span>
       <div class="pd-actions">
         <a class="submit-btn" href="admin.html?edit=${encodeURIComponent(p.id)}">Editar</a>
-        ${currentRole === 'admin' ? `<a class="cancel-btn" href="vista-cliente.html?user=${encodeURIComponent(p.owner_user_id)}&highlight=${encodeURIComponent(p.id)}" target="_blank" rel="noopener">Ver como cliente ↗</a>` : ''}
+        ${currentRole === 'admin' ? `<a class="cancel-btn" href="vista-cliente.html?user=${encodeURIComponent(p.owner_user_id)}&highlight=${encodeURIComponent(p.id)}">Ver como cliente</a>` : ''}
       </div>
 
       <div class="panel" style="margin-top:26px;">

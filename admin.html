@@ -115,7 +115,7 @@
      toda la fila es clickeable y lleva al detalle (misma pestaña — pedido
      explícito de Ric, 2026-09-19: el detalle de proyecto y "Ver como
      cliente" ya no deben abrir pestaña nueva). */
-  .proj-table-head, .proj-table-row { display: grid; grid-template-columns: 2.1fr 1.3fr 1.3fr 1.3fr 1.1fr 1fr; gap: 10px 16px; align-items: center; }
+  .proj-table-head, .proj-table-row { display: grid; grid-template-columns: 2fr 1.2fr 1.1fr 1.2fr 1.3fr 1fr 1fr; gap: 10px 16px; align-items: center; }
   .proj-table-head { padding: 0 14px 10px; font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-600); border-bottom: 1px solid var(--paper-border); margin-bottom: 4px; }
   .proj-table-row { padding: 14px; border-radius: 5px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--paper-border); transition: background 0.12s; }
   .proj-table-row:last-child { border-bottom: none; }
@@ -561,7 +561,7 @@
             <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
             <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
             <div class="field"><label>Filtrar por responsable</label><select id="filterResponsable"><option value="">Todos</option><option value="__unassigned__">Sin asignar</option></select></div>
-            <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
+            <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option><option value="__con_oc__">Con OC activa</option>${statusOptionsHtml('')}</select></div>
           </div>
           <div class="form-row single" style="margin-bottom:4px;">
             <div class="field"><label>Buscar (folio, nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. AVT-0012, COT-4821 o Ternium"></div>
@@ -1004,10 +1004,14 @@
       .filter(p => p.status !== 'entregado' && p.estimated_delivery_date && p.estimated_delivery_date < today)
       .sort((a, b) => a.estimated_delivery_date.localeCompare(b.estimated_delivery_date));
     const sinOC = projectsCache.filter(p => p.status !== 'activo' && p.status !== 'espera_pedido' && p.status !== 'entregado' && !p.po_number);
+    // "OC activas" (pedido por Ric, 2026-09-19): tiene la OC del cliente
+    // capturada y todavía no se entrega — para monitorear qué hay que cumplir.
+    const ocActivasCount = projectsCache.filter(p => p.po_number && p.status !== 'entregado').length;
 
     wrap.innerHTML = `
       <div class="stat-grid">
         <div class="stat-card clickable" data-dash-filter-status=""><div class="snum">${total}</div><div class="slabel">Proyectos visibles</div></div>
+        <div class="stat-card clickable" data-dash-filter-status="__con_oc__"><div class="snum">${ocActivasCount}</div><div class="slabel">OC activas</div></div>
         ${STATUS_ORDER.map(s => `<div class="stat-card clickable" data-dash-filter-status="${s}"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
       </div>
       <div class="form-row" style="align-items:start;">
@@ -1217,7 +1221,7 @@
           <p class="panel-sub">Agrupados por empresa/planta. Dale clic a cualquier proyecto para ver su detalle completo — desde ahí puedes editarlo, ver su historial, sus pendientes y sus comentarios.</p>
           <div class="form-row" style="margin-bottom:4px;">
             <div class="field"><label>Buscar (folio, nombre, cotización, OC)</label><input type="text" id="filterText" placeholder="Ej. AVT-0012, COT-4821 o Ternium"></div>
-            <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option>${statusOptionsHtml('')}</select></div>
+            <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option><option value="__con_oc__">Con OC activa</option>${statusOptionsHtml('')}</select></div>
           </div>
           <div id="projectsList"></div>
         </div>
@@ -1866,7 +1870,11 @@
       if (responsable === '__unassigned__' && p.owner_vendedor_id) return false;
       if (responsable && responsable !== '__unassigned__' && p.owner_vendedor_id !== responsable) return false;
       if (status === '__active__' && p.status === 'entregado') return false;
-      if (status && status !== '__active__' && p.status !== status) return false;
+      // "Con OC activa" (pedido por Ric, 2026-09-19): tiene OC del cliente
+      // capturada y todavía no se entrega — no es un estatus real, es un
+      // filtro combinado, mismo patrón que "__active__".
+      if (status === '__con_oc__' && !(p.po_number && p.status !== 'entregado')) return false;
+      if (status && status !== '__active__' && status !== '__con_oc__' && p.status !== status) return false;
       if (text) {
         const haystack = [p.folio, p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
         if (!haystack.includes(text)) return false;
@@ -1891,7 +1899,14 @@
       return;
     }
 
+    const fsEl = document.getElementById('filterStatus');
+    const isConOcView = !!(fsEl && fsEl.value === '__con_oc__');
+
     const sorted = list.slice().sort((a, b) => {
+      if (isConOcView) {
+        // Fecha comprometida más próxima primero; sin fecha capturada al final.
+        return (a.estimated_delivery_date || '9999-99-99').localeCompare(b.estimated_delivery_date || '9999-99-99');
+      }
       const byClient = clientName(a.client_id).localeCompare(clientName(b.client_id));
       if (byClient !== 0) return byClient;
       const aDelivered = a.status === 'entregado' ? 1 : 0;
@@ -1906,14 +1921,19 @@
     // de Ric, 2026-09-19). ----
     let html = `
       <div class="proj-table-head">
-        <span>Proyecto</span><span>Cliente / planta</span><span>Usuario</span><span>Responsable AVANTA</span><span>Estatus</span><span>Pendientes</span>
+        <span>Proyecto</span><span>Cliente / planta</span><span>Usuario</span><span>Responsable AVANTA</span><span>OC / Entrega</span><span>Estatus</span><span>Pendientes</span>
       </div>
     `;
     let lastClientId = null;
     sorted.forEach(p => {
-      if (p.client_id !== lastClientId) {
-        html += `<div class="client-group-header">${escapeHtml(clientName(p.client_id))}</div>`;
-        lastClientId = p.client_id;
+      // En la vista "Con OC activa" el orden es por fecha comprometida más
+      // próxima primero (pedido por Ric, 2026-09-19: "no perder de vista
+      // cuáles hay que cumplir") — no tiene sentido agrupar por empresa ahí.
+      if (!isConOcView) {
+        if (p.client_id !== lastClientId) {
+          html += `<div class="client-group-header">${escapeHtml(clientName(p.client_id))}</div>`;
+          lastClientId = p.client_id;
+        }
       }
       const pend = checklistCountsCache[p.id] || { open: 0, total: 0 };
       const badgeCount = projectAutoAlertCount(p) + pend.open;
@@ -1926,6 +1946,10 @@
         <span class="ptr-cell">${escapeHtml(clientName(p.client_id))}</span>
         <span class="ptr-cell">${escapeHtml(userName(p.owner_user_id))}</span>
         <span class="ptr-cell${p.owner_vendedor_id ? '' : ' muted'}">${p.owner_vendedor_id ? escapeHtml(vendedorName(p.owner_vendedor_id)) : 'Sin asignar'}</span>
+        <span class="ptr-cell${p.po_number ? '' : ' muted'}">
+          ${p.po_number ? escapeHtml(p.po_number) : '—'}
+          ${p.po_number && p.estimated_delivery_date ? `<span class="ptr-folio">Entrega ${formatDateShort(p.estimated_delivery_date)}</span>` : ''}
+        </span>
         <span><span class="status-pill-sm status-${p.status}">${STATUS_LABELS[p.status] || p.status}</span></span>
         <span class="ptr-pend">${badgeCount ? `<span class="dot"></span>${badgeCount} pendiente${badgeCount === 1 ? '' : 's'}` : '<span class="ptr-cell muted">—</span>'}</span>
       </a>

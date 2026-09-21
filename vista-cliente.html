@@ -149,7 +149,7 @@
 
 <div class="vc-header">
   <div>
-    <a class="tools-back-link" href="herramientas.html">← Volver a Herramientas</a>
+    <a class="tools-back-link" id="toolsBackLink" href="herramientas.html">← Volver a Herramientas</a>
     <h1>Ver como cliente</h1>
   </div>
   <div>
@@ -310,6 +310,15 @@
     const params = new URLSearchParams(window.location.search);
     const preselectUserId = params.get('user');
     const highlightProjectId = params.get('highlight');
+    // Si se llegó desde "Ver como cliente" de un proyecto puntual, el link
+    // de arriba debe regresar a ESE proyecto (no hasta Herramientas) —
+    // reportado por Ric 2026-09-21: se quedaba sin forma de volver al
+    // detalle del proyecto, la única opción lo mandaba hasta el inicio.
+    const backLink = document.getElementById('toolsBackLink');
+    if (backLink && highlightProjectId) {
+      backLink.href = 'proyecto-detalle.html?id=' + encodeURIComponent(highlightProjectId);
+      backLink.textContent = '← Volver al proyecto';
+    }
     if (preselectUserId && allUsers.find(u => u.id === preselectUserId)) {
       renderClientView(preselectUserId, highlightProjectId);
     } else {
@@ -416,6 +425,14 @@
       url.searchParams.delete('user');
       url.searchParams.delete('highlight');
       window.history.replaceState({}, '', url);
+      // Al elegir otro usuario ya no aplica el "volver al proyecto" de
+      // donde se vino (si aplicaba) — regresa el link de arriba a su
+      // default.
+      const backLink = document.getElementById('toolsBackLink');
+      if (backLink) {
+        backLink.href = 'herramientas.html';
+        backLink.textContent = '← Volver a Herramientas';
+      }
       renderPicker();
     });
 

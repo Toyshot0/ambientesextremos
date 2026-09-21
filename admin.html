@@ -1299,16 +1299,30 @@
       wrap.innerHTML = '<p class="empty-note">Todavía no hay empleados registrados.</p>';
       return;
     }
-    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Empleados de AVANTA con acceso (el correo no se puede editar aquí):</p>' + staff.map(s => `
+    // Eliminar (pedido por Ric, 2026-09-21): borra el acceso por
+    // completo (fila + login de Auth) vía la Edge Function
+    // delete-staff-user — nunca solo la fila, para no dejar un correo
+    // "ocupado" en Auth sin cuenta visible. No se puede eliminar la
+    // propia cuenta desde aquí (protección extra, además de la que ya
+    // hace la Edge Function del lado del servidor), ni al último
+    // administrador activo.
+    const activeAdminCount = adminsCache.filter(a => a.active !== false).length;
+    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Empleados de AVANTA con acceso (el correo no se puede editar aquí):</p>' + staff.map(s => {
+      const isSelf = s.id === currentStaffId;
+      const isLastAdmin = s.role === 'admin' && activeAdminCount <= 1 && s.active !== false;
+      const canDelete = !isSelf && !isLastAdmin;
+      return `
       <div class="row-item">
-        <span class="r-main">${escapeHtml(s.full_name)}${s.active === false ? ' <em style="color:var(--steel-300);">(desactivado)</em>' : ''}</span>
+        <span class="r-main">${escapeHtml(s.full_name)}${s.active === false ? ' <em style="color:var(--steel-300);">(desactivado)</em>' : ''}${isSelf ? ' <em style="color:var(--steel-300);">(tú)</em>' : ''}</span>
         <span class="r-meta">${escapeHtml(s.email)} — ${s.role === 'admin' ? 'Administrador' : 'Vendedor'}</span>
         <span class="r-actions">
           <a data-staff-rename="${s.id}" data-staff-role="${s.role}">Editar nombre</a>
           <a data-staff-toggle="${s.id}" data-staff-role="${s.role}" data-staff-active="${s.active !== false}">${s.active === false ? 'Activar' : 'Desactivar'}</a>
+          ${canDelete ? `<a class="danger" data-staff-delete="${s.id}" data-staff-role="${s.role}">Eliminar</a>` : ''}
         </span>
       </div>
-    `).join('');
+    `;
+    }).join('');
     wrap.querySelectorAll('[data-staff-rename]').forEach(a => {
       a.addEventListener('click', () => {
         const s = staff.find(x => x.id === a.getAttribute('data-staff-rename') && x.role === a.getAttribute('data-staff-role'));
@@ -1323,6 +1337,28 @@
         toggleStaffActive(role, id, !isActive);
       });
     });
+    wrap.querySelectorAll('[data-staff-delete]').forEach(a => {
+      a.addEventListener('click', () => {
+        const role = a.getAttribute('data-staff-role');
+        const id = a.getAttribute('data-staff-delete');
+        const s = staff.find(x => x.id === id && x.role === role);
+        deleteStaff(role, id, s ? s.full_name : '');
+      });
+    });
+  }
+
+  async function deleteStaff(role, id, fullName) {
+    if (!confirm(`¿Eliminar por completo el acceso de "${fullName}"? Esto borra también su login — no se puede deshacer. Si tiene proyectos a su nombre, primero reasígnalos.`)) return;
+    const { data, error } = await supabaseClient.functions.invoke('delete-staff-user', { body: { id, role } });
+    if (error || !data || data.error) {
+      alert('No se pudo eliminar: ' + (data && data.error ? data.error : (error ? error.message : 'error desconocido')));
+      return;
+    }
+    await loadVendedores();
+    await loadAdmins();
+    renderStaffList();
+    renderAccesoList();
+    refreshResponsableOptions();
   }
   function refreshResponsableOptions() {
     const sel = document.getElementById('projectResponsable');

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pendientes Operativos — AMBIENTES EXTREMOS</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="main.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  /* ---- Misma paleta navy/azul estructural del Portal de Clientes que
+     admin.html (ver ahí el comentario completo). ---- */
+  :root {
+    --paper-900: #0f1c30;
+    --paper-800: #16273f;
+    --paper-border: #28405f;
+    --ink-900: #eef2f6;
+    --ink-600: #93a8c2;
+    --p-input-bg: #1c3352;
+    --p-blue: #3e7bfa;
+    --p-blue-dim: rgba(62,123,250,0.16);
+  }
+
+  .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .admin-header h1 { font-size: 22px; font-weight: 600; }
+  .tools-back-link { display: inline-block; font-size: 12.5px; color: var(--steel-300); text-decoration: none; margin-bottom: 6px; }
+  .tools-back-link:hover { color: var(--orange); }
+  .admin-header-right { display: flex; align-items: center; gap: 16px; }
+  .staff-identity { font-size: 13px; color: var(--steel-300); text-align: right; }
+  .staff-identity strong { color: var(--white); font-weight: 600; }
+  body.content-light .staff-identity { color: var(--ink-600); }
+  body.content-light .staff-identity strong { color: var(--ink-900); }
+  .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
+  .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  .admin-content { padding: 32px 48px 64px; max-width: 1020px; margin: 0 auto; }
+  .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
+  .admin-note { font-size: 13px; color: var(--steel-300); margin-bottom: 20px; }
+  body.content-light .admin-note { color: var(--ink-600); }
+
+  .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; }
+  .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .panel .panel-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 18px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
+  .field input, .field select, .field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--p-blue); }
+  .field-note { font-size: 11px; color: var(--steel-300); margin-top: 5px; }
+
+  .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
+  .submit-btn:hover { background: #d0531a; }
+  .cancel-btn { background: transparent; color: var(--steel-300); border: 1px solid var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; margin-left: 10px; }
+
+  .msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
+  .msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
+  .msg.error { background: rgba(220,60,60,0.12); border: 1px solid #c0392b; color: #ff8a8a; display: block; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .stat-card { background: var(--gunmetal-900); border: 1px solid var(--gunmetal-700); border-radius: 4px; padding: 14px 16px; text-align: center; cursor: pointer; transition: border-color 0.15s; }
+  .stat-card:hover { border-color: var(--p-blue); }
+  .stat-card .snum { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 700; color: var(--p-blue); line-height: 1.1; }
+  .stat-card .slabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--steel-300); margin-top: 6px; }
+  body.content-light .stat-card { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .stat-card .slabel { color: var(--ink-600); }
+
+  .row-item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 14px 0; border-bottom: 1px solid var(--gunmetal-700); font-size: 14px; }
+  .row-item:last-child { border-bottom: none; }
+  .row-item .r-wrap { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .row-item .r-main { font-weight: 600; }
+  .row-item .r-meta { font-size: 12px; color: var(--steel-300); }
+  .row-item .r-actions { margin-left: auto; display: flex; gap: 14px; flex-shrink: 0; }
+  .row-item .r-actions a { font-size: 12px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; color: var(--p-blue); cursor: pointer; text-decoration: none; }
+  .row-item .r-actions a.danger { color: #e05a5a; }
+  .task-check { width: 17px; height: 17px; flex-shrink: 0; cursor: pointer; accent-color: var(--p-blue); }
+  .task-row.done .r-main { text-decoration: line-through; color: var(--steel-300); }
+  body.content-light .task-row.done .r-main { color: var(--ink-600); }
+  .task-due { font-weight: 600; }
+  .task-due.overdue { color: #e05a5a; }
+  .task-due.soon { color: var(--orange); }
+
+  .empty-note { font-size: 13px; color: var(--steel-300); padding: 8px 0; }
+  .hidden { display: none !important; }
+  .verifying-note { color: var(--steel-300); }
+
+  body.content-light .admin-header { border-color: var(--paper-border); }
+  body.content-light .admin-header h1 { color: var(--ink-900); }
+  body.content-light .tools-back-link { color: var(--ink-600); }
+  body.content-light .tools-back-link:hover { color: var(--orange); }
+  body.content-light .logout-btn { border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .denied { color: var(--ink-600); }
+  body.content-light .panel { background: var(--paper-800); border-color: var(--paper-border); }
+  body.content-light .panel h2 { color: var(--ink-900); }
+  body.content-light .panel .panel-sub { color: var(--ink-600); }
+  body.content-light .field label { color: var(--ink-600); }
+  body.content-light .field input, body.content-light .field select { background: var(--p-input-bg); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .field-note { color: var(--ink-600); }
+  body.content-light .cancel-btn { border-color: var(--paper-border); color: var(--ink-600); }
+  body.content-light .msg.success { color: #1f7a45; }
+  body.content-light .msg.error { color: #a63232; }
+  body.content-light .row-item { border-color: var(--paper-border); }
+  body.content-light .row-item .r-meta { color: var(--ink-600); }
+  body.content-light .empty-note { color: var(--ink-600); }
+  body.content-light .verifying-note { color: var(--ink-600); }
+</style>
+</head>
+<body class="content-light">
+
+<header>
+  <a class="logo" href="index.html">AMBIENTES <span>EXTREMOS</span></a>
+  <nav>
+    <ul>
+      <li><a href="sensores.html">Sensores</a></li>
+      <li><a href="ensambles.html">Ensambles</a></li>
+      <li><a href="cables.html">Cables</a></li>
+      <li><a href="protecciones.html">Protecciones</a></li>
+      <li><a href="index.html#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+</header>
+
+<div class="admin-header">
+  <div>
+    <a class="tools-back-link" href="herramientas.html">← Volver a Herramientas</a>
+    <h1>Pendientes Operativos</h1>
+  </div>
+  <div class="admin-header-right">
+    <span class="staff-identity" id="staffIdentity"></span>
+    <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+  </div>
+</div>
+
+<div class="admin-content" id="adminContent">
+  <p class="verifying-note">Verificando acceso...</p>
+</div>
+
+<script src="portal-config.js"></script>
+<script>
+  const adminContent = document.getElementById('adminContent');
+
+  let currentRole = null; // 'admin' | 'vendedor'
+  let currentStaffId = null;
+  let currentLabel = '';
+  let clientsCache = [];
+  let projectsCache = [];
+  let vendedoresCache = []; // solo se carga para admin (selector de responsable)
+  let tasksCache = [];
+  let editingTaskId = null;
+  let showingForm = false;
+
+  function setStaffIdentity(label) {
+    const el = document.getElementById('staffIdentity');
+    if (el) el.innerHTML = label;
+  }
+
+  async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.location.href = 'portal.html'; return; }
+    currentStaffId = session.user.id;
+    const sessionEmail = session.user.email || '';
+
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active').eq('id', currentStaffId).single();
+    if (adminRow) {
+      if (adminRow.active === false) { await denyInactive(); return; }
+      currentRole = 'admin';
+      currentLabel = sessionEmail;
+      setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
+      await loadAll();
+      renderShell();
+      return;
+    }
+
+    const { data: vendedorRow } = await supabaseClient.from('portal_vendedores').select('id, full_name, active').eq('id', currentStaffId).single();
+    if (vendedorRow) {
+      if (vendedorRow.active === false) { await denyInactive(); return; }
+      currentRole = 'vendedor';
+      currentLabel = vendedorRow.full_name;
+      setStaffIdentity(`<strong>${escapeHtml(vendedorRow.full_name)}</strong> — Vendedor`);
+      await loadAll();
+      renderShell();
+      return;
+    }
+
+    adminContent.innerHTML = '<div class="denied">Esta cuenta no tiene permisos en Herramientas.</div>';
+  }
+
+  async function denyInactive() {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'portal.html?inactive=1';
+  }
+
+  async function loadAll() {
+    const { data: clients } = await supabaseClient.from('portal_clients').select('id, company_name').order('company_name');
+    clientsCache = clients || [];
+
+    let projQuery = supabaseClient.from('portal_projects').select('id, folio, name, client_id').order('created_at', { ascending: false });
+    if (currentRole === 'vendedor') projQuery = projQuery.eq('owner_vendedor_id', currentStaffId);
+    const { data: projects } = await projQuery;
+    projectsCache = projects || [];
+
+    if (currentRole === 'admin') {
+      const { data: vendedores } = await supabaseClient.from('portal_vendedores').select('id, full_name, active').eq('active', true).order('full_name');
+      vendedoresCache = vendedores || [];
+    }
+
+    // RLS ya deja ver a cada rol exactamente lo que le toca: admin ve
+    // todos los pendientes, vendedor solo los suyos (assigned_role =
+    // 'vendedor' AND assigned_id = auth.uid()).
+    const { data: tasks } = await supabaseClient.from('portal_tasks').select('*').order('created_at', { ascending: false });
+    tasksCache = tasks || [];
+  }
+
+  function clientName(id) {
+    const c = clientsCache.find(c => c.id === id);
+    return c ? c.company_name : '';
+  }
+  function projectLabel(id) {
+    const p = projectsCache.find(p => p.id === id);
+    if (!p) return '';
+    return (p.folio ? p.folio + ' — ' : '') + p.name;
+  }
+
+  function todayIso() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function addDaysIso(iso, days) {
+    const d = new Date(iso + 'T00:00:00');
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function formatDateShort(d) {
+    if (!d) return '';
+    return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  // =====================================================================
+  // Pantalla
+  // =====================================================================
+  function renderShell() {
+    adminContent.innerHTML = `
+      <p class="admin-note">Tareas normales de la operación — mandar fotos, agendar visitas, solicitar información, enviar presentaciones, etc. Se pueden ligar a una empresa/proyecto existente o dejarse sueltas.</p>
+      <div id="statsWrap"></div>
+      <div class="panel">
+        <h2>Pendientes</h2>
+        <p class="panel-sub">${currentRole === 'admin' ? 'Ves los de todos — filtra por responsable si buscas algo puntual.' : 'Ves solo los tuyos.'}</p>
+        <div class="form-row${currentRole === 'admin' ? ' triple' : ''}" style="margin-bottom:10px;">
+          <div class="field">
+            <label>Estatus</label>
+            <select id="filterEstatus">
+              <option value="">Pendientes (no hechos)</option>
+              <option value="__vencidos__">Vencidos</option>
+              <option value="__proximos__">Próximos a vencer (7 días)</option>
+              <option value="__hechos__">Hechos</option>
+              <option value="__todos__">Todos</option>
+            </select>
+          </div>
+          ${currentRole === 'admin' ? `<div class="field"><label>Responsable</label><select id="filterResponsable"><option value="">Todos</option><option value="admin">Administración</option>${vendedoresCache.map(v => `<option value="vendedor:${v.id}">${escapeHtml(v.full_name)}</option>`).join('')}</select></div>` : ''}
+          <div class="field"><label>Empresa</label><select id="filterClient"><option value="">Todas</option>${clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row single" style="margin-bottom:6px;">
+          <div class="field"><label>Buscar</label><input type="text" id="filterText" placeholder="Ej. presentación o Ternium"></div>
+        </div>
+        <button type="button" class="submit-btn" id="newTaskBtn" style="margin-top:4px;">+ Nuevo pendiente</button>
+        <div id="taskFormWrap" style="margin-top:14px;"></div>
+        <div id="tasksListWrap" style="margin-top:18px;"></div>
+      </div>
+    `;
+    document.getElementById('filterEstatus').addEventListener('change', renderList);
+    document.getElementById('filterClient').addEventListener('change', renderList);
+    if (document.getElementById('filterResponsable')) document.getElementById('filterResponsable').addEventListener('change', renderList);
+    document.getElementById('filterText').addEventListener('input', renderList);
+    document.getElementById('newTaskBtn').addEventListener('click', () => {
+      editingTaskId = null;
+      showingForm = true;
+      renderTaskFormPanel();
+      document.getElementById('taskFormWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    renderStats();
+    renderTaskFormPanel();
+    renderList();
+  }
+
+  // ---- Tarjetas de conteo — clickeables, aplican el filtro de estatus
+  // correspondiente (mismo patrón interactivo ya usado en el Dashboard de
+  // admin.html). ----
+  function renderStats() {
+    const wrap = document.getElementById('statsWrap');
+    if (!wrap) return;
+    const today = todayIso();
+    const in7 = addDaysIso(today, 7);
+    const pendientes = tasksCache.filter(t => !t.done).length;
+    const vencidos = tasksCache.filter(t => !t.done && t.due_date && t.due_date < today).length;
+    const proximos = tasksCache.filter(t => !t.done && t.due_date && t.due_date >= today && t.due_date <= in7).length;
+    const hechos = tasksCache.filter(t => t.done).length;
+    wrap.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card" data-stat-filter=""><div class="snum">${pendientes}</div><div class="slabel">Pendientes</div></div>
+        <div class="stat-card" data-stat-filter="__vencidos__"><div class="snum">${vencidos}</div><div class="slabel">Vencidos</div></div>
+        <div class="stat-card" data-stat-filter="__proximos__"><div class="snum">${proximos}</div><div class="slabel">Próximos a vencer</div></div>
+        <div class="stat-card" data-stat-filter="__hechos__"><div class="snum">${hechos}</div><div class="slabel">Hechos</div></div>
+      </div>
+    `;
+    wrap.querySelectorAll('[data-stat-filter]').forEach(el => {
+      el.addEventListener('click', () => {
+        const fs = document.getElementById('filterEstatus');
+        if (fs) { fs.value = el.getAttribute('data-stat-filter'); renderList(); }
+      });
+    });
+  }
+
+  function filteredTasks() {
+    const estatus = document.getElementById('filterEstatus').value;
+    const responsableEl = document.getElementById('filterResponsable');
+    const responsable = responsableEl ? responsableEl.value : '';
+    const clientId = document.getElementById('filterClient').value;
+    const text = document.getElementById('filterText').value.trim().toLowerCase();
+    const today = todayIso();
+    const in7 = addDaysIso(today, 7);
+    return tasksCache.filter(t => {
+      if (estatus === '' && t.done) return false;
+      if (estatus === '__hechos__' && !t.done) return false;
+      if (estatus === '__vencidos__' && (t.done || !t.due_date || t.due_date >= today)) return false;
+      if (estatus === '__proximos__' && (t.done || !t.due_date || t.due_date < today || t.due_date > in7)) return false;
+      if (responsable === 'admin' && t.assigned_role !== 'admin') return false;
+      if (responsable.indexOf('vendedor:') === 0 && `vendedor:${t.assigned_id}` !== responsable) return false;
+      if (clientId && t.client_id !== clientId) return false;
+      if (text) {
+        const haystack = [t.text, t.assigned_label, clientName(t.client_id), projectLabel(t.project_id)].filter(Boolean).join(' ').toLowerCase();
+        if (haystack.indexOf(text) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function sortTasks(list) {
+    return list.slice().sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (!a.done) {
+        const ad = a.due_date || '9999-99-99';
+        const bd = b.due_date || '9999-99-99';
+        return ad.localeCompare(bd);
+      }
+      const ad = a.done_at || '';
+      const bd = b.done_at || '';
+      return bd.localeCompare(ad);
+    });
+  }
+
+  function renderList() {
+    const wrap = document.getElementById('tasksListWrap');
+    if (!wrap) return;
+    if (tasksCache.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay pendientes — usa "+ Nuevo pendiente" para agregar el primero.</p>';
+      return;
+    }
+    const list = sortTasks(filteredTasks());
+    if (list.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Ningún pendiente coincide con el filtro.</p>';
+      return;
+    }
+    wrap.innerHTML = list.map(t => taskRowHtml(t)).join('');
+    list.forEach(t => {
+      wrap.querySelector(`[data-task-check="${t.id}"]`).addEventListener('change', e => toggleDone(t.id, e.target.checked));
+      wrap.querySelector(`[data-task-edit="${t.id}"]`).addEventListener('click', () => {
+        editingTaskId = t.id;
+        showingForm = true;
+        renderTaskFormPanel();
+        document.getElementById('taskFormWrap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      wrap.querySelector(`[data-task-delete="${t.id}"]`).addEventListener('click', () => deleteTask(t.id));
+    });
+  }
+
+  function taskRowHtml(t) {
+    const today = todayIso();
+    const in7 = addDaysIso(today, 7);
+    let dueClass = '';
+    let duePrefix = 'Vence';
+    if (t.due_date) {
+      if (!t.done && t.due_date < today) { dueClass = ' overdue'; duePrefix = 'Venció'; }
+      else if (!t.done && t.due_date <= in7) { dueClass = ' soon'; duePrefix = 'Vence'; }
+      else if (t.done) { duePrefix = 'Vencía'; }
+    }
+    const metaParts = [];
+    if (currentRole === 'admin') metaParts.push(escapeHtml(t.assigned_label));
+    const link = projectLabel(t.project_id) || clientName(t.client_id);
+    if (link) metaParts.push(escapeHtml(link));
+    if (t.due_date) metaParts.push(`<span class="task-due${dueClass}">${duePrefix} ${formatDateShort(t.due_date)}</span>`);
+    return `
+      <div class="row-item task-row${t.done ? ' done' : ''}">
+        <input type="checkbox" class="task-check" data-task-check="${t.id}" ${t.done ? 'checked' : ''}>
+        <div class="r-wrap">
+          <span class="r-main">${escapeHtml(t.text)}</span>
+          <span class="r-meta">${metaParts.join(' — ')}</span>
+        </div>
+        <div class="r-actions">
+          <a data-task-edit="${t.id}">Editar</a>
+          <a class="danger" data-task-delete="${t.id}">Eliminar</a>
+        </div>
+      </div>
+    `;
+  }
+
+  // =====================================================================
+  // Formulario compartido — crear y editar usan el mismo panel (mismo
+  // patrón que "Crear/Editar proyecto" en admin.html).
+  // =====================================================================
+  function responsableOptionsHtml() {
+    const editing = editingTaskId ? tasksCache.find(t => t.id === editingTaskId) : null;
+    let selected = `admin:${currentStaffId}`;
+    if (editing) {
+      if (editing.assigned_role === 'vendedor') selected = `vendedor:${editing.assigned_id}`;
+      else if (editing.assigned_label === currentLabel) selected = `admin:${currentStaffId}`;
+      else selected = 'admin:other';
+    }
+    let html = `<option value="admin:${currentStaffId}"${selected === `admin:${currentStaffId}` ? ' selected' : ''}>Yo mismo</option>`;
+    vendedoresCache.forEach(v => {
+      const val = `vendedor:${v.id}`;
+      html += `<option value="${val}"${selected === val ? ' selected' : ''}>${escapeHtml(v.full_name)}</option>`;
+    });
+    html += `<option value="admin:other"${selected === 'admin:other' ? ' selected' : ''}>Otro (especificar)</option>`;
+    return html;
+  }
+
+  function renderTaskFormPanel() {
+    const wrap = document.getElementById('taskFormWrap');
+    if (!wrap) return;
+    if (!showingForm) { wrap.innerHTML = ''; return; }
+    const editing = editingTaskId ? tasksCache.find(t => t.id === editingTaskId) : null;
+    const showOtherLabel = editing && editing.assigned_role === 'admin' && editing.assigned_label !== currentLabel;
+
+    wrap.innerHTML = `
+      <div class="panel" id="taskFormPanel" style="margin-bottom:0;">
+        <h2>${editing ? 'Editar pendiente' : 'Nuevo pendiente'}</h2>
+        <div id="taskFormMsg" class="msg"></div>
+        <div class="form-row single">
+          <div class="field"><label>Pendiente</label><input type="text" id="tfText" value="${editing ? escapeHtml(editing.text) : ''}" placeholder="Ej. Mandar fotos del avance a Ternium"></div>
+        </div>
+        <div class="form-row${currentRole === 'admin' ? ' triple' : ''}">
+          <div class="field"><label>Fecha límite (opcional)</label><input type="date" id="tfDue" value="${editing && editing.due_date ? editing.due_date : ''}"></div>
+          ${currentRole === 'admin' ? `<div class="field"><label>Responsable</label><select id="tfResponsable">${responsableOptionsHtml()}</select></div>` : ''}
+          ${currentRole === 'admin' ? `<div class="field${showOtherLabel ? '' : ' hidden'}" id="tfOtherLabelWrap"><label>Nombre del responsable</label><input type="text" id="tfOtherLabel" value="${showOtherLabel ? escapeHtml(editing.assigned_label) : ''}" placeholder="Ej. Ing. Sarkis"></div>` : ''}
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Empresa (opcional)</label><select id="tfClient"><option value="">Sin empresa</option>${clientsCache.map(c => `<option value="${c.id}"${editing && editing.client_id === c.id ? ' selected' : ''}>${escapeHtml(c.company_name)}</option>`).join('')}</select></div>
+          <div class="field"><label>Proyecto (opcional)</label><select id="tfProject"><option value="">Sin proyecto</option>${projectsCache.map(p => `<option value="${p.id}"${editing && editing.project_id === p.id ? ' selected' : ''}>${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)} (${escapeHtml(clientName(p.client_id))})</option>`).join('')}</select></div>
+        </div>
+        <p class="field-note">Empresa y proyecto son opcionales e independientes — un pendiente suelto de la operación no necesita ninguno de los dos.</p>
+        <button type="button" class="submit-btn" id="tfSaveBtn">${editing ? 'Guardar cambios' : 'Agregar pendiente'}</button>
+        <button type="button" class="cancel-btn" id="tfCancelBtn">Cancelar</button>
+      </div>
+    `;
+    if (currentRole === 'admin') {
+      document.getElementById('tfResponsable').addEventListener('change', e => {
+        document.getElementById('tfOtherLabelWrap').classList.toggle('hidden', e.target.value !== 'admin:other');
+      });
+    }
+    document.getElementById('tfProject').addEventListener('change', e => {
+      const proj = projectsCache.find(p => p.id === e.target.value);
+      if (proj) document.getElementById('tfClient').value = proj.client_id;
+    });
+    document.getElementById('tfSaveBtn').addEventListener('click', saveTask);
+    document.getElementById('tfCancelBtn').addEventListener('click', () => {
+      showingForm = false;
+      editingTaskId = null;
+      renderTaskFormPanel();
+    });
+  }
+
+  async function saveTask() {
+    const msg = document.getElementById('taskFormMsg');
+    const text = document.getElementById('tfText').value.trim();
+    if (!text) {
+      msg.className = 'msg error';
+      msg.textContent = 'Escribe qué es el pendiente.';
+      return;
+    }
+    const due_date = document.getElementById('tfDue').value || null;
+    const client_id = document.getElementById('tfClient').value || null;
+    const project_id = document.getElementById('tfProject').value || null;
+
+    let assigned_role, assigned_id, assigned_label;
+    if (currentRole === 'vendedor') {
+      assigned_role = 'vendedor';
+      assigned_id = currentStaffId;
+      assigned_label = currentLabel;
+    } else {
+      const respVal = document.getElementById('tfResponsable').value; // "admin:<uid>" | "vendedor:<id>" | "admin:other"
+      if (respVal === 'admin:other') {
+        const otherLabel = document.getElementById('tfOtherLabel').value.trim();
+        if (!otherLabel) {
+          msg.className = 'msg error';
+          msg.textContent = 'Escribe el nombre del responsable.';
+          return;
+        }
+        assigned_role = 'admin';
+        assigned_id = currentStaffId;
+        assigned_label = otherLabel;
+      } else if (respVal.indexOf('vendedor:') === 0) {
+        const vid = respVal.slice('vendedor:'.length);
+        const v = vendedoresCache.find(v => v.id === vid);
+        assigned_role = 'vendedor';
+        assigned_id = vid;
+        assigned_label = v ? v.full_name : '';
+      } else {
+        assigned_role = 'admin';
+        assigned_id = currentStaffId;
+        assigned_label = currentLabel;
+      }
+    }
+
+    if (editingTaskId) {
+      const payload = { text, due_date, client_id, project_id, assigned_role, assigned_id, assigned_label };
+      const { data, error } = await supabaseClient.from('portal_tasks').update(payload).eq('id', editingTaskId).select().single();
+      if (error) {
+        msg.className = 'msg error';
+        msg.textContent = 'Error: ' + error.message;
+        return;
+      }
+      const idx = tasksCache.findIndex(t => t.id === editingTaskId);
+      if (idx >= 0) tasksCache[idx] = data;
+    } else {
+      const payload = {
+        text, due_date, client_id, project_id, assigned_role, assigned_id, assigned_label,
+        created_by_role: currentRole, created_by_id: currentStaffId, created_by_label: currentLabel,
+      };
+      const { data, error } = await supabaseClient.from('portal_tasks').insert(payload).select().single();
+      if (error) {
+        msg.className = 'msg error';
+        msg.textContent = 'Error: ' + error.message;
+        return;
+      }
+      tasksCache.unshift(data);
+    }
+    showingForm = false;
+    editingTaskId = null;
+    renderTaskFormPanel();
+    renderStats();
+    renderList();
+  }
+
+  async function toggleDone(id, checked) {
+    const payload = { done: checked, done_at: checked ? new Date().toISOString() : null };
+    const { error } = await supabaseClient.from('portal_tasks').update(payload).eq('id', id);
+    if (!error) {
+      const t = tasksCache.find(t => t.id === id);
+      if (t) { t.done = checked; t.done_at = payload.done_at; }
+      renderStats();
+      renderList();
+    }
+  }
+
+  async function deleteTask(id) {
+    if (!confirm('¿Eliminar este pendiente? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabaseClient.from('portal_tasks').delete().eq('id', id);
+    if (!error) {
+      tasksCache = tasksCache.filter(t => t.id !== id);
+      renderStats();
+      renderList();
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'portal.html';
+  });
+
+  init();
+</script>
+
+</body>
+</html>

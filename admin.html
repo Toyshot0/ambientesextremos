@@ -325,6 +325,7 @@
   let currentRole = null; // 'admin' | 'vendedor'
   let currentStaffId = null;
   let currentStaffFullName = null;
+  let currentStaffEmail = null; // solo se llena para administradores (viene de la sesión de Auth — portal_admins no guarda correo)
   let supplierRows = []; // [{provider, po_number_supplier}] — filas del formulario de proyecto en edición
 
   function setStaffIdentity(label) {
@@ -347,6 +348,7 @@
     if (adminRow) {
       if (adminRow.active === false) { await denyInactive(); return; }
       currentRole = 'admin';
+      currentStaffEmail = sessionEmail;
       setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
       renderAdmin();
       await refreshAll();
@@ -1263,7 +1265,11 @@
     vendedoresCache = data || [];
   }
   async function loadAdmins() {
-    const { data } = await supabaseClient.from('portal_admins').select('id, full_name, email, active').order('full_name');
+    // portal_admins NUNCA ha tenido columnas full_name/email (a diferencia
+    // de portal_vendedores/portal_users) — pedirlas aquí hacía fallar esta
+    // consulta completa (error 400 silencioso) y dejaba la lista de
+    // "Personal interno de AVANTA" siempre vacía para administradores.
+    const { data } = await supabaseClient.from('portal_admins').select('id, active').order('id');
     adminsCache = data || [];
   }
   async function toggleStaffActive(role, id, nextActive) {
@@ -1311,12 +1317,34 @@
       const isSelf = s.id === currentStaffId;
       const isLastAdmin = s.role === 'admin' && activeAdminCount <= 1 && s.active !== false;
       const canDelete = !isSelf && !isLastAdmin;
+
+      // portal_admins no guarda full_name/email (a diferencia de
+      // portal_vendedores) — solo podemos mostrar un nombre/correo real
+      // para TU PROPIA cuenta (viene de la sesión de Auth). Para otro
+      // administrador no hay forma de mostrarlo desde aquí sin una Edge
+      // Function nueva que consulte Auth por su cuenta — se puede
+      // construir si en algún momento hace falta más detalle.
+      let mainName, metaLine, canRename;
+      if (s.role === 'vendedor') {
+        mainName = escapeHtml(s.full_name);
+        metaLine = escapeHtml(s.email) + ' — Vendedor';
+        canRename = true;
+      } else if (isSelf) {
+        mainName = escapeHtml(currentStaffEmail || 'Administrador');
+        metaLine = 'Administrador';
+        canRename = false;
+      } else {
+        mainName = 'Administrador';
+        metaLine = 'Correo no disponible aquí — revísalo en Supabase → Authentication → Users';
+        canRename = false;
+      }
+
       return `
       <div class="row-item">
-        <span class="r-main">${escapeHtml(s.full_name)}${s.active === false ? ' <em style="color:var(--steel-300);">(desactivado)</em>' : ''}${isSelf ? ' <em style="color:var(--steel-300);">(tú)</em>' : ''}</span>
-        <span class="r-meta">${escapeHtml(s.email)} — ${s.role === 'admin' ? 'Administrador' : 'Vendedor'}</span>
+        <span class="r-main">${mainName}${s.active === false ? ' <em style="color:var(--steel-300);">(desactivado)</em>' : ''}${isSelf ? ' <em style="color:var(--steel-300);">(tú)</em>' : ''}</span>
+        <span class="r-meta">${metaLine}</span>
         <span class="r-actions">
-          <a data-staff-rename="${s.id}" data-staff-role="${s.role}">Editar nombre</a>
+          ${canRename ? `<a data-staff-rename="${s.id}" data-staff-role="${s.role}">Editar nombre</a>` : ''}
           <a data-staff-toggle="${s.id}" data-staff-role="${s.role}" data-staff-active="${s.active !== false}">${s.active === false ? 'Activar' : 'Desactivar'}</a>
           ${canDelete ? `<a class="danger" data-staff-delete="${s.id}" data-staff-role="${s.role}">Eliminar</a>` : ''}
         </span>
@@ -1452,15 +1480,19 @@
       wrap.innerHTML = '<p class="empty-note">Todavía no hay empresas registradas.</p>';
       return;
     }
-    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Empresas registradas:</p>' + clientsCache.map(c => `
+    wrap.innerHTML = '<p class="field-note" style="margin-bottom:8px;">Empresas registradas:</p>' + clientsCache.map(c => {
+      const hasUsers = usersCache.some(u => u.client_id === c.id);
+      return `
       <div class="row-item">
         <span class="r-main">${escapeHtml(c.company_name)}${c.active === false ? ' <em style="color:var(--steel-300);">(desactivada)</em>' : ''}</span>
         <span class="r-actions">
           <a data-client-rename="${c.id}">Editar nombre</a>
           <a data-client-toggle="${c.id}" data-client-active="${c.active !== false}">${c.active === false ? 'Activar' : 'Desactivar'}</a>
+          ${!hasUsers ? `<a class="danger" data-client-delete="${c.id}">Eliminar</a>` : ''}
         </span>
       </div>
-    `).join('');
+    `;
+    }).join('');
     wrap.querySelectorAll('[data-client-rename]').forEach(a => {
       a.addEventListener('click', () => {
         const c = clientsCache.find(x => x.id === a.getAttribute('data-client-rename'));
@@ -1474,6 +1506,32 @@
         toggleClientActive(id, !isActive);
       });
     });
+    wrap.querySelectorAll('[data-client-delete]').forEach(a => {
+      a.addEventListener('click', () => {
+        const c = clientsCache.find(x => x.id === a.getAttribute('data-client-delete'));
+        if (c) deleteClient(c.id, c.company_name);
+      });
+    });
+  }
+
+  // Eliminar (pedido por Ric, 2026-09-21): a diferencia del personal de
+  // AVANTA, una empresa no tiene login propio (portal_clients solo agrupa
+  // usuarios), así que esto NO necesita una Edge Function — un DELETE
+  // normal ya respeta las políticas RLS de administrador. Bloqueado por
+  // completo (ni siquiera se muestra el botón) si la empresa todavía
+  // tiene algún usuario registrado — hay que eliminarlos primero uno por
+  // uno. Como cada proyecto exige una empresa Y un usuario dueño de esa
+  // misma empresa al crearse, cero usuarios garantiza cero proyectos
+  // huérfanos también.
+  async function deleteClient(id, companyName) {
+    if (!confirm(`¿Eliminar por completo la empresa "${companyName}"? No se puede deshacer.`)) return;
+    const { error } = await supabaseClient.from('portal_clients').delete().eq('id', id);
+    if (error) { alert('No se pudo eliminar: ' + error.message); return; }
+    await loadClients();
+    renderClientsList();
+    refreshClientSelects();
+    refreshFilterSelects();
+    renderProjectsList();
   }
 
   async function loadProjects() {
@@ -1648,6 +1706,9 @@
     wrap.innerHTML = usersCache.map(u => {
       const rolePart = [u.puesto, u.area].filter(Boolean).join(' · ');
       const managerName = u.manager_id ? userName(u.manager_id) : 'Sin jefe';
+      const isManagerOfSomeone = usersCache.some(other => other.manager_id === u.id);
+      const hasProjects = projectsCache.some(p => p.owner_user_id === u.id);
+      const canDelete = !hasProjects && !isManagerOfSomeone;
       return `
         <div class="row-item" data-user-row="${u.id}">
           <div class="r-wrap">
@@ -1656,6 +1717,7 @@
             <span class="r-actions">
               <a data-edit-user="${u.id}">Editar</a>
               <a data-toggle-user="${u.id}" data-user-active="${u.active !== false}">${u.active === false ? 'Activar' : 'Desactivar'}</a>
+              ${canDelete ? `<a class="danger" data-user-delete="${u.id}">Eliminar</a>` : ''}
             </span>
           </div>
           <div class="inline-edit" id="edit-user-${u.id}">
@@ -1676,7 +1738,34 @@
       document.querySelector(`[data-cancel-user="${u.id}"]`).addEventListener('click', () => closeUserEdit(u.id));
       document.querySelector(`[data-save-user="${u.id}"]`).addEventListener('click', () => saveUserEdit(u.id));
       document.querySelector(`[data-toggle-user="${u.id}"]`).addEventListener('click', () => toggleUserActive(u.id, u.active === false));
+      const delLink = document.querySelector(`[data-user-delete="${u.id}"]`);
+      if (delLink) delLink.addEventListener('click', () => deleteClientUser(u.id, u.full_name));
     });
+  }
+
+  // Eliminar (pedido por Ric, 2026-09-21): igual que con personal de
+  // AVANTA, un usuario cliente SÍ tiene login real de Supabase Auth, así
+  // que esto necesita la Edge Function delete-client-user (borra la fila
+  // Y el login). El botón se oculta si el usuario todavía tiene proyectos
+  // a su nombre (owner_user_id) o si es el jefe de alguien más en el
+  // organigrama — en ambos casos hay que resolverlo primero (reasignar
+  // proyectos, o quitarlo como jefe de sus subordinados) para no romper
+  // nada. La Edge Function vuelve a checar lo mismo del lado del
+  // servidor, por si acaso.
+  async function deleteClientUser(userId, fullName) {
+    if (!confirm(`¿Eliminar por completo el acceso de "${fullName}"? Esto borra también su login — no se puede deshacer.`)) return;
+    const { data, error } = await supabaseClient.functions.invoke('delete-client-user', { body: { id: userId } });
+    if (error || !data || data.error) {
+      alert('No se pudo eliminar: ' + (data && data.error ? data.error : (error ? error.message : 'error desconocido')));
+      return;
+    }
+    await loadUsers();
+    refreshUserManagerOptions();
+    refreshProjectOwnerOptions();
+    renderUsersList();
+    renderClientsList();
+    renderAccesoList();
+    refreshGrantSelects();
   }
 
   async function toggleUserActive(userId, nextActive) {

@@ -9,6 +9,23 @@
 <link rel="stylesheet" href="main.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  /* ---- Paleta navy del Portal de Clientes (2026-09-18, admin.html /
+     proyecto-detalle.html / dashboard.html / vista-cliente.html) — a este
+     archivo nunca se le había aplicado, se queda corto arreglarlo ahora.
+     Mismas variables, mismo mecanismo: redefine lo que ya usaba el tema
+     "content-light" y todas las reglas "body.content-light ..." de abajo
+     cambian de gris claro a navy sin reescribirlas una por una. */
+  :root {
+    --paper-900: #0f1c30;
+    --paper-800: #16273f;
+    --paper-border: #28405f;
+    --ink-900: #eef2f6;
+    --ink-600: #93a8c2;
+    --p-input-bg: #1c3352;
+    --p-blue: #3e7bfa;
+    --p-blue-dim: rgba(62,123,250,0.16);
+  }
+
   .admin-header { padding: 24px 48px; border-bottom: 1px solid var(--gunmetal-700); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
   .admin-header h1 { font-size: 22px; font-weight: 600; }
   .tools-back-link { display: inline-block; font-size: 12.5px; color: var(--steel-300); text-decoration: none; margin-bottom: 6px; }
@@ -21,18 +38,21 @@
   .logout-btn { background: transparent; border: 1px solid var(--gunmetal-600); color: var(--steel-100); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 18px; border-radius: 3px; cursor: pointer; }
   .logout-btn:hover { border-color: var(--orange); color: var(--orange); }
 
-  .admin-content { padding: 32px 48px 64px; max-width: 1180px; margin: 0 auto; }
+  .admin-content { padding: 32px 48px 64px; max-width: 1220px; margin: 0 auto; }
   .denied { text-align: center; padding: 100px 24px; color: var(--steel-300); }
 
   .panel { background: var(--gunmetal-800); border: 1px solid var(--gunmetal-700); border-radius: 6px; padding: 28px 30px; margin-bottom: 28px; }
   .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
   .panel .panel-sub { font-size: 13px; color: var(--steel-300); margin-bottom: 18px; }
 
+  /* Las pestañas son navegación — les toca el azul estructural, mismo
+     criterio que el quick-nav de admin.html (el naranja se queda para
+     botones de acción como "Guardar"). */
   .tabs { display: flex; gap: 8px; margin-bottom: 22px; }
   .tab-btn { font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--steel-100); background: var(--gunmetal-800); border: 1px solid var(--gunmetal-600); border-radius: 20px; padding: 9px 18px; cursor: pointer; }
-  .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  .tab-btn.active { background: var(--p-blue); border-color: var(--p-blue); color: var(--white); }
   body.content-light .tab-btn { background: var(--paper-800); border-color: var(--paper-border); color: var(--ink-600); }
-  body.content-light .tab-btn.active { background: var(--orange); border-color: var(--orange); color: var(--white); }
+  body.content-light .tab-btn.active { background: var(--p-blue); border-color: var(--p-blue); color: var(--white); }
 
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   .form-row.single { grid-template-columns: 1fr; }
@@ -40,6 +60,17 @@
   .field label { display: block; font-size: 12px; color: var(--steel-300); margin-bottom: 6px; }
   .field input, .field select, .field textarea { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border-radius: 3px; }
   .field input:focus, .field select:focus { outline: none; border-color: var(--orange); }
+  /* Todos los valores se capturan a mano — sin flechas de subir/bajar,
+     para no dar la impresión de que algún campo se calcula o incrementa
+     solo (pedido explícito de Ric, 2026-09-21). */
+  .field input[type="number"]::-webkit-outer-spin-button,
+  .field input[type="number"]::-webkit-inner-spin-button,
+  .comp-table input[type="number"]::-webkit-outer-spin-button,
+  .comp-table input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .field input[type="number"], .comp-table input[type="number"] { -moz-appearance: textfield; }
   .field-note { font-size: 11px; color: var(--steel-300); margin-top: 5px; }
 
   .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
@@ -439,49 +470,67 @@
     renderNewAsmCompRows();
   }
 
-  function componentDraftRowHtml(prefix, i, row) {
+  // Misma tabla ancha (.comp-table, con scroll horizontal) que usan el
+  // Panel de compras y los componentes ya existentes — antes estas filas
+  // usaban un .form-row angosto que apretaba 14 campos dentro del ancho
+  // del panel; Ric pidió que aprovechara el ancho de pantalla y mantuviera
+  // el mismo formato del resto del portal (2026-09-21).
+  function componentDraftTableHtml(bodyId) {
     return `
-      <div class="form-row" style="grid-template-columns: 1.1fr 0.7fr 0.5fr 0.6fr 0.7fr 0.7fr 0.9fr 0.6fr 0.7fr 0.7fr 0.9fr 0.7fr 1fr auto; align-items:end;">
-        <div class="field"><label>Componente</label><input type="text" data-${prefix}-name="${i}" value="${escapeHtml(row.component_name)}" placeholder="Ej. Motor 3 HP"></div>
-        <div class="field"><label>NP</label><input type="text" data-${prefix}-np="${i}" value="${escapeHtml(row.part_number || '')}"></div>
-        <div class="field"><label>Cant.</label><input type="number" step="any" data-${prefix}-qty="${i}" value="${row.quantity ?? 1}"></div>
-        <div class="field"><label>Unidad</label><input type="text" data-${prefix}-unit="${i}" value="${escapeHtml(row.unit || '')}" placeholder="Ej. pza"></div>
-        <div class="field"><label>Costo unitario</label><input type="number" step="any" data-${prefix}-cost="${i}" value="${row.unit_cost ?? ''}"></div>
-        <div class="field"><label>Costo total</label><input type="number" step="any" data-${prefix}-total="${i}" value="${row.total_cost ?? ''}"></div>
-        <div class="field"><label>Proveedor</label>${providerSelectHtml(prefix + '-provider-' + i, row.provider_id)}</div>
-        <div class="field"><label>MOQ</label><input type="number" step="any" data-${prefix}-moq="${i}" value="${row.moq ?? ''}"></div>
-        <div class="field"><label>TE</label><input type="text" data-${prefix}-te="${i}" value="${escapeHtml(row.lead_time || '')}" placeholder="Ej. 15 días"></div>
-        <div class="field"><label>Disponible</label><input type="text" data-${prefix}-disp="${i}" value="${escapeHtml(row.availability || '')}" placeholder="Ej. 3 en stock"></div>
-        <div class="field"><label>Estatus</label><select data-${prefix}-status="${i}">${componentStatusOptionsHtml(row.status)}</select></div>
-        <div class="field"><label>PO</label><input type="text" data-${prefix}-po="${i}" value="${escapeHtml(row.po_number_component)}" placeholder="OC-..."></div>
-        <div class="field"><label>Compromiso proveedor</label><input type="date" data-${prefix}-date="${i}" value="${row.supplier_commitment_date || ''}"></div>
-        <button type="button" class="cancel-btn" data-${prefix}-remove="${i}" style="margin-left:0;">Quitar</button>
+      <div class="comp-table-scroll">
+      <table class="comp-table">
+        <thead><tr><th>Componente</th><th>NP</th><th>Cant.</th><th>Unidad</th><th>Costo</th><th>Costo total</th><th>Proveedor</th><th>MOQ</th><th>TE</th><th>Disponible</th><th>Estatus</th><th>PO</th><th>Compromiso proveedor</th><th></th></tr></thead>
+        <tbody id="${bodyId}"></tbody>
+      </table>
       </div>
     `;
   }
 
-  function wireComponentDraftRow(prefix, i, wrap, drafts, rerender) {
-    wrap.querySelector(`[data-${prefix}-name="${i}"]`).addEventListener('input', e => { drafts[i].component_name = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-np="${i}"]`).addEventListener('input', e => { drafts[i].part_number = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-qty="${i}"]`).addEventListener('input', e => { drafts[i].quantity = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-unit="${i}"]`).addEventListener('input', e => { drafts[i].unit = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-cost="${i}"]`).addEventListener('input', e => { drafts[i].unit_cost = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-total="${i}"]`).addEventListener('input', e => { drafts[i].total_cost = e.target.value; });
-    wireProviderSelect(wrap.querySelector(`[data-provider-field="${prefix}-provider-${i}"]`), (id) => { drafts[i].provider_id = id; rerender(); });
-    wrap.querySelector(`[data-${prefix}-moq="${i}"]`).addEventListener('input', e => { drafts[i].moq = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-te="${i}"]`).addEventListener('input', e => { drafts[i].lead_time = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-disp="${i}"]`).addEventListener('input', e => { drafts[i].availability = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-status="${i}"]`).addEventListener('change', e => { drafts[i].status = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-po="${i}"]`).addEventListener('input', e => { drafts[i].po_number_component = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-date="${i}"]`).addEventListener('change', e => { drafts[i].supplier_commitment_date = e.target.value; });
-    wrap.querySelector(`[data-${prefix}-remove="${i}"]`).addEventListener('click', () => { drafts.splice(i, 1); rerender(); });
+  function componentDraftRowHtml(prefix, i, row) {
+    return `
+      <tr>
+        <td><input type="text" data-${prefix}-name="${i}" value="${escapeHtml(row.component_name)}" placeholder="Ej. Motor 3 HP"></td>
+        <td><input type="text" data-${prefix}-np="${i}" value="${escapeHtml(row.part_number || '')}"></td>
+        <td><input type="number" step="any" data-${prefix}-qty="${i}" value="${row.quantity ?? 1}"></td>
+        <td><input type="text" data-${prefix}-unit="${i}" value="${escapeHtml(row.unit || '')}" placeholder="Ej. pza"></td>
+        <td><input type="number" step="any" data-${prefix}-cost="${i}" value="${row.unit_cost ?? ''}"></td>
+        <td><input type="number" step="any" data-${prefix}-total="${i}" value="${row.total_cost ?? ''}"></td>
+        <td>${providerSelectHtml(prefix + '-provider-' + i, row.provider_id)}</td>
+        <td><input type="number" step="any" data-${prefix}-moq="${i}" value="${row.moq ?? ''}"></td>
+        <td><input type="text" data-${prefix}-te="${i}" value="${escapeHtml(row.lead_time || '')}" placeholder="Ej. 15 días"></td>
+        <td><input type="text" data-${prefix}-disp="${i}" value="${escapeHtml(row.availability || '')}" placeholder="Ej. 3 en stock"></td>
+        <td><select data-${prefix}-status="${i}">${componentStatusOptionsHtml(row.status)}</select></td>
+        <td><input type="text" data-${prefix}-po="${i}" value="${escapeHtml(row.po_number_component)}" placeholder="OC-..."></td>
+        <td><input type="date" data-${prefix}-date="${i}" value="${row.supplier_commitment_date || ''}"></td>
+        <td><a class="qa danger" data-${prefix}-remove="${i}">Quitar</a></td>
+      </tr>
+    `;
+  }
+
+  function wireComponentDraftRow(prefix, i, body, drafts, rerender) {
+    body.querySelector(`[data-${prefix}-name="${i}"]`).addEventListener('input', e => { drafts[i].component_name = e.target.value; });
+    body.querySelector(`[data-${prefix}-np="${i}"]`).addEventListener('input', e => { drafts[i].part_number = e.target.value; });
+    body.querySelector(`[data-${prefix}-qty="${i}"]`).addEventListener('input', e => { drafts[i].quantity = e.target.value; });
+    body.querySelector(`[data-${prefix}-unit="${i}"]`).addEventListener('input', e => { drafts[i].unit = e.target.value; });
+    body.querySelector(`[data-${prefix}-cost="${i}"]`).addEventListener('input', e => { drafts[i].unit_cost = e.target.value; });
+    body.querySelector(`[data-${prefix}-total="${i}"]`).addEventListener('input', e => { drafts[i].total_cost = e.target.value; });
+    wireProviderSelect(body.querySelector(`[data-provider-field="${prefix}-provider-${i}"]`), (id) => { drafts[i].provider_id = id; rerender(); });
+    body.querySelector(`[data-${prefix}-moq="${i}"]`).addEventListener('input', e => { drafts[i].moq = e.target.value; });
+    body.querySelector(`[data-${prefix}-te="${i}"]`).addEventListener('input', e => { drafts[i].lead_time = e.target.value; });
+    body.querySelector(`[data-${prefix}-disp="${i}"]`).addEventListener('input', e => { drafts[i].availability = e.target.value; });
+    body.querySelector(`[data-${prefix}-status="${i}"]`).addEventListener('change', e => { drafts[i].status = e.target.value; });
+    body.querySelector(`[data-${prefix}-po="${i}"]`).addEventListener('input', e => { drafts[i].po_number_component = e.target.value; });
+    body.querySelector(`[data-${prefix}-date="${i}"]`).addEventListener('change', e => { drafts[i].supplier_commitment_date = e.target.value; });
+    body.querySelector(`[data-${prefix}-remove="${i}"]`).addEventListener('click', () => { drafts.splice(i, 1); rerender(); });
   }
 
   function renderNewAsmCompRows() {
     const wrap = document.getElementById('newAsmCompWrap');
     if (!wrap) return;
-    wrap.innerHTML = newAssemblyDrafts.map((row, i) => componentDraftRowHtml('na', i, row)).join('');
-    newAssemblyDrafts.forEach((row, i) => wireComponentDraftRow('na', i, wrap, newAssemblyDrafts, renderNewAsmCompRows));
+    wrap.innerHTML = componentDraftTableHtml('newAsmCompBody');
+    const body = document.getElementById('newAsmCompBody');
+    body.innerHTML = newAssemblyDrafts.map((row, i) => componentDraftRowHtml('na', i, row)).join('');
+    newAssemblyDrafts.forEach((row, i) => wireComponentDraftRow('na', i, body, newAssemblyDrafts, renderNewAsmCompRows));
   }
 
   async function saveNewAssembly() {
@@ -672,8 +721,10 @@
       return;
     }
     if (saveBtn) saveBtn.classList.remove('hidden');
-    wrap.innerHTML = addCompDrafts.map((row, i) => componentDraftRowHtml('ad', i, row)).join('');
-    addCompDrafts.forEach((row, i) => wireComponentDraftRow('ad', i, wrap, addCompDrafts, () => renderAddAsmCompRows(assemblyId)));
+    wrap.innerHTML = componentDraftTableHtml('addAsmCompBody');
+    const body = document.getElementById('addAsmCompBody');
+    body.innerHTML = addCompDrafts.map((row, i) => componentDraftRowHtml('ad', i, row)).join('');
+    addCompDrafts.forEach((row, i) => wireComponentDraftRow('ad', i, body, addCompDrafts, () => renderAddAsmCompRows(assemblyId)));
   }
 
   async function saveAddAsmComponents(assemblyId) {

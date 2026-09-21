@@ -1016,7 +1016,7 @@
 
     wrap.innerHTML = `
       <div class="stat-grid">
-        <div class="stat-card clickable" data-dash-filter-status="__active__"><div class="snum">${totalActivos}</div><div class="slabel">Proyectos activos</div></div>
+        <div class="stat-card clickable" data-dash-filter-status="__active__"><div class="snum">${totalActivos}</div><div class="slabel">En curso</div></div>
         <div class="stat-card clickable" data-dash-filter-status="__con_oc__"><div class="snum">${ocActivasCount}</div><div class="slabel">OC activas</div></div>
         ${STATUS_ORDER.map(s => `<div class="stat-card clickable" data-dash-filter-status="${s}"><div class="snum">${counts[s]}</div><div class="slabel">${STATUS_LABELS[s]}</div></div>`).join('')}
       </div>

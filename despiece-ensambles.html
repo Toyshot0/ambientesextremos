@@ -55,7 +55,16 @@
   .verifying-note { color: var(--steel-300); }
 
   /* Panel de compras — tabla de componentes cruzando proyectos */
-  .comp-table { width: 100%; border-collapse: collapse; }
+  .comp-table-scroll { overflow-x: auto; }
+  .comp-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+  .comp-table td input, .comp-table td select { min-width: 78px; }
+  .comp-total-row { text-align: right; font-size: 14px; font-weight: 600; padding: 12px 10px 4px; }
+  .assembly-summary { background: var(--gunmetal-900); border: 1px solid var(--orange); border-radius: 4px; padding: 14px 16px; margin-bottom: 18px; }
+  .assembly-summary .as-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .assembly-summary .as-meta { font-size: 13px; color: var(--steel-300); }
+  .assembly-summary .qa { margin-left: 12px; }
+  body.content-light .assembly-summary { background: var(--paper-800); }
+  body.content-light .assembly-summary .as-meta { color: var(--ink-600); }
   .comp-table th { text-align: left; font-family: 'Oswald', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--steel-300); padding: 8px 10px; border-bottom: 1px solid var(--gunmetal-600); }
   .comp-table td { padding: 8px 10px; border-bottom: 1px solid var(--gunmetal-700); font-size: 13px; vertical-align: middle; }
   .comp-table td .r-main { font-weight: 600; }
@@ -150,12 +159,16 @@
     return '<option value="">Sin definir</option>' + PROVIDER_ORDER.map(p => `<option value="${p}"${p === selected ? ' selected' : ''}>${PROVIDER_LABELS[p]}</option>`).join('');
   }
 
-  const COMPONENT_STATUS_ORDER = ['por_pedir', 'pedido', 'en_transito', 'recibido'];
+  // Estatus renombrado a los términos reales de Ric (2026-09-21) — antes
+  // era por_pedir/pedido/en_transito/recibido. "Cotizar" es un paso nuevo,
+  // para componentes que todavía no tienen proveedor/precio definido.
+  const COMPONENT_STATUS_ORDER = ['cotizar', 'programar_pago', 'pago_programado', 'en_transito', 'disponible'];
   const COMPONENT_STATUS_LABELS = {
-    por_pedir: 'Por pedir',
-    pedido: 'Pedido al proveedor',
+    cotizar: 'Cotizar',
+    programar_pago: 'Programar pago',
+    pago_programado: 'Pago programado',
     en_transito: 'En tránsito',
-    recibido: 'Recibido en AVANTA',
+    disponible: 'Disponible',
   };
   function componentStatusOptionsHtml(selected) {
     return COMPONENT_STATUS_ORDER.map(s => `<option value="${s}"${s === selected ? ' selected' : ''}>${COMPONENT_STATUS_LABELS[s]}</option>`).join('');
@@ -167,9 +180,11 @@
   let usersCache = [];
   let projectsCache = []; // proyectos (ensambles) — datos mínimos para localizar/crear
   let componentsCache = []; // TODOS los componentes visibles para este rol, con su proyecto embebido
+  let assembliesCache = []; // catálogo de diseños de ensamble reutilizables (2026-09-21)
   let activeTab = 'compras'; // 'compras' | 'buscar'
   let selectedProjectId = null; // proyecto abierto en la pestaña "Buscar / cargar ensamble"
   let newRowDrafts = []; // filas nuevas sin guardar en el editor de un ensamble
+  let showingNewAssemblyFields = false; // dentro del editor de un ensamble, si se está creando un diseño nuevo
 
   function setStaffIdentity(label) {
     const el = document.getElementById('staffIdentity');
@@ -219,11 +234,16 @@
 
     let projQuery = supabaseClient
       .from('portal_projects')
-      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date')
+      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, assembly_id')
       .order('created_at', { ascending: false });
     if (currentRole === 'vendedor') projQuery = projQuery.eq('owner_vendedor_id', currentStaffId);
     const { data: projects } = await projQuery;
     projectsCache = projects || [];
+
+    // Catálogo de diseños de ensamble reutilizables (2026-09-21) — ambos
+    // roles pueden verlo/crearlo, solo admin puede borrarlo (RLS).
+    const { data: assemblies } = await supabaseClient.from('portal_assemblies').select('id, name, part_number, sale_price, active').order('name');
+    assembliesCache = assemblies || [];
 
     await reloadComponents();
   }
@@ -231,9 +251,26 @@
   async function reloadComponents() {
     const { data } = await supabaseClient
       .from('portal_project_components')
-      .select('id, project_id, component_name, status, provider, po_number_component, supplier_commitment_date, order_index, portal_projects(id, folio, name, client_id, status)')
+      .select('id, project_id, component_name, part_number, quantity, unit_cost, moq, lead_time, availability, status, provider, po_number_component, supplier_commitment_date, order_index, portal_projects(id, folio, name, client_id, status)')
       .order('created_at', { ascending: true });
     componentsCache = data || [];
+  }
+
+  function assemblyById(id) {
+    return assembliesCache.find(a => a.id === id) || null;
+  }
+
+  // Cuántos proyectos "en curso" (no entregados) usan el mismo diseño de
+  // ensamble — el "Pedidos activos" que Ric ya lleva a mano en Excel.
+  function activeOrdersForAssembly(assemblyId) {
+    return projectsCache.filter(p => p.assembly_id === assemblyId && p.status !== 'entregado').length;
+  }
+
+  function formatCurrency(n) {
+    if (n === null || n === undefined || n === '') return '';
+    const num = Number(n);
+    if (isNaN(num)) return '';
+    return num.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
   }
 
   function clientName(id) {
@@ -300,7 +337,7 @@
     return componentsCache.filter(c => {
       const proj = c.portal_projects;
       if (provider && c.provider !== provider) return false;
-      if (status === '__pending__' && c.status === 'recibido') return false;
+      if (status === '__pending__' && c.status === 'disponible') return false;
       if (status && status !== '__pending__' && c.status !== status) return false;
       if (clientId && (!proj || proj.client_id !== clientId)) return false;
       if (text) {
@@ -329,12 +366,20 @@
       return;
     }
     wrap.innerHTML = `
+      <div class="comp-table-scroll">
       <table class="comp-table">
         <thead>
           <tr>
             <th>Componente</th>
             <th>Ensamble / Cliente</th>
+            <th>NP</th>
+            <th>Cant.</th>
+            <th>Costo</th>
+            <th>Costo total</th>
             <th>Proveedor</th>
+            <th>MOQ</th>
+            <th>TE</th>
+            <th>Disponible</th>
             <th>Estatus</th>
             <th>PO</th>
             <th>Compromiso proveedor</th>
@@ -343,10 +388,12 @@
         </thead>
         <tbody id="compTableBody"></tbody>
       </table>
+      </div>
     `;
     const body = document.getElementById('compTableBody');
     body.innerHTML = list.map(c => {
       const proj = c.portal_projects;
+      const totalCost = Number(c.quantity || 0) * Number(c.unit_cost || 0);
       return `
       <tr data-comp-row="${c.id}">
         <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
@@ -354,7 +401,14 @@
           <div class="r-main">${proj ? (proj.folio ? escapeHtml(proj.folio) + ' — ' : '') + escapeHtml(proj.name) : '—'}</div>
           <div class="r-meta">${proj ? escapeHtml(clientName(proj.client_id)) : ''}</div>
         </td>
+        <td><input type="text" data-live-np="${c.id}" value="${escapeHtml(c.part_number || '')}"></td>
+        <td><input type="number" step="any" data-live-qty="${c.id}" value="${c.quantity ?? 1}"></td>
+        <td><input type="number" step="any" data-live-cost="${c.id}" value="${c.unit_cost ?? ''}"></td>
+        <td><span class="r-meta">${formatCurrency(totalCost)}</span></td>
         <td><select data-live-provider="${c.id}">${providerOptionsHtml(c.provider || '')}</select></td>
+        <td><input type="number" step="any" data-live-moq="${c.id}" value="${c.moq ?? ''}"></td>
+        <td><input type="text" data-live-te="${c.id}" value="${escapeHtml(c.lead_time || '')}" placeholder="Ej. 15 días"></td>
+        <td><input type="text" data-live-disp="${c.id}" value="${escapeHtml(c.availability || '')}" placeholder="Ej. 3 en stock"></td>
         <td><select data-live-status="${c.id}">${componentStatusOptionsHtml(c.status)}</select></td>
         <td><input type="text" data-live-po="${c.id}" value="${escapeHtml(c.po_number_component || '')}" placeholder="OC-..."></td>
         <td><input type="date" data-live-date="${c.id}" value="${c.supplier_commitment_date || ''}"></td>
@@ -367,7 +421,13 @@
     }).join('');
 
     list.forEach(c => {
+      body.querySelector(`[data-live-np="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'part_number', e.target.value.trim() || null));
+      body.querySelector(`[data-live-qty="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'quantity', Number(e.target.value) || 0); renderComprasTable(); });
+      body.querySelector(`[data-live-cost="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'unit_cost', e.target.value === '' ? null : Number(e.target.value)); renderComprasTable(); });
       body.querySelector(`[data-live-provider="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'provider', e.target.value || null));
+      body.querySelector(`[data-live-moq="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'moq', e.target.value === '' ? null : Number(e.target.value)));
+      body.querySelector(`[data-live-te="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'lead_time', e.target.value.trim() || null));
+      body.querySelector(`[data-live-disp="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'availability', e.target.value.trim() || null));
       body.querySelector(`[data-live-status="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'status', e.target.value));
       body.querySelector(`[data-live-po="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'po_number_component', e.target.value.trim() || null));
       body.querySelector(`[data-live-date="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'supplier_commitment_date', e.target.value || null));
@@ -503,15 +563,18 @@
     if (!wrap || !p) { if (wrap) wrap.innerHTML = ''; return; }
 
     newRowDrafts = [];
+    showingNewAssemblyFields = false;
     wrap.innerHTML = `
       <div class="panel">
         <h2>Componentes de este ensamble</h2>
         <p class="panel-sub">Cada componente se pide a un proveedor distinto. La fecha compromiso y la fecha real de entrega del ensamble completo se editan en Administración de Proyectos → Editar.</p>
+        <div id="assemblyBlockWrap"></div>
         <div class="ensamble-summary">
           <div class="es-name">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</div>
           <div class="es-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}</div>
         </div>
         <div id="existingCompWrap"></div>
+        <div id="compTotalWrap"></div>
         <div id="newCompMsg" class="msg"></div>
         <div id="newCompWrap" style="margin-top:10px;"></div>
         <button type="button" class="cancel-btn" id="addNewCompBtn" style="margin-left:0;">+ Agregar componente</button>
@@ -519,41 +582,148 @@
       </div>
     `;
     document.getElementById('addNewCompBtn').addEventListener('click', () => {
-      newRowDrafts.push({ component_name: '', status: 'por_pedir', provider: '', po_number_component: '', supplier_commitment_date: '' });
+      newRowDrafts.push({ component_name: '', part_number: '', quantity: 1, unit_cost: '', provider: '', moq: '', lead_time: '', availability: '', status: 'cotizar', po_number_component: '', supplier_commitment_date: '' });
       renderNewCompRows();
     });
     document.getElementById('saveNewCompBtn').addEventListener('click', () => saveNewCompRows(projectId));
+    renderAssemblyBlock(projectId);
     renderExistingComponents(projectId);
     renderNewCompRows();
   }
 
+  // Bloque "Diseño de ensamble" (2026-09-21) — liga este proyecto a un
+  // diseño reutilizable del catálogo (portal_assemblies). Opcional: si no
+  // se liga nada, el ensamble sigue funcionando exactamente igual que
+  // antes. Ligarlo muestra Nombre/NP/Pedidos activos/Precio, igual que el
+  // control que Ric ya llevaba en Excel.
+  function renderAssemblyBlock(projectId) {
+    const wrap = document.getElementById('assemblyBlockWrap');
+    if (!wrap) return;
+    const p = projectsCache.find(pr => pr.id === projectId);
+    const asm = p && p.assembly_id ? assemblyById(p.assembly_id) : null;
+
+    if (asm && !showingNewAssemblyFields) {
+      const activos = activeOrdersForAssembly(asm.id);
+      wrap.innerHTML = `
+        <div class="assembly-summary">
+          <div class="as-name">${escapeHtml(asm.name)}</div>
+          <div class="as-meta">${asm.part_number ? 'NP: ' + escapeHtml(asm.part_number) : 'NP: sin definir'} — Pedidos activos: ${activos}${asm.sale_price !== null && asm.sale_price !== undefined ? ' — Precio: ' + formatCurrency(asm.sale_price) : ''}<a class="qa" id="changeAssemblyLink">Cambiar diseño</a></div>
+        </div>
+      `;
+      document.getElementById('changeAssemblyLink').addEventListener('click', () => { showingNewAssemblyFields = true; renderAssemblyBlock(projectId); });
+      return;
+    }
+
+    wrap.innerHTML = `
+      <div class="ensamble-summary" style="border:1px solid var(--orange);">
+        <p class="field-note" style="margin-top:0;">Ligar este ensamble a un diseño del catálogo es opcional — te deja ver cuántos pedidos activos usan el mismo diseño (como "Pedidos activos" en tu Excel), y reutilizar su NP/precio de venta.</p>
+        <div class="form-row single">
+          <div class="field"><label>Diseño de ensamble</label><select id="asmSelect"><option value="">+ Crear diseño nuevo (o dejar sin ligar)</option>${assembliesCache.map(a => `<option value="${a.id}"${asm && asm.id === a.id ? ' selected' : ''}>${escapeHtml(a.name)}${a.part_number ? ' — ' + escapeHtml(a.part_number) : ''}</option>`).join('')}</select></div>
+        </div>
+        <div id="newAsmFieldsWrap"></div>
+        <button type="button" class="submit-btn" id="asmSaveBtn" style="margin-top:6px;">Guardar diseño</button>
+        ${asm ? `<button type="button" class="cancel-btn" id="asmCancelBtn">Cancelar</button>` : ''}
+        <div id="asmMsg" class="msg"></div>
+      </div>
+    `;
+    const sel = document.getElementById('asmSelect');
+    const renderNewAsmFields = () => {
+      const fw = document.getElementById('newAsmFieldsWrap');
+      if (!fw) return;
+      if (sel.value) { fw.innerHTML = ''; return; }
+      fw.innerHTML = `
+        <div class="form-row triple">
+          <div class="field"><label>Nombre del diseño</label><input type="text" id="asmNewName" placeholder="Ej. Walther Nuevo Recto"></div>
+          <div class="field"><label>NP del diseño</label><input type="text" id="asmNewNP" placeholder="Ej. RG-W7C20-H"></div>
+          <div class="field"><label>Precio de venta</label><input type="number" step="any" id="asmNewPrice" placeholder="Ej. 4650"></div>
+        </div>
+        <p class="field-note">Déjalo en blanco si por ahora no quieres ligar este ensamble a ningún diseño del catálogo.</p>
+      `;
+    };
+    renderNewAsmFields();
+    sel.addEventListener('change', renderNewAsmFields);
+    document.getElementById('asmSaveBtn').addEventListener('click', () => saveAssemblyLink(projectId));
+    const cancelBtn = document.getElementById('asmCancelBtn');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => { showingNewAssemblyFields = false; renderAssemblyBlock(projectId); });
+  }
+
+  async function saveAssemblyLink(projectId) {
+    const msg = document.getElementById('asmMsg');
+    const sel = document.getElementById('asmSelect');
+    let assemblyId = sel.value || null;
+
+    if (!assemblyId) {
+      const nameEl = document.getElementById('asmNewName');
+      const name = nameEl ? nameEl.value.trim() : '';
+      if (name) {
+        const npEl = document.getElementById('asmNewNP');
+        const priceEl = document.getElementById('asmNewPrice');
+        const { data, error } = await supabaseClient.from('portal_assemblies').insert({
+          name,
+          part_number: npEl && npEl.value.trim() ? npEl.value.trim() : null,
+          sale_price: priceEl && priceEl.value !== '' ? Number(priceEl.value) : null,
+        }).select('id, name, part_number, sale_price, active').single();
+        if (error) { msg.className = 'msg error'; msg.textContent = 'Error al crear el diseño: ' + error.message; return; }
+        assembliesCache.unshift(data);
+        assemblyId = data.id;
+      }
+    }
+
+    const { error: updError } = await supabaseClient.from('portal_projects').update({ assembly_id: assemblyId }).eq('id', projectId);
+    if (updError) { msg.className = 'msg error'; msg.textContent = 'Error: ' + updError.message; return; }
+    const p = projectsCache.find(pr => pr.id === projectId);
+    if (p) p.assembly_id = assemblyId;
+    showingNewAssemblyFields = false;
+    renderAssemblyBlock(projectId);
+  }
+
   function renderExistingComponents(projectId) {
     const wrap = document.getElementById('existingCompWrap');
+    const totalWrap = document.getElementById('compTotalWrap');
     if (!wrap) return;
     const rows = componentsCache.filter(c => c.project_id === projectId);
     if (rows.length === 0) {
       wrap.innerHTML = '<p class="empty-note">Ningún componente cargado todavía para este ensamble.</p>';
+      if (totalWrap) totalWrap.innerHTML = '';
       return;
     }
     wrap.innerHTML = `
+      <div class="comp-table-scroll">
       <table class="comp-table">
-        <thead><tr><th>Componente</th><th>Proveedor</th><th>Estatus</th><th>PO</th><th>Compromiso proveedor</th><th></th></tr></thead>
+        <thead><tr><th>Componente</th><th>NP</th><th>Cant.</th><th>Costo</th><th>Costo total</th><th>Proveedor</th><th>MOQ</th><th>TE</th><th>Disponible</th><th>Estatus</th><th>PO</th><th>Compromiso proveedor</th><th></th></tr></thead>
         <tbody id="existingCompBody"></tbody>
       </table>
+      </div>
     `;
     const body = document.getElementById('existingCompBody');
-    body.innerHTML = rows.map(c => `
+    body.innerHTML = rows.map(c => {
+      const totalCost = Number(c.quantity || 0) * Number(c.unit_cost || 0);
+      return `
       <tr>
         <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
+        <td><input type="text" data-ex-np="${c.id}" value="${escapeHtml(c.part_number || '')}"></td>
+        <td><input type="number" step="any" data-ex-qty="${c.id}" value="${c.quantity ?? 1}"></td>
+        <td><input type="number" step="any" data-ex-cost="${c.id}" value="${c.unit_cost ?? ''}"></td>
+        <td><span class="r-meta">${formatCurrency(totalCost)}</span></td>
         <td><select data-ex-provider="${c.id}">${providerOptionsHtml(c.provider || '')}</select></td>
+        <td><input type="number" step="any" data-ex-moq="${c.id}" value="${c.moq ?? ''}"></td>
+        <td><input type="text" data-ex-te="${c.id}" value="${escapeHtml(c.lead_time || '')}" placeholder="Ej. 15 días"></td>
+        <td><input type="text" data-ex-disp="${c.id}" value="${escapeHtml(c.availability || '')}" placeholder="Ej. 3 en stock"></td>
         <td><select data-ex-status="${c.id}">${componentStatusOptionsHtml(c.status)}</select></td>
         <td><input type="text" data-ex-po="${c.id}" value="${escapeHtml(c.po_number_component || '')}"></td>
         <td><input type="date" data-ex-date="${c.id}" value="${c.supplier_commitment_date || ''}"></td>
         <td><a class="qa danger" data-ex-remove="${c.id}">Quitar</a></td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
     rows.forEach(c => {
+      body.querySelector(`[data-ex-np="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'part_number', e.target.value.trim() || null));
+      body.querySelector(`[data-ex-qty="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'quantity', Number(e.target.value) || 0); renderExistingComponents(projectId); renderComprasTableIfVisible(); });
+      body.querySelector(`[data-ex-cost="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'unit_cost', e.target.value === '' ? null : Number(e.target.value)); renderExistingComponents(projectId); renderComprasTableIfVisible(); });
       body.querySelector(`[data-ex-provider="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'provider', e.target.value || null));
+      body.querySelector(`[data-ex-moq="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'moq', e.target.value === '' ? null : Number(e.target.value)));
+      body.querySelector(`[data-ex-te="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'lead_time', e.target.value.trim() || null));
+      body.querySelector(`[data-ex-disp="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'availability', e.target.value.trim() || null));
       body.querySelector(`[data-ex-status="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'status', e.target.value));
       body.querySelector(`[data-ex-po="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'po_number_component', e.target.value.trim() || null));
       body.querySelector(`[data-ex-date="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'supplier_commitment_date', e.target.value || null));
@@ -563,6 +733,11 @@
         if (!error) { componentsCache = componentsCache.filter(x => x.id !== c.id); renderExistingComponents(projectId); renderComprasTableIfVisible(); }
       });
     });
+
+    if (totalWrap) {
+      const total = rows.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.unit_cost || 0), 0);
+      totalWrap.innerHTML = `<div class="comp-total-row">Costo total del ensamble: ${formatCurrency(total)}</div>`;
+    }
   }
 
   function renderComprasTableIfVisible() {
@@ -579,19 +754,35 @@
       return;
     }
     if (saveBtn) saveBtn.classList.remove('hidden');
-    wrap.innerHTML = newRowDrafts.map((row, i) => `
-      <div class="form-row" style="grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr auto; align-items:end;">
+    wrap.innerHTML = newRowDrafts.map((row, i) => {
+      const totalCost = Number(row.quantity || 0) * Number(row.unit_cost || 0);
+      return `
+      <div class="form-row" style="grid-template-columns: 1.2fr 0.8fr 0.6fr 0.8fr 0.8fr 0.9fr 0.6fr 0.8fr 0.8fr 1fr 0.8fr 1fr auto; align-items:end;">
         <div class="field"><label>Componente</label><input type="text" data-new-name="${i}" value="${escapeHtml(row.component_name)}" placeholder="Ej. Motor 3 HP"></div>
+        <div class="field"><label>NP</label><input type="text" data-new-np="${i}" value="${escapeHtml(row.part_number || '')}"></div>
+        <div class="field"><label>Cant.</label><input type="number" step="any" data-new-qty="${i}" value="${row.quantity ?? 1}"></div>
+        <div class="field"><label>Costo</label><input type="number" step="any" data-new-cost="${i}" value="${row.unit_cost ?? ''}"></div>
+        <div class="field"><label>Costo total</label><span class="r-meta">${formatCurrency(totalCost)}</span></div>
         <div class="field"><label>Proveedor</label><select data-new-provider="${i}">${providerOptionsHtml(row.provider)}</select></div>
+        <div class="field"><label>MOQ</label><input type="number" step="any" data-new-moq="${i}" value="${row.moq ?? ''}"></div>
+        <div class="field"><label>TE</label><input type="text" data-new-te="${i}" value="${escapeHtml(row.lead_time || '')}" placeholder="Ej. 15 días"></div>
+        <div class="field"><label>Disponible</label><input type="text" data-new-disp="${i}" value="${escapeHtml(row.availability || '')}" placeholder="Ej. 3 en stock"></div>
         <div class="field"><label>Estatus</label><select data-new-status="${i}">${componentStatusOptionsHtml(row.status)}</select></div>
         <div class="field"><label>PO</label><input type="text" data-new-po="${i}" value="${escapeHtml(row.po_number_component)}" placeholder="OC-..."></div>
         <div class="field"><label>Compromiso proveedor</label><input type="date" data-new-date="${i}" value="${row.supplier_commitment_date || ''}"></div>
         <button type="button" class="cancel-btn" data-new-remove="${i}" style="margin-left:0;">Quitar</button>
       </div>
-    `).join('');
+    `;
+    }).join('');
     newRowDrafts.forEach((row, i) => {
       wrap.querySelector(`[data-new-name="${i}"]`).addEventListener('input', e => { newRowDrafts[i].component_name = e.target.value; });
+      wrap.querySelector(`[data-new-np="${i}"]`).addEventListener('input', e => { newRowDrafts[i].part_number = e.target.value; });
+      wrap.querySelector(`[data-new-qty="${i}"]`).addEventListener('change', e => { newRowDrafts[i].quantity = Number(e.target.value) || 0; renderNewCompRows(); });
+      wrap.querySelector(`[data-new-cost="${i}"]`).addEventListener('change', e => { newRowDrafts[i].unit_cost = e.target.value; renderNewCompRows(); });
       wrap.querySelector(`[data-new-provider="${i}"]`).addEventListener('change', e => { newRowDrafts[i].provider = e.target.value; });
+      wrap.querySelector(`[data-new-moq="${i}"]`).addEventListener('input', e => { newRowDrafts[i].moq = e.target.value; });
+      wrap.querySelector(`[data-new-te="${i}"]`).addEventListener('input', e => { newRowDrafts[i].lead_time = e.target.value; });
+      wrap.querySelector(`[data-new-disp="${i}"]`).addEventListener('input', e => { newRowDrafts[i].availability = e.target.value; });
       wrap.querySelector(`[data-new-status="${i}"]`).addEventListener('change', e => { newRowDrafts[i].status = e.target.value; });
       wrap.querySelector(`[data-new-po="${i}"]`).addEventListener('input', e => { newRowDrafts[i].po_number_component = e.target.value; });
       wrap.querySelector(`[data-new-date="${i}"]`).addEventListener('change', e => { newRowDrafts[i].supplier_commitment_date = e.target.value; });
@@ -615,7 +806,13 @@
     const payload = rows.map(r => ({
       project_id: projectId,
       component_name: r.component_name.trim(),
-      status: r.status || 'por_pedir',
+      part_number: (r.part_number || '').trim() || null,
+      quantity: Number(r.quantity) || 1,
+      unit_cost: r.unit_cost === '' || r.unit_cost === null || r.unit_cost === undefined ? null : Number(r.unit_cost),
+      moq: r.moq === '' || r.moq === null || r.moq === undefined ? null : Number(r.moq),
+      lead_time: (r.lead_time || '').trim() || null,
+      availability: (r.availability || '').trim() || null,
+      status: r.status || 'cotizar',
       provider: r.provider || null,
       po_number_component: r.po_number_component || null,
       supplier_commitment_date: r.supplier_commitment_date || null,

@@ -54,9 +54,9 @@
   .hidden { display: none !important; }
   .verifying-note { color: var(--steel-300); }
 
-  /* Panel de compras — tabla de componentes cruzando proyectos */
+  /* Panel de compras / ensambles — tablas de componentes */
   .comp-table-scroll { overflow-x: auto; }
-  .comp-table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+  .comp-table { width: 100%; border-collapse: collapse; min-width: 1280px; }
   .comp-table td input, .comp-table td select { min-width: 78px; }
   .comp-total-row { text-align: right; font-size: 14px; font-weight: 600; padding: 12px 10px 4px; }
   .assembly-summary { background: var(--gunmetal-900); border: 1px solid var(--orange); border-radius: 4px; padding: 14px 16px; margin-bottom: 18px; }
@@ -70,7 +70,7 @@
   .comp-table td .r-main { font-weight: 600; }
   .comp-table td .r-meta { font-size: 11.5px; color: var(--steel-300); }
   .comp-table select, .comp-table input { width: 100%; background: var(--gunmetal-900); border: 1px solid var(--gunmetal-600); color: var(--white); font-family: 'Inter', sans-serif; font-size: 13px; padding: 6px 8px; border-radius: 3px; }
-  .comp-table .qa { font-size: 12px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; color: var(--orange); cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .comp-table .qa { font-size: 12px; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.03em; color: var(--orange); cursor: pointer; text-decoration: none; white-space: nowrap; margin-right: 10px; }
   .comp-table .qa.danger { color: #e05a5a; }
   .status-pill-sm { font-family: 'Oswald', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; padding: 3px 9px; border-radius: 12px; background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); white-space: nowrap; }
   .status-pill-sm.recibido { background: rgba(60,180,100,0.14); border-color: #2ecc71; color: #7fe0a5; }
@@ -131,7 +131,7 @@
 <div class="admin-header">
   <div>
     <a class="tools-back-link" href="herramientas.html">← Volver a Herramientas</a>
-    <h1>Despiece de Ensambles — Panel de Compras</h1>
+    <h1>Despiece de Ensambles</h1>
   </div>
   <div class="admin-header-right">
     <span class="staff-identity" id="staffIdentity"></span>
@@ -146,22 +146,10 @@
 <script src="portal-config.js"></script>
 <script>
   const adminContent = document.getElementById('adminContent');
+  const PROVIDER_NEW_VALUE = '__new__';
 
-  const PROVIDER_ORDER = ['nsd', 'mazzella', 'watteredge', 'avanta', 'prysmian'];
-  const PROVIDER_LABELS = {
-    nsd: 'NSD',
-    mazzella: 'Mazzella',
-    watteredge: 'Watteredge',
-    avanta: 'Avanta (fabricación propia)',
-    prysmian: 'Prysmian',
-  };
-  function providerOptionsHtml(selected) {
-    return '<option value="">Sin definir</option>' + PROVIDER_ORDER.map(p => `<option value="${p}"${p === selected ? ' selected' : ''}>${PROVIDER_LABELS[p]}</option>`).join('');
-  }
-
-  // Estatus renombrado a los términos reales de Ric (2026-09-21) — antes
-  // era por_pedir/pedido/en_transito/recibido. "Cotizar" es un paso nuevo,
-  // para componentes que todavía no tienen proveedor/precio definido.
+  // Estatus de compra de cada componente — mismo flujo de 5 pasos
+  // confirmado con Ric el 2026-09-21.
   const COMPONENT_STATUS_ORDER = ['cotizar', 'programar_pago', 'pago_programado', 'en_transito', 'disponible'];
   const COMPONENT_STATUS_LABELS = {
     cotizar: 'Cotizar',
@@ -176,15 +164,15 @@
 
   let currentRole = null; // 'admin' | 'vendedor'
   let currentStaffId = null;
-  let clientsCache = [];
-  let usersCache = [];
-  let projectsCache = []; // proyectos (ensambles) — datos mínimos para localizar/crear
-  let componentsCache = []; // TODOS los componentes visibles para este rol, con su proyecto embebido
-  let assembliesCache = []; // catálogo de diseños de ensamble reutilizables (2026-09-21)
-  let activeTab = 'compras'; // 'compras' | 'buscar'
-  let selectedProjectId = null; // proyecto abierto en la pestaña "Buscar / cargar ensamble"
-  let newRowDrafts = []; // filas nuevas sin guardar en el editor de un ensamble
-  let showingNewAssemblyFields = false; // dentro del editor de un ensamble, si se está creando un diseño nuevo
+  let providersCache = []; // catálogo de proveedores editable — reemplaza el enum fijo (2026-09-21)
+  let assembliesCache = []; // catálogo de diseños de ensamble reutilizables
+  let projectsCache = []; // solo id/assembly_id/status — para "Pedidos activos"
+  let componentsCache = []; // TODOS los componentes de TODOS los ensambles, con su ensamble embebido
+  let activeTab = 'ensambles'; // 'ensambles' | 'compras'
+  let openAssemblyId = null; // ensamble abierto en "Todos los ensambles"
+  let showingNewAssemblyForm = false;
+  let newAssemblyDrafts = []; // filas de componentes al crear un ensamble nuevo
+  let addCompDrafts = []; // filas de componentes nuevos para un ensamble ya existente
 
   function setStaffIdentity(label) {
     const el = document.getElementById('staffIdentity');
@@ -226,44 +214,37 @@
   }
 
   async function loadAll() {
-    const { data: clients } = await supabaseClient.from('portal_clients').select('id, company_name').order('company_name');
-    clientsCache = clients || [];
+    const { data: providers } = await supabaseClient.from('portal_providers').select('id, name, active').order('name');
+    providersCache = providers || [];
 
-    const { data: users } = await supabaseClient.from('portal_users').select('id, full_name, client_id').order('full_name');
-    usersCache = users || [];
-
-    let projQuery = supabaseClient
-      .from('portal_projects')
-      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, assembly_id')
-      .order('created_at', { ascending: false });
-    if (currentRole === 'vendedor') projQuery = projQuery.eq('owner_vendedor_id', currentStaffId);
-    const { data: projects } = await projQuery;
-    projectsCache = projects || [];
-
-    // Catálogo de diseños de ensamble reutilizables (2026-09-21) — ambos
-    // roles pueden verlo/crearlo, solo admin puede borrarlo (RLS).
     const { data: assemblies } = await supabaseClient.from('portal_assemblies').select('id, name, part_number, sale_price, active').order('name');
     assembliesCache = assemblies || [];
+
+    // Solo lo mínimo para calcular "Pedidos activos" — un vendedor solo ve
+    // (vía RLS) sus propios proyectos, así que para él este número refleja
+    // solo lo suyo; un administrador ve el total real de toda la empresa.
+    const { data: projects } = await supabaseClient.from('portal_projects').select('id, assembly_id, status');
+    projectsCache = projects || [];
 
     await reloadComponents();
   }
 
   async function reloadComponents() {
     const { data } = await supabaseClient
-      .from('portal_project_components')
-      .select('id, project_id, component_name, part_number, quantity, unit_cost, moq, lead_time, availability, status, provider, po_number_component, supplier_commitment_date, order_index, portal_projects(id, folio, name, client_id, status)')
+      .from('portal_assembly_components')
+      .select('id, assembly_id, component_name, part_number, quantity, unit, unit_cost, total_cost, provider_id, moq, lead_time, availability, status, po_number_component, supplier_commitment_date, order_index, portal_assemblies(id, name, part_number)')
       .order('created_at', { ascending: true });
     componentsCache = data || [];
-  }
-
-  function assemblyById(id) {
-    return assembliesCache.find(a => a.id === id) || null;
   }
 
   // Cuántos proyectos "en curso" (no entregados) usan el mismo diseño de
   // ensamble — el "Pedidos activos" que Ric ya lleva a mano en Excel.
   function activeOrdersForAssembly(assemblyId) {
     return projectsCache.filter(p => p.assembly_id === assemblyId && p.status !== 'entregado').length;
+  }
+
+  function assemblyComponentCount(assemblyId) {
+    return componentsCache.filter(c => c.assembly_id === assemblyId).length;
   }
 
   function formatCurrency(n) {
@@ -273,20 +254,75 @@
     return num.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
   }
 
-  function clientName(id) {
-    const c = clientsCache.find(c => c.id === id);
-    return c ? c.company_name : '—';
+  // ---- Proveedores: catálogo editable compartido en todo el portal.
+  // Cualquier select de proveedor incluye "+ Agregar proveedor nuevo…" —
+  // al elegirlo se crea de inmediato y queda disponible aquí y en
+  // Administración de Proyectos (Proveedores por pedido). ----
+  function providerSelectHtml(fieldKey, selected) {
+    return `<select data-provider-field="${fieldKey}">` +
+      '<option value="">Sin definir</option>' +
+      providersCache.map(p => `<option value="${p.id}"${p.id === selected ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('') +
+      `<option value="${PROVIDER_NEW_VALUE}">+ Agregar proveedor nuevo…</option>` +
+      '</select>';
   }
-  function userName(id) {
-    const u = usersCache.find(u => u.id === id);
-    return u ? u.full_name : '—';
+
+  function wireProviderSelect(selectEl, onSelect) {
+    if (!selectEl) return;
+    selectEl.addEventListener('change', async (e) => {
+      if (e.target.value === PROVIDER_NEW_VALUE) {
+        const name = (prompt('Nombre del proveedor nuevo:') || '').trim();
+        if (!name) { e.target.value = ''; return; }
+        const { data, error } = await supabaseClient.from('portal_providers').insert({ name }).select('id, name, active').single();
+        if (error) {
+          alert('No se pudo crear el proveedor: ' + error.message);
+          e.target.value = '';
+          return;
+        }
+        providersCache.push(data);
+        providersCache.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        onSelect(data.id);
+        return;
+      }
+      onSelect(e.target.value || null);
+    });
+  }
+
+  function blankComponentDraft() {
+    return { component_name: '', part_number: '', quantity: 1, unit: '', unit_cost: '', total_cost: '', provider_id: '', moq: '', lead_time: '', availability: '', status: 'cotizar', po_number_component: '', supplier_commitment_date: '' };
+  }
+
+  function componentDraftToPayload(r, assemblyId) {
+    return {
+      assembly_id: assemblyId,
+      component_name: r.component_name.trim(),
+      part_number: (r.part_number || '').trim() || null,
+      quantity: r.quantity === '' || r.quantity === null || r.quantity === undefined ? 1 : (Number(r.quantity) || 1),
+      unit: (r.unit || '').trim() || null,
+      unit_cost: r.unit_cost === '' || r.unit_cost === null || r.unit_cost === undefined ? null : Number(r.unit_cost),
+      total_cost: r.total_cost === '' || r.total_cost === null || r.total_cost === undefined ? null : Number(r.total_cost),
+      provider_id: r.provider_id || null,
+      moq: r.moq === '' || r.moq === null || r.moq === undefined ? null : Number(r.moq),
+      lead_time: (r.lead_time || '').trim() || null,
+      availability: (r.availability || '').trim() || null,
+      status: r.status || 'cotizar',
+      po_number_component: r.po_number_component || null,
+      supplier_commitment_date: r.supplier_commitment_date || null,
+    };
+  }
+
+  async function updateComponentField(componentId, field, value) {
+    const { error } = await supabaseClient.from('portal_assembly_components').update({ [field]: value }).eq('id', componentId);
+    if (!error) {
+      const c = componentsCache.find(c => c.id === componentId);
+      if (c) c[field] = value;
+    }
   }
 
   function renderShell() {
     adminContent.innerHTML = `
       <div class="tabs">
+        <button type="button" class="tab-btn" data-tab="ensambles">Todos los ensambles</button>
         <button type="button" class="tab-btn" data-tab="compras">Panel de compras</button>
-        <button type="button" class="tab-btn" data-tab="buscar">Buscar / cargar ensamble</button>
       </div>
       <div id="tabContent"></div>
     `;
@@ -299,32 +335,397 @@
   function renderTabs() {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.getAttribute('data-tab') === activeTab));
     if (activeTab === 'compras') renderComprasTab();
-    else renderBuscarTab();
+    else renderEnsamblesTab();
   }
 
   // =====================================================================
-  // Pestaña 1 — Panel de compras: todos los componentes, de todos los
+  // Pestaña 1 — Todos los ensambles: el catálogo completo. Cada diseño se
+  // da de alta aquí, con TODOS sus componentes, antes de poder ligarlo a
+  // un pedido (eso se hace desde Administración de Proyectos).
+  // =====================================================================
+  function renderEnsamblesTab() {
+    const wrap = document.getElementById('tabContent');
+    wrap.innerHTML = `
+      <div class="panel">
+        <h2>Todos los ensambles</h2>
+        <p class="panel-sub">El catálogo completo de diseños de ensamble — cada uno con sus componentes, costos, proveedor y estatus de compra. Los pedidos se ligan a estos diseños ya existentes desde Administración de Proyectos.</p>
+        <div class="form-row single" style="margin-bottom:4px;">
+          <div class="field"><label>Buscar (nombre o NP)</label><input type="text" id="asmSearchText" placeholder="Ej. Walther Nuevo Recto"></div>
+        </div>
+        <div id="assembliesListWrap" style="margin-top:14px;"></div>
+        <button type="button" class="cancel-btn" id="newAssemblyBtn" style="margin-left:0; margin-top:14px;">+ Cargar nuevo ensamble</button>
+      </div>
+      <div id="newAssemblyFormWrap"></div>
+      <div id="assemblyDetailWrap"></div>
+    `;
+    document.getElementById('asmSearchText').addEventListener('input', renderAssembliesList);
+    document.getElementById('newAssemblyBtn').addEventListener('click', () => {
+      showingNewAssemblyForm = true;
+      openAssemblyId = null;
+      newAssemblyDrafts = [blankComponentDraft()];
+      renderNewAssemblyForm();
+      renderAssemblyDetail();
+      setTimeout(() => { const f = document.getElementById('newAssemblyFormWrap'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 0);
+    });
+    renderAssembliesList();
+    renderNewAssemblyForm();
+    renderAssemblyDetail();
+  }
+
+  function renderAssembliesList() {
+    const wrap = document.getElementById('assembliesListWrap');
+    if (!wrap) return;
+    const textEl = document.getElementById('asmSearchText');
+    const text = textEl ? textEl.value.trim().toLowerCase() : '';
+    const list = assembliesCache.filter(a => {
+      if (!text) return true;
+      return [a.name, a.part_number].filter(Boolean).join(' ').toLowerCase().includes(text);
+    });
+    if (list.length === 0) {
+      wrap.innerHTML = `<p class="empty-note">${assembliesCache.length === 0 ? 'Todavía no hay ningún ensamble dado de alta — usa "+ Cargar nuevo ensamble".' : 'Ningún ensamble coincide con la búsqueda.'}</p>`;
+      return;
+    }
+    wrap.innerHTML = list.map(a => `
+      <div class="row-item" data-open-assembly="${a.id}">
+        <span class="r-main">${escapeHtml(a.name)}</span>
+        <span class="r-meta">${a.part_number ? 'NP ' + escapeHtml(a.part_number) : 'Sin NP'} — ${assemblyComponentCount(a.id)} componente(s) — Pedidos activos: ${activeOrdersForAssembly(a.id)}${a.sale_price !== null && a.sale_price !== undefined ? ' — Precio: ' + formatCurrency(a.sale_price) : ''}</span>
+      </div>
+    `).join('');
+    list.forEach(a => {
+      wrap.querySelector(`[data-open-assembly="${a.id}"]`).addEventListener('click', () => {
+        openAssemblyId = a.id;
+        showingNewAssemblyForm = false;
+        renderNewAssemblyForm();
+        renderAssemblyDetail();
+        setTimeout(() => { const d = document.getElementById('assemblyDetailWrap'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 0);
+      });
+    });
+  }
+
+  // ---- Cargar ensamble nuevo: Nombre + NP + Precio, y hay que cargar al
+  // menos un componente para poder guardar. ----
+  function renderNewAssemblyForm() {
+    const wrap = document.getElementById('newAssemblyFormWrap');
+    if (!wrap) return;
+    if (!showingNewAssemblyForm) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="panel">
+        <h2>Cargar nuevo ensamble</h2>
+        <p class="panel-sub">Captura el diseño y TODOS sus componentes — para guardar necesitas al menos uno con nombre.</p>
+        <div id="newAsmMsg" class="msg"></div>
+        <div class="form-row triple">
+          <div class="field"><label>Nombre del ensamble</label><input type="text" id="newAsmName" placeholder="Ej. Walther Nuevo Recto"></div>
+          <div class="field"><label>Número de parte (NP)</label><input type="text" id="newAsmNP" placeholder="Ej. RG-W7C20-H"></div>
+          <div class="field"><label>Precio de venta (opcional)</label><input type="number" step="any" id="newAsmPrice" placeholder="Ej. 4650"></div>
+        </div>
+        <label style="display:block; font-size:12px; color: var(--steel-300); margin: 18px 0 8px;">Componentes — captura todos los valores a mano (costo unitario y costo total no se calculan solos)</label>
+        <div id="newAsmCompWrap"></div>
+        <button type="button" class="cancel-btn" id="newAsmAddCompBtn" style="margin-left:0;">+ Agregar componente</button>
+        <div style="margin-top:18px;">
+          <button type="button" class="submit-btn" id="newAsmSaveBtn">Guardar ensamble</button>
+          <button type="button" class="cancel-btn" id="newAsmCancelBtn">Cancelar</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('newAsmAddCompBtn').addEventListener('click', () => {
+      newAssemblyDrafts.push(blankComponentDraft());
+      renderNewAsmCompRows();
+    });
+    document.getElementById('newAsmSaveBtn').addEventListener('click', saveNewAssembly);
+    document.getElementById('newAsmCancelBtn').addEventListener('click', () => {
+      showingNewAssemblyForm = false;
+      renderNewAssemblyForm();
+    });
+    renderNewAsmCompRows();
+  }
+
+  function componentDraftRowHtml(prefix, i, row) {
+    return `
+      <div class="form-row" style="grid-template-columns: 1.1fr 0.7fr 0.5fr 0.6fr 0.7fr 0.7fr 0.9fr 0.6fr 0.7fr 0.7fr 0.9fr 0.7fr 1fr auto; align-items:end;">
+        <div class="field"><label>Componente</label><input type="text" data-${prefix}-name="${i}" value="${escapeHtml(row.component_name)}" placeholder="Ej. Motor 3 HP"></div>
+        <div class="field"><label>NP</label><input type="text" data-${prefix}-np="${i}" value="${escapeHtml(row.part_number || '')}"></div>
+        <div class="field"><label>Cant.</label><input type="number" step="any" data-${prefix}-qty="${i}" value="${row.quantity ?? 1}"></div>
+        <div class="field"><label>Unidad</label><input type="text" data-${prefix}-unit="${i}" value="${escapeHtml(row.unit || '')}" placeholder="Ej. pza"></div>
+        <div class="field"><label>Costo unitario</label><input type="number" step="any" data-${prefix}-cost="${i}" value="${row.unit_cost ?? ''}"></div>
+        <div class="field"><label>Costo total</label><input type="number" step="any" data-${prefix}-total="${i}" value="${row.total_cost ?? ''}"></div>
+        <div class="field"><label>Proveedor</label>${providerSelectHtml(prefix + '-provider-' + i, row.provider_id)}</div>
+        <div class="field"><label>MOQ</label><input type="number" step="any" data-${prefix}-moq="${i}" value="${row.moq ?? ''}"></div>
+        <div class="field"><label>TE</label><input type="text" data-${prefix}-te="${i}" value="${escapeHtml(row.lead_time || '')}" placeholder="Ej. 15 días"></div>
+        <div class="field"><label>Disponible</label><input type="text" data-${prefix}-disp="${i}" value="${escapeHtml(row.availability || '')}" placeholder="Ej. 3 en stock"></div>
+        <div class="field"><label>Estatus</label><select data-${prefix}-status="${i}">${componentStatusOptionsHtml(row.status)}</select></div>
+        <div class="field"><label>PO</label><input type="text" data-${prefix}-po="${i}" value="${escapeHtml(row.po_number_component)}" placeholder="OC-..."></div>
+        <div class="field"><label>Compromiso proveedor</label><input type="date" data-${prefix}-date="${i}" value="${row.supplier_commitment_date || ''}"></div>
+        <button type="button" class="cancel-btn" data-${prefix}-remove="${i}" style="margin-left:0;">Quitar</button>
+      </div>
+    `;
+  }
+
+  function wireComponentDraftRow(prefix, i, wrap, drafts, rerender) {
+    wrap.querySelector(`[data-${prefix}-name="${i}"]`).addEventListener('input', e => { drafts[i].component_name = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-np="${i}"]`).addEventListener('input', e => { drafts[i].part_number = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-qty="${i}"]`).addEventListener('input', e => { drafts[i].quantity = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-unit="${i}"]`).addEventListener('input', e => { drafts[i].unit = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-cost="${i}"]`).addEventListener('input', e => { drafts[i].unit_cost = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-total="${i}"]`).addEventListener('input', e => { drafts[i].total_cost = e.target.value; });
+    wireProviderSelect(wrap.querySelector(`[data-provider-field="${prefix}-provider-${i}"]`), (id) => { drafts[i].provider_id = id; rerender(); });
+    wrap.querySelector(`[data-${prefix}-moq="${i}"]`).addEventListener('input', e => { drafts[i].moq = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-te="${i}"]`).addEventListener('input', e => { drafts[i].lead_time = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-disp="${i}"]`).addEventListener('input', e => { drafts[i].availability = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-status="${i}"]`).addEventListener('change', e => { drafts[i].status = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-po="${i}"]`).addEventListener('input', e => { drafts[i].po_number_component = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-date="${i}"]`).addEventListener('change', e => { drafts[i].supplier_commitment_date = e.target.value; });
+    wrap.querySelector(`[data-${prefix}-remove="${i}"]`).addEventListener('click', () => { drafts.splice(i, 1); rerender(); });
+  }
+
+  function renderNewAsmCompRows() {
+    const wrap = document.getElementById('newAsmCompWrap');
+    if (!wrap) return;
+    wrap.innerHTML = newAssemblyDrafts.map((row, i) => componentDraftRowHtml('na', i, row)).join('');
+    newAssemblyDrafts.forEach((row, i) => wireComponentDraftRow('na', i, wrap, newAssemblyDrafts, renderNewAsmCompRows));
+  }
+
+  async function saveNewAssembly() {
+    const msg = document.getElementById('newAsmMsg');
+    const name = document.getElementById('newAsmName').value.trim();
+    const np = document.getElementById('newAsmNP').value.trim();
+    const priceEl = document.getElementById('newAsmPrice');
+    const price = priceEl.value !== '' ? Number(priceEl.value) : null;
+
+    if (!name) {
+      msg.className = 'msg error';
+      msg.textContent = 'Falta el nombre del ensamble.';
+      return;
+    }
+    const rows = newAssemblyDrafts.filter(r => r.component_name && r.component_name.trim());
+    if (rows.length === 0) {
+      msg.className = 'msg error';
+      msg.textContent = 'Para guardar un ensamble nuevo hay que cargar al menos un componente con nombre.';
+      return;
+    }
+    if (rows.some(r => r.po_number_component && !r.provider_id)) {
+      msg.className = 'msg error';
+      msg.textContent = 'Falta elegir el proveedor en algún componente que ya tiene PO capturada.';
+      return;
+    }
+
+    const { data: asm, error: asmError } = await supabaseClient.from('portal_assemblies').insert({
+      name, part_number: np || null, sale_price: price,
+    }).select('id, name, part_number, sale_price, active').single();
+
+    if (asmError) {
+      msg.className = 'msg error';
+      msg.textContent = 'Error al crear el ensamble: ' + asmError.message;
+      return;
+    }
+
+    const payload = rows.map(r => componentDraftToPayload(r, asm.id));
+    const { error: compError } = await supabaseClient.from('portal_assembly_components').insert(payload);
+    if (compError) {
+      msg.className = 'msg error';
+      msg.textContent = 'El ensamble se creó, pero hubo un error al guardar sus componentes: ' + compError.message;
+      return;
+    }
+
+    assembliesCache.push(asm);
+    assembliesCache.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    await reloadComponents();
+    showingNewAssemblyForm = false;
+    openAssemblyId = asm.id;
+    renderAssembliesList();
+    renderNewAssemblyForm();
+    renderAssemblyDetail();
+    renderComprasTableIfVisible();
+  }
+
+  // ---- Detalle de un ensamble ya existente: editar Nombre/NP/Precio y
+  // administrar sus componentes (misma tabla editable en vivo). ----
+  function renderAssemblyDetail() {
+    const wrap = document.getElementById('assemblyDetailWrap');
+    if (!wrap) return;
+    if (!openAssemblyId || showingNewAssemblyForm) { wrap.innerHTML = ''; return; }
+    const a = assembliesCache.find(x => x.id === openAssemblyId);
+    if (!a) { wrap.innerHTML = ''; return; }
+
+    addCompDrafts = [];
+    const activos = activeOrdersForAssembly(a.id);
+    wrap.innerHTML = `
+      <div class="panel">
+        <h2>${escapeHtml(a.name)}</h2>
+        <p class="panel-sub">Pedidos activos que usan este diseño: ${activos}. La compra y el estatus de estos componentes son compartidos — aplican para todos los pedidos que usen este mismo diseño, no solo uno.</p>
+        <div id="asmDetailMsg" class="msg"></div>
+        <div class="form-row triple">
+          <div class="field"><label>Nombre del ensamble</label><input type="text" id="asmEditName" value="${escapeHtml(a.name)}"></div>
+          <div class="field"><label>Número de parte (NP)</label><input type="text" id="asmEditNP" value="${escapeHtml(a.part_number || '')}"></div>
+          <div class="field"><label>Precio de venta (opcional)</label><input type="number" step="any" id="asmEditPrice" value="${a.sale_price ?? ''}"></div>
+        </div>
+        <button type="button" class="cancel-btn" id="asmEditSaveBtn" style="margin-left:0;">Guardar cambios del ensamble</button>
+        <div id="existingAsmCompWrap" style="margin-top:22px;"></div>
+        <div id="asmCompTotalWrap"></div>
+        <div id="newAsmCompMsg" class="msg"></div>
+        <div id="addAsmCompWrap" style="margin-top:10px;"></div>
+        <button type="button" class="cancel-btn" id="addAsmCompBtn" style="margin-left:0;">+ Agregar componente</button>
+        <button type="button" class="submit-btn hidden" id="saveAddAsmCompBtn" style="margin-left:10px;">Guardar nuevos componentes</button>
+        <button type="button" class="cancel-btn" id="closeAsmDetailBtn" style="margin-left:10px;">Cerrar</button>
+      </div>
+    `;
+    document.getElementById('asmEditSaveBtn').addEventListener('click', () => saveAssemblyHeader(a.id));
+    document.getElementById('addAsmCompBtn').addEventListener('click', () => {
+      addCompDrafts.push(blankComponentDraft());
+      renderAddAsmCompRows(a.id);
+    });
+    document.getElementById('saveAddAsmCompBtn').addEventListener('click', () => saveAddAsmComponents(a.id));
+    document.getElementById('closeAsmDetailBtn').addEventListener('click', () => {
+      openAssemblyId = null;
+      renderAssemblyDetail();
+    });
+    renderExistingAsmComponents(a.id);
+    renderAddAsmCompRows(a.id);
+  }
+
+  async function saveAssemblyHeader(assemblyId) {
+    const msg = document.getElementById('asmDetailMsg');
+    const name = document.getElementById('asmEditName').value.trim();
+    const np = document.getElementById('asmEditNP').value.trim();
+    const priceEl = document.getElementById('asmEditPrice');
+    const price = priceEl.value !== '' ? Number(priceEl.value) : null;
+    if (!name) { msg.className = 'msg error'; msg.textContent = 'El nombre no puede quedar vacío.'; return; }
+    const { error } = await supabaseClient.from('portal_assemblies').update({ name, part_number: np || null, sale_price: price }).eq('id', assemblyId);
+    if (error) { msg.className = 'msg error'; msg.textContent = 'Error: ' + error.message; return; }
+    const a = assembliesCache.find(x => x.id === assemblyId);
+    if (a) { a.name = name; a.part_number = np || null; a.sale_price = price; }
+    msg.className = 'msg success';
+    msg.textContent = 'Ensamble actualizado.';
+    renderAssembliesList();
+  }
+
+  function renderExistingAsmComponents(assemblyId) {
+    const wrap = document.getElementById('existingAsmCompWrap');
+    const totalWrap = document.getElementById('asmCompTotalWrap');
+    if (!wrap) return;
+    const rows = componentsCache.filter(c => c.assembly_id === assemblyId);
+    if (rows.length === 0) {
+      wrap.innerHTML = '<p class="empty-note">Ningún componente cargado todavía para este ensamble.</p>';
+      if (totalWrap) totalWrap.innerHTML = '';
+      return;
+    }
+    wrap.innerHTML = `
+      <div class="comp-table-scroll">
+      <table class="comp-table">
+        <thead><tr><th>Componente</th><th>NP</th><th>Cant.</th><th>Unidad</th><th>Costo</th><th>Costo total</th><th>Proveedor</th><th>MOQ</th><th>TE</th><th>Disponible</th><th>Estatus</th><th>PO</th><th>Compromiso proveedor</th>${currentRole === 'admin' ? '<th></th>' : ''}</tr></thead>
+        <tbody id="existingAsmCompBody"></tbody>
+      </table>
+      </div>
+    `;
+    const body = document.getElementById('existingAsmCompBody');
+    body.innerHTML = rows.map(c => `
+      <tr>
+        <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
+        <td><input type="text" data-ac-np="${c.id}" value="${escapeHtml(c.part_number || '')}"></td>
+        <td><input type="number" step="any" data-ac-qty="${c.id}" value="${c.quantity ?? 1}"></td>
+        <td><input type="text" data-ac-unit="${c.id}" value="${escapeHtml(c.unit || '')}" placeholder="Ej. pza"></td>
+        <td><input type="number" step="any" data-ac-cost="${c.id}" value="${c.unit_cost ?? ''}"></td>
+        <td><input type="number" step="any" data-ac-total="${c.id}" value="${c.total_cost ?? ''}"></td>
+        <td>${providerSelectHtml('ac-provider-' + c.id, c.provider_id || '')}</td>
+        <td><input type="number" step="any" data-ac-moq="${c.id}" value="${c.moq ?? ''}"></td>
+        <td><input type="text" data-ac-te="${c.id}" value="${escapeHtml(c.lead_time || '')}" placeholder="Ej. 15 días"></td>
+        <td><input type="text" data-ac-disp="${c.id}" value="${escapeHtml(c.availability || '')}" placeholder="Ej. 3 en stock"></td>
+        <td><select data-ac-status="${c.id}">${componentStatusOptionsHtml(c.status)}</select></td>
+        <td><input type="text" data-ac-po="${c.id}" value="${escapeHtml(c.po_number_component || '')}"></td>
+        <td><input type="date" data-ac-date="${c.id}" value="${c.supplier_commitment_date || ''}"></td>
+        ${currentRole === 'admin' ? `<td><a class="qa danger" data-ac-remove="${c.id}">Quitar</a></td>` : ''}
+      </tr>
+    `).join('');
+    rows.forEach(c => {
+      body.querySelector(`[data-ac-np="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'part_number', e.target.value.trim() || null));
+      body.querySelector(`[data-ac-qty="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'quantity', Number(e.target.value) || 0));
+      body.querySelector(`[data-ac-unit="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'unit', e.target.value.trim() || null));
+      body.querySelector(`[data-ac-cost="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'unit_cost', e.target.value === '' ? null : Number(e.target.value)));
+      body.querySelector(`[data-ac-total="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'total_cost', e.target.value === '' ? null : Number(e.target.value)); renderExistingAsmComponents(assemblyId); renderComprasTableIfVisible(); });
+      wireProviderSelect(body.querySelector(`[data-provider-field="ac-provider-${c.id}"]`), (id) => { updateComponentField(c.id, 'provider_id', id); renderExistingAsmComponents(assemblyId); renderComprasTableIfVisible(); });
+      body.querySelector(`[data-ac-moq="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'moq', e.target.value === '' ? null : Number(e.target.value)));
+      body.querySelector(`[data-ac-te="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'lead_time', e.target.value.trim() || null));
+      body.querySelector(`[data-ac-disp="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'availability', e.target.value.trim() || null));
+      body.querySelector(`[data-ac-status="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'status', e.target.value));
+      body.querySelector(`[data-ac-po="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'po_number_component', e.target.value.trim() || null));
+      body.querySelector(`[data-ac-date="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'supplier_commitment_date', e.target.value || null));
+      const removeLink = body.querySelector(`[data-ac-remove="${c.id}"]`);
+      if (removeLink) removeLink.addEventListener('click', async () => {
+        if (!confirm('¿Quitar este componente?')) return;
+        const { error } = await supabaseClient.from('portal_assembly_components').delete().eq('id', c.id);
+        if (!error) { componentsCache = componentsCache.filter(x => x.id !== c.id); renderExistingAsmComponents(assemblyId); renderComprasTableIfVisible(); renderAssembliesList(); }
+      });
+    });
+
+    if (totalWrap) {
+      const total = rows.reduce((sum, c) => sum + Number(c.total_cost || 0), 0);
+      totalWrap.innerHTML = `<div class="comp-total-row">Costo total del ensamble: ${formatCurrency(total)}</div>`;
+    }
+  }
+
+  function renderAddAsmCompRows(assemblyId) {
+    const wrap = document.getElementById('addAsmCompWrap');
+    const saveBtn = document.getElementById('saveAddAsmCompBtn');
+    if (!wrap) return;
+    if (addCompDrafts.length === 0) {
+      wrap.innerHTML = '';
+      if (saveBtn) saveBtn.classList.add('hidden');
+      return;
+    }
+    if (saveBtn) saveBtn.classList.remove('hidden');
+    wrap.innerHTML = addCompDrafts.map((row, i) => componentDraftRowHtml('ad', i, row)).join('');
+    addCompDrafts.forEach((row, i) => wireComponentDraftRow('ad', i, wrap, addCompDrafts, () => renderAddAsmCompRows(assemblyId)));
+  }
+
+  async function saveAddAsmComponents(assemblyId) {
+    const msg = document.getElementById('newAsmCompMsg');
+    const rows = addCompDrafts.filter(r => r.component_name && r.component_name.trim());
+    if (rows.length === 0) {
+      msg.className = 'msg error';
+      msg.textContent = 'Agrega al menos un componente con nombre antes de guardar.';
+      return;
+    }
+    if (rows.some(r => r.po_number_component && !r.provider_id)) {
+      msg.className = 'msg error';
+      msg.textContent = 'Falta elegir el proveedor en alguna fila que ya tiene PO capturada.';
+      return;
+    }
+    const payload = rows.map(r => componentDraftToPayload(r, assemblyId));
+    const { error } = await supabaseClient.from('portal_assembly_components').insert(payload);
+    if (error) {
+      msg.className = 'msg error';
+      msg.textContent = 'Error: ' + error.message;
+      return;
+    }
+    msg.className = 'msg success';
+    msg.textContent = 'Componentes agregados correctamente.';
+    addCompDrafts = [];
+    await reloadComponents();
+    renderExistingAsmComponents(assemblyId);
+    renderAddAsmCompRows(assemblyId);
+    renderComprasTableIfVisible();
+    renderAssembliesList();
+  }
+
+  // =====================================================================
+  // Pestaña 2 — Panel de compras: todos los componentes, de todos los
   // ensambles, en una sola vista filtrable. Pensada para responder
-  // "¿qué me falta pedir hoy?" sin tener que entrar proyecto por proyecto.
+  // "¿qué me falta pedir hoy?" sin tener que entrar ensamble por ensamble.
   // =====================================================================
   function renderComprasTab() {
     const wrap = document.getElementById('tabContent');
     wrap.innerHTML = `
       <div class="panel">
         <h2>Panel de compras</h2>
-        <p class="panel-sub">Todos los componentes de todos los ensambles, sin importar de qué proyecto/cliente son. Edita estatus, proveedor, PO o fecha directo aquí — se guarda al momento.</p>
+        <p class="panel-sub">Todos los componentes de todos los ensambles. La compra/estatus es compartida entre todos los pedidos que usen el mismo diseño. Edita estatus, proveedor, PO o fecha directo aquí — se guarda al instante.</p>
         <div class="form-row triple" style="margin-bottom:10px;">
-          <div class="field"><label>Proveedor</label><select id="compFilterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
-          <div class="field"><label>Estatus</label><select id="compFilterStatus"><option value="">Todos</option><option value="__pending__">Pendientes (no recibidos)</option>${componentStatusOptionsHtml('')}</select></div>
-          <div class="field"><label>Cliente</label><select id="compFilterClient"><option value="">Todos</option>${clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('')}</select></div>
-        </div>
-        <div class="form-row single" style="margin-bottom:4px;">
-          <div class="field"><label>Buscar (componente, ensamble, PO)</label><input type="text" id="compFilterText" placeholder="Ej. Motor 3 HP o OC-9010"></div>
+          <div class="field"><label>Proveedor</label><select id="compFilterProvider"><option value="">Todos</option>${providersCache.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')}</select></div>
+          <div class="field"><label>Estatus</label><select id="compFilterStatus"><option value="">Todos</option><option value="__pending__">Pendientes (no disponibles)</option>${componentStatusOptionsHtml('')}</select></div>
+          <div class="field"><label>Buscar (componente, ensamble, NP, PO)</label><input type="text" id="compFilterText" placeholder="Ej. Motor 3 HP o OC-9010"></div>
         </div>
         <div id="compTableWrap" style="margin-top:14px;"></div>
       </div>
     `;
-    ['compFilterProvider', 'compFilterStatus', 'compFilterClient'].forEach(id => document.getElementById(id).addEventListener('change', renderComprasTable));
+    ['compFilterProvider', 'compFilterStatus'].forEach(id => document.getElementById(id).addEventListener('change', renderComprasTable));
     document.getElementById('compFilterText').addEventListener('input', renderComprasTable);
     renderComprasTable();
   }
@@ -332,32 +733,25 @@
   function filteredComponents() {
     const provider = document.getElementById('compFilterProvider').value;
     const status = document.getElementById('compFilterStatus').value;
-    const clientId = document.getElementById('compFilterClient').value;
     const text = document.getElementById('compFilterText').value.trim().toLowerCase();
     return componentsCache.filter(c => {
-      const proj = c.portal_projects;
-      if (provider && c.provider !== provider) return false;
+      const asm = c.portal_assemblies;
+      if (provider && c.provider_id !== provider) return false;
       if (status === '__pending__' && c.status === 'disponible') return false;
       if (status && status !== '__pending__' && c.status !== status) return false;
-      if (clientId && (!proj || proj.client_id !== clientId)) return false;
       if (text) {
-        const haystack = [c.component_name, c.po_number_component, proj ? proj.folio : '', proj ? proj.name : '', proj ? clientName(proj.client_id) : ''].filter(Boolean).join(' ').toLowerCase();
+        const haystack = [c.component_name, c.part_number, c.po_number_component, asm ? asm.name : '', asm ? asm.part_number : ''].filter(Boolean).join(' ').toLowerCase();
         if (!haystack.includes(text)) return false;
       }
       return true;
     });
   }
 
-  function formatDateShort(d) {
-    if (!d) return '';
-    return new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' });
-  }
-
   function renderComprasTable() {
     const wrap = document.getElementById('compTableWrap');
     if (!wrap) return;
     if (componentsCache.length === 0) {
-      wrap.innerHTML = '<p class="empty-note">Todavía no hay componentes cargados — ve a "Buscar / cargar ensamble" para agregar los del primer ensamble.</p>';
+      wrap.innerHTML = '<p class="empty-note">Todavía no hay componentes cargados — ve a "Todos los ensambles" para dar de alta el primero.</p>';
       return;
     }
     const list = filteredComponents();
@@ -371,9 +765,10 @@
         <thead>
           <tr>
             <th>Componente</th>
-            <th>Ensamble / Cliente</th>
+            <th>Ensamble</th>
             <th>NP</th>
             <th>Cant.</th>
+            <th>Unidad</th>
             <th>Costo</th>
             <th>Costo total</th>
             <th>Proveedor</th>
@@ -392,20 +787,20 @@
     `;
     const body = document.getElementById('compTableBody');
     body.innerHTML = list.map(c => {
-      const proj = c.portal_projects;
-      const totalCost = Number(c.quantity || 0) * Number(c.unit_cost || 0);
+      const asm = c.portal_assemblies;
       return `
-      <tr data-comp-row="${c.id}">
+      <tr>
         <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
         <td>
-          <div class="r-main">${proj ? (proj.folio ? escapeHtml(proj.folio) + ' — ' : '') + escapeHtml(proj.name) : '—'}</div>
-          <div class="r-meta">${proj ? escapeHtml(clientName(proj.client_id)) : ''}</div>
+          <div class="r-main">${asm ? escapeHtml(asm.name) : '—'}</div>
+          <div class="r-meta">${asm && asm.part_number ? 'NP ' + escapeHtml(asm.part_number) : ''}</div>
         </td>
         <td><input type="text" data-live-np="${c.id}" value="${escapeHtml(c.part_number || '')}"></td>
         <td><input type="number" step="any" data-live-qty="${c.id}" value="${c.quantity ?? 1}"></td>
+        <td><input type="text" data-live-unit="${c.id}" value="${escapeHtml(c.unit || '')}" placeholder="Ej. pza"></td>
         <td><input type="number" step="any" data-live-cost="${c.id}" value="${c.unit_cost ?? ''}"></td>
-        <td><span class="r-meta">${formatCurrency(totalCost)}</span></td>
-        <td><select data-live-provider="${c.id}">${providerOptionsHtml(c.provider || '')}</select></td>
+        <td><input type="number" step="any" data-live-total="${c.id}" value="${c.total_cost ?? ''}"></td>
+        <td>${providerSelectHtml('live-provider-' + c.id, c.provider_id || '')}</td>
         <td><input type="number" step="any" data-live-moq="${c.id}" value="${c.moq ?? ''}"></td>
         <td><input type="text" data-live-te="${c.id}" value="${escapeHtml(c.lead_time || '')}" placeholder="Ej. 15 días"></td>
         <td><input type="text" data-live-disp="${c.id}" value="${escapeHtml(c.availability || '')}" placeholder="Ej. 3 en stock"></td>
@@ -413,8 +808,8 @@
         <td><input type="text" data-live-po="${c.id}" value="${escapeHtml(c.po_number_component || '')}" placeholder="OC-..."></td>
         <td><input type="date" data-live-date="${c.id}" value="${c.supplier_commitment_date || ''}"></td>
         <td>
-          ${proj ? `<a class="qa" data-open-project="${proj.id}">Ver ensamble</a>` : ''}
-          <a class="qa danger" data-quick-remove="${c.id}">Quitar</a>
+          ${asm ? `<a class="qa" data-open-asm="${asm.id}">Ver ensamble</a>` : ''}
+          ${currentRole === 'admin' ? `<a class="qa danger" data-quick-remove="${c.id}">Quitar</a>` : ''}
         </td>
       </tr>
     `;
@@ -422,414 +817,37 @@
 
     list.forEach(c => {
       body.querySelector(`[data-live-np="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'part_number', e.target.value.trim() || null));
-      body.querySelector(`[data-live-qty="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'quantity', Number(e.target.value) || 0); renderComprasTable(); });
-      body.querySelector(`[data-live-cost="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'unit_cost', e.target.value === '' ? null : Number(e.target.value)); renderComprasTable(); });
-      body.querySelector(`[data-live-provider="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'provider', e.target.value || null));
+      body.querySelector(`[data-live-qty="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'quantity', Number(e.target.value) || 0));
+      body.querySelector(`[data-live-unit="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'unit', e.target.value.trim() || null));
+      body.querySelector(`[data-live-cost="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'unit_cost', e.target.value === '' ? null : Number(e.target.value)));
+      body.querySelector(`[data-live-total="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'total_cost', e.target.value === '' ? null : Number(e.target.value)));
+      wireProviderSelect(body.querySelector(`[data-provider-field="live-provider-${c.id}"]`), (id) => { updateComponentField(c.id, 'provider_id', id); renderComprasTable(); });
       body.querySelector(`[data-live-moq="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'moq', e.target.value === '' ? null : Number(e.target.value)));
       body.querySelector(`[data-live-te="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'lead_time', e.target.value.trim() || null));
       body.querySelector(`[data-live-disp="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'availability', e.target.value.trim() || null));
       body.querySelector(`[data-live-status="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'status', e.target.value));
       body.querySelector(`[data-live-po="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'po_number_component', e.target.value.trim() || null));
       body.querySelector(`[data-live-date="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'supplier_commitment_date', e.target.value || null));
-      const openLink = body.querySelector(`[data-open-project="${c.portal_projects ? c.portal_projects.id : ''}"]`);
-      if (openLink) openLink.addEventListener('click', () => { activeTab = 'buscar'; selectedProjectId = c.portal_projects.id; renderShell(); });
-      body.querySelector(`[data-quick-remove="${c.id}"]`).addEventListener('click', () => quickRemoveComponent(c.id));
+      const asm = c.portal_assemblies;
+      const openLink = asm ? body.querySelector(`[data-open-asm="${asm.id}"]`) : null;
+      if (openLink) openLink.addEventListener('click', () => { activeTab = 'ensambles'; openAssemblyId = asm.id; showingNewAssemblyForm = false; renderShell(); });
+      const removeLink = body.querySelector(`[data-quick-remove="${c.id}"]`);
+      if (removeLink) removeLink.addEventListener('click', () => quickRemoveComponent(c.id));
     });
-  }
-
-  async function updateComponentField(componentId, field, value) {
-    const { error } = await supabaseClient.from('portal_project_components').update({ [field]: value }).eq('id', componentId);
-    if (!error) {
-      const c = componentsCache.find(c => c.id === componentId);
-      if (c) c[field] = value;
-    }
-  }
-
-  async function quickRemoveComponent(componentId) {
-    if (!confirm('¿Quitar este componente? Esta acción no se puede deshacer.')) return;
-    const { error } = await supabaseClient.from('portal_project_components').delete().eq('id', componentId);
-    if (!error) {
-      componentsCache = componentsCache.filter(c => c.id !== componentId);
-      renderComprasTable();
-    }
-  }
-
-  // =====================================================================
-  // Pestaña 2 — Buscar / cargar ensamble: localizar un proyecto existente
-  // (o crear uno rápido) y editar ahí sus componentes uno por uno.
-  // =====================================================================
-  function renderBuscarTab() {
-    const wrap = document.getElementById('tabContent');
-    wrap.innerHTML = `
-      <div class="panel">
-        <h2>Buscar ensamble</h2>
-        <p class="panel-sub">Localiza el proyecto (ensamble) por nombre, cliente, cotización u OC — o carga uno nuevo si todavía no existe.</p>
-        <div class="form-row single" style="margin-bottom:4px;">
-          <div class="field"><label>Buscar</label><input type="text" id="projSearchText" placeholder="Ej. Ternium o COT-4821"></div>
-        </div>
-        <div id="projSearchResults" style="margin-top:10px;"></div>
-        <button type="button" class="cancel-btn" id="newEnsambleBtn" style="margin-left:0; margin-top:14px;">+ Cargar ensamble nuevo</button>
-        <div id="newEnsambleForm" class="hidden" style="margin-top:14px; padding-top:14px; border-top:1px dashed var(--gunmetal-600);">
-          <div id="newEnsambleMsg" class="msg"></div>
-          <div class="form-row">
-            <div class="field"><label>Empresa</label><select id="neClient"><option value="">Seleccione...</option>${clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('')}</select></div>
-            <div class="field"><label>Usuario (dueño)</label><select id="neOwner"><option value="">Seleccione una empresa primero...</option></select></div>
-          </div>
-          <div class="form-row single">
-            <div class="field"><label>Nombre del ensamble</label><input type="text" id="neName" placeholder="Ej. Ensamble control M12 — Ternium HSM"></div>
-          </div>
-          <p class="field-note">Esto crea el proyecto con lo mínimo para empezar a cargarle componentes — el resto (cotización, OC, fechas, estatus) se termina de llenar en Administración de Proyectos.</p>
-          <button type="button" class="submit-btn" id="neSaveBtn">Crear y abrir</button>
-          <button type="button" class="cancel-btn" id="neCancelBtn">Cancelar</button>
-        </div>
-      </div>
-      <div id="ensambleEditorWrap"></div>
-    `;
-    document.getElementById('projSearchText').addEventListener('input', renderProjSearchResults);
-    document.getElementById('newEnsambleBtn').addEventListener('click', () => document.getElementById('newEnsambleForm').classList.remove('hidden'));
-    document.getElementById('neCancelBtn').addEventListener('click', () => document.getElementById('newEnsambleForm').classList.add('hidden'));
-    document.getElementById('neClient').addEventListener('change', refreshNeOwnerOptions);
-    document.getElementById('neSaveBtn').addEventListener('click', saveNewEnsamble);
-    renderProjSearchResults();
-    if (selectedProjectId) renderEnsambleEditor(selectedProjectId);
-  }
-
-  function refreshNeOwnerOptions() {
-    const clientId = document.getElementById('neClient').value;
-    const sel = document.getElementById('neOwner');
-    if (!clientId) { sel.innerHTML = '<option value="">Seleccione una empresa primero...</option>'; return; }
-    const candidates = usersCache.filter(u => u.client_id === clientId);
-    sel.innerHTML = '<option value="">Seleccione...</option>' + candidates.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('');
-  }
-
-  async function saveNewEnsamble() {
-    const msg = document.getElementById('newEnsambleMsg');
-    const client_id = document.getElementById('neClient').value;
-    const owner_user_id = document.getElementById('neOwner').value;
-    const name = document.getElementById('neName').value.trim();
-    if (!client_id || !owner_user_id || !name) {
-      msg.className = 'msg error';
-      msg.textContent = 'Faltan datos — empresa, usuario dueño y nombre son obligatorios.';
-      return;
-    }
-    const payload = { client_id, owner_user_id, name, status: 'espera_pedido' };
-    if (currentRole === 'vendedor') payload.owner_vendedor_id = currentStaffId;
-    const { data, error } = await supabaseClient.from('portal_projects').insert(payload).select('id, client_id, owner_user_id, owner_vendedor_id, name, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date').single();
-    if (error) {
-      msg.className = 'msg error';
-      msg.textContent = 'Error: ' + error.message;
-      return;
-    }
-    projectsCache.unshift(data);
-    document.getElementById('newEnsambleForm').classList.add('hidden');
-    document.getElementById('neClient').value = '';
-    document.getElementById('neOwner').innerHTML = '<option value="">Seleccione una empresa primero...</option>';
-    document.getElementById('neName').value = '';
-    selectedProjectId = data.id;
-    renderProjSearchResults();
-    renderEnsambleEditor(data.id);
-  }
-
-  function renderProjSearchResults() {
-    const wrap = document.getElementById('projSearchResults');
-    if (!wrap) return;
-    const text = document.getElementById('projSearchText').value.trim().toLowerCase();
-    if (!text) {
-      wrap.innerHTML = '<p class="empty-note">Escribe para buscar, o usa "+ Cargar ensamble nuevo".</p>';
-      return;
-    }
-    const matches = projectsCache.filter(p => {
-      const haystack = [p.folio, p.name, p.quote_number, p.po_number, clientName(p.client_id), userName(p.owner_user_id)].filter(Boolean).join(' ').toLowerCase();
-      return haystack.includes(text);
-    }).slice(0, 20);
-    if (matches.length === 0) {
-      wrap.innerHTML = '<p class="empty-note">Ningún proyecto coincide.</p>';
-      return;
-    }
-    wrap.innerHTML = matches.map(p => `
-      <div class="row-item" data-select-project="${p.id}">
-        <span class="r-main">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</span>
-        <span class="r-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.po_number ? ' — OC ' + escapeHtml(p.po_number) : ''}</span>
-      </div>
-    `).join('');
-    matches.forEach(p => {
-      wrap.querySelector(`[data-select-project="${p.id}"]`).addEventListener('click', () => { selectedProjectId = p.id; renderEnsambleEditor(p.id); });
-    });
-  }
-
-  function renderEnsambleEditor(projectId) {
-    const wrap = document.getElementById('ensambleEditorWrap');
-    const p = projectsCache.find(pr => pr.id === projectId);
-    if (!wrap || !p) { if (wrap) wrap.innerHTML = ''; return; }
-
-    newRowDrafts = [];
-    showingNewAssemblyFields = false;
-    wrap.innerHTML = `
-      <div class="panel">
-        <h2>Componentes de este ensamble</h2>
-        <p class="panel-sub">Cada componente se pide a un proveedor distinto. La fecha compromiso y la fecha real de entrega del ensamble completo se editan en Administración de Proyectos → Editar.</p>
-        <div id="assemblyBlockWrap"></div>
-        <div class="ensamble-summary">
-          <div class="es-name">${p.folio ? escapeHtml(p.folio) + ' — ' : ''}${escapeHtml(p.name)}</div>
-          <div class="es-meta">${escapeHtml(clientName(p.client_id))} — ${escapeHtml(userName(p.owner_user_id))}${p.quote_number ? ' — Cotización ' + escapeHtml(p.quote_number) : ''}${p.po_number ? ' — OC cliente ' + escapeHtml(p.po_number) : ''}${p.estimated_delivery_date ? ' — Entrega estimada ' + formatDateShort(p.estimated_delivery_date) : ''}${p.actual_delivery_date ? ' — Entregado el ' + formatDateShort(p.actual_delivery_date) : ''}</div>
-        </div>
-        <div id="existingCompWrap"></div>
-        <div id="compTotalWrap"></div>
-        <div id="newCompMsg" class="msg"></div>
-        <div id="newCompWrap" style="margin-top:10px;"></div>
-        <button type="button" class="cancel-btn" id="addNewCompBtn" style="margin-left:0;">+ Agregar componente</button>
-        <button type="button" class="submit-btn hidden" id="saveNewCompBtn" style="margin-left:10px;">Guardar nuevos componentes</button>
-      </div>
-    `;
-    document.getElementById('addNewCompBtn').addEventListener('click', () => {
-      newRowDrafts.push({ component_name: '', part_number: '', quantity: 1, unit_cost: '', provider: '', moq: '', lead_time: '', availability: '', status: 'cotizar', po_number_component: '', supplier_commitment_date: '' });
-      renderNewCompRows();
-    });
-    document.getElementById('saveNewCompBtn').addEventListener('click', () => saveNewCompRows(projectId));
-    renderAssemblyBlock(projectId);
-    renderExistingComponents(projectId);
-    renderNewCompRows();
-  }
-
-  // Bloque "Diseño de ensamble" (2026-09-21) — liga este proyecto a un
-  // diseño reutilizable del catálogo (portal_assemblies). Opcional: si no
-  // se liga nada, el ensamble sigue funcionando exactamente igual que
-  // antes. Ligarlo muestra Nombre/NP/Pedidos activos/Precio, igual que el
-  // control que Ric ya llevaba en Excel.
-  function renderAssemblyBlock(projectId) {
-    const wrap = document.getElementById('assemblyBlockWrap');
-    if (!wrap) return;
-    const p = projectsCache.find(pr => pr.id === projectId);
-    const asm = p && p.assembly_id ? assemblyById(p.assembly_id) : null;
-
-    if (asm && !showingNewAssemblyFields) {
-      const activos = activeOrdersForAssembly(asm.id);
-      wrap.innerHTML = `
-        <div class="assembly-summary">
-          <div class="as-name">${escapeHtml(asm.name)}</div>
-          <div class="as-meta">${asm.part_number ? 'NP: ' + escapeHtml(asm.part_number) : 'NP: sin definir'} — Pedidos activos: ${activos}${asm.sale_price !== null && asm.sale_price !== undefined ? ' — Precio: ' + formatCurrency(asm.sale_price) : ''}<a class="qa" id="changeAssemblyLink">Cambiar diseño</a></div>
-        </div>
-      `;
-      document.getElementById('changeAssemblyLink').addEventListener('click', () => { showingNewAssemblyFields = true; renderAssemblyBlock(projectId); });
-      return;
-    }
-
-    wrap.innerHTML = `
-      <div class="ensamble-summary" style="border:1px solid var(--orange);">
-        <p class="field-note" style="margin-top:0;">Ligar este ensamble a un diseño del catálogo es opcional — te deja ver cuántos pedidos activos usan el mismo diseño (como "Pedidos activos" en tu Excel), y reutilizar su NP/precio de venta.</p>
-        <div class="form-row single">
-          <div class="field"><label>Diseño de ensamble</label><select id="asmSelect"><option value="">+ Crear diseño nuevo (o dejar sin ligar)</option>${assembliesCache.map(a => `<option value="${a.id}"${asm && asm.id === a.id ? ' selected' : ''}>${escapeHtml(a.name)}${a.part_number ? ' — ' + escapeHtml(a.part_number) : ''}</option>`).join('')}</select></div>
-        </div>
-        <div id="newAsmFieldsWrap"></div>
-        <button type="button" class="submit-btn" id="asmSaveBtn" style="margin-top:6px;">Guardar diseño</button>
-        ${asm ? `<button type="button" class="cancel-btn" id="asmCancelBtn">Cancelar</button>` : ''}
-        <div id="asmMsg" class="msg"></div>
-      </div>
-    `;
-    const sel = document.getElementById('asmSelect');
-    const renderNewAsmFields = () => {
-      const fw = document.getElementById('newAsmFieldsWrap');
-      if (!fw) return;
-      if (sel.value) { fw.innerHTML = ''; return; }
-      fw.innerHTML = `
-        <div class="form-row triple">
-          <div class="field"><label>Nombre del diseño</label><input type="text" id="asmNewName" placeholder="Ej. Walther Nuevo Recto"></div>
-          <div class="field"><label>NP del diseño</label><input type="text" id="asmNewNP" placeholder="Ej. RG-W7C20-H"></div>
-          <div class="field"><label>Precio de venta</label><input type="number" step="any" id="asmNewPrice" placeholder="Ej. 4650"></div>
-        </div>
-        <p class="field-note">Déjalo en blanco si por ahora no quieres ligar este ensamble a ningún diseño del catálogo.</p>
-      `;
-    };
-    renderNewAsmFields();
-    sel.addEventListener('change', renderNewAsmFields);
-    document.getElementById('asmSaveBtn').addEventListener('click', () => saveAssemblyLink(projectId));
-    const cancelBtn = document.getElementById('asmCancelBtn');
-    if (cancelBtn) cancelBtn.addEventListener('click', () => { showingNewAssemblyFields = false; renderAssemblyBlock(projectId); });
-  }
-
-  async function saveAssemblyLink(projectId) {
-    const msg = document.getElementById('asmMsg');
-    const sel = document.getElementById('asmSelect');
-    let assemblyId = sel.value || null;
-
-    if (!assemblyId) {
-      const nameEl = document.getElementById('asmNewName');
-      const name = nameEl ? nameEl.value.trim() : '';
-      if (name) {
-        const npEl = document.getElementById('asmNewNP');
-        const priceEl = document.getElementById('asmNewPrice');
-        const { data, error } = await supabaseClient.from('portal_assemblies').insert({
-          name,
-          part_number: npEl && npEl.value.trim() ? npEl.value.trim() : null,
-          sale_price: priceEl && priceEl.value !== '' ? Number(priceEl.value) : null,
-        }).select('id, name, part_number, sale_price, active').single();
-        if (error) { msg.className = 'msg error'; msg.textContent = 'Error al crear el diseño: ' + error.message; return; }
-        assembliesCache.unshift(data);
-        assemblyId = data.id;
-      }
-    }
-
-    const { error: updError } = await supabaseClient.from('portal_projects').update({ assembly_id: assemblyId }).eq('id', projectId);
-    if (updError) { msg.className = 'msg error'; msg.textContent = 'Error: ' + updError.message; return; }
-    const p = projectsCache.find(pr => pr.id === projectId);
-    if (p) p.assembly_id = assemblyId;
-    showingNewAssemblyFields = false;
-    renderAssemblyBlock(projectId);
-  }
-
-  function renderExistingComponents(projectId) {
-    const wrap = document.getElementById('existingCompWrap');
-    const totalWrap = document.getElementById('compTotalWrap');
-    if (!wrap) return;
-    const rows = componentsCache.filter(c => c.project_id === projectId);
-    if (rows.length === 0) {
-      wrap.innerHTML = '<p class="empty-note">Ningún componente cargado todavía para este ensamble.</p>';
-      if (totalWrap) totalWrap.innerHTML = '';
-      return;
-    }
-    wrap.innerHTML = `
-      <div class="comp-table-scroll">
-      <table class="comp-table">
-        <thead><tr><th>Componente</th><th>NP</th><th>Cant.</th><th>Costo</th><th>Costo total</th><th>Proveedor</th><th>MOQ</th><th>TE</th><th>Disponible</th><th>Estatus</th><th>PO</th><th>Compromiso proveedor</th><th></th></tr></thead>
-        <tbody id="existingCompBody"></tbody>
-      </table>
-      </div>
-    `;
-    const body = document.getElementById('existingCompBody');
-    body.innerHTML = rows.map(c => {
-      const totalCost = Number(c.quantity || 0) * Number(c.unit_cost || 0);
-      return `
-      <tr>
-        <td><span class="r-main">${escapeHtml(c.component_name)}</span></td>
-        <td><input type="text" data-ex-np="${c.id}" value="${escapeHtml(c.part_number || '')}"></td>
-        <td><input type="number" step="any" data-ex-qty="${c.id}" value="${c.quantity ?? 1}"></td>
-        <td><input type="number" step="any" data-ex-cost="${c.id}" value="${c.unit_cost ?? ''}"></td>
-        <td><span class="r-meta">${formatCurrency(totalCost)}</span></td>
-        <td><select data-ex-provider="${c.id}">${providerOptionsHtml(c.provider || '')}</select></td>
-        <td><input type="number" step="any" data-ex-moq="${c.id}" value="${c.moq ?? ''}"></td>
-        <td><input type="text" data-ex-te="${c.id}" value="${escapeHtml(c.lead_time || '')}" placeholder="Ej. 15 días"></td>
-        <td><input type="text" data-ex-disp="${c.id}" value="${escapeHtml(c.availability || '')}" placeholder="Ej. 3 en stock"></td>
-        <td><select data-ex-status="${c.id}">${componentStatusOptionsHtml(c.status)}</select></td>
-        <td><input type="text" data-ex-po="${c.id}" value="${escapeHtml(c.po_number_component || '')}"></td>
-        <td><input type="date" data-ex-date="${c.id}" value="${c.supplier_commitment_date || ''}"></td>
-        <td><a class="qa danger" data-ex-remove="${c.id}">Quitar</a></td>
-      </tr>
-    `;
-    }).join('');
-    rows.forEach(c => {
-      body.querySelector(`[data-ex-np="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'part_number', e.target.value.trim() || null));
-      body.querySelector(`[data-ex-qty="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'quantity', Number(e.target.value) || 0); renderExistingComponents(projectId); renderComprasTableIfVisible(); });
-      body.querySelector(`[data-ex-cost="${c.id}"]`).addEventListener('change', e => { updateComponentField(c.id, 'unit_cost', e.target.value === '' ? null : Number(e.target.value)); renderExistingComponents(projectId); renderComprasTableIfVisible(); });
-      body.querySelector(`[data-ex-provider="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'provider', e.target.value || null));
-      body.querySelector(`[data-ex-moq="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'moq', e.target.value === '' ? null : Number(e.target.value)));
-      body.querySelector(`[data-ex-te="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'lead_time', e.target.value.trim() || null));
-      body.querySelector(`[data-ex-disp="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'availability', e.target.value.trim() || null));
-      body.querySelector(`[data-ex-status="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'status', e.target.value));
-      body.querySelector(`[data-ex-po="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'po_number_component', e.target.value.trim() || null));
-      body.querySelector(`[data-ex-date="${c.id}"]`).addEventListener('change', e => updateComponentField(c.id, 'supplier_commitment_date', e.target.value || null));
-      body.querySelector(`[data-ex-remove="${c.id}"]`).addEventListener('click', async () => {
-        if (!confirm('¿Quitar este componente?')) return;
-        const { error } = await supabaseClient.from('portal_project_components').delete().eq('id', c.id);
-        if (!error) { componentsCache = componentsCache.filter(x => x.id !== c.id); renderExistingComponents(projectId); renderComprasTableIfVisible(); }
-      });
-    });
-
-    if (totalWrap) {
-      const total = rows.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.unit_cost || 0), 0);
-      totalWrap.innerHTML = `<div class="comp-total-row">Costo total del ensamble: ${formatCurrency(total)}</div>`;
-    }
   }
 
   function renderComprasTableIfVisible() {
     if (document.getElementById('compTableWrap')) renderComprasTable();
   }
 
-  function renderNewCompRows() {
-    const wrap = document.getElementById('newCompWrap');
-    const saveBtn = document.getElementById('saveNewCompBtn');
-    if (!wrap) return;
-    if (newRowDrafts.length === 0) {
-      wrap.innerHTML = '';
-      if (saveBtn) saveBtn.classList.add('hidden');
-      return;
+  async function quickRemoveComponent(componentId) {
+    if (!confirm('¿Quitar este componente? Esta acción no se puede deshacer.')) return;
+    const { error } = await supabaseClient.from('portal_assembly_components').delete().eq('id', componentId);
+    if (!error) {
+      componentsCache = componentsCache.filter(c => c.id !== componentId);
+      renderComprasTable();
+      renderAssembliesList();
     }
-    if (saveBtn) saveBtn.classList.remove('hidden');
-    wrap.innerHTML = newRowDrafts.map((row, i) => {
-      const totalCost = Number(row.quantity || 0) * Number(row.unit_cost || 0);
-      return `
-      <div class="form-row" style="grid-template-columns: 1.2fr 0.8fr 0.6fr 0.8fr 0.8fr 0.9fr 0.6fr 0.8fr 0.8fr 1fr 0.8fr 1fr auto; align-items:end;">
-        <div class="field"><label>Componente</label><input type="text" data-new-name="${i}" value="${escapeHtml(row.component_name)}" placeholder="Ej. Motor 3 HP"></div>
-        <div class="field"><label>NP</label><input type="text" data-new-np="${i}" value="${escapeHtml(row.part_number || '')}"></div>
-        <div class="field"><label>Cant.</label><input type="number" step="any" data-new-qty="${i}" value="${row.quantity ?? 1}"></div>
-        <div class="field"><label>Costo</label><input type="number" step="any" data-new-cost="${i}" value="${row.unit_cost ?? ''}"></div>
-        <div class="field"><label>Costo total</label><span class="r-meta">${formatCurrency(totalCost)}</span></div>
-        <div class="field"><label>Proveedor</label><select data-new-provider="${i}">${providerOptionsHtml(row.provider)}</select></div>
-        <div class="field"><label>MOQ</label><input type="number" step="any" data-new-moq="${i}" value="${row.moq ?? ''}"></div>
-        <div class="field"><label>TE</label><input type="text" data-new-te="${i}" value="${escapeHtml(row.lead_time || '')}" placeholder="Ej. 15 días"></div>
-        <div class="field"><label>Disponible</label><input type="text" data-new-disp="${i}" value="${escapeHtml(row.availability || '')}" placeholder="Ej. 3 en stock"></div>
-        <div class="field"><label>Estatus</label><select data-new-status="${i}">${componentStatusOptionsHtml(row.status)}</select></div>
-        <div class="field"><label>PO</label><input type="text" data-new-po="${i}" value="${escapeHtml(row.po_number_component)}" placeholder="OC-..."></div>
-        <div class="field"><label>Compromiso proveedor</label><input type="date" data-new-date="${i}" value="${row.supplier_commitment_date || ''}"></div>
-        <button type="button" class="cancel-btn" data-new-remove="${i}" style="margin-left:0;">Quitar</button>
-      </div>
-    `;
-    }).join('');
-    newRowDrafts.forEach((row, i) => {
-      wrap.querySelector(`[data-new-name="${i}"]`).addEventListener('input', e => { newRowDrafts[i].component_name = e.target.value; });
-      wrap.querySelector(`[data-new-np="${i}"]`).addEventListener('input', e => { newRowDrafts[i].part_number = e.target.value; });
-      wrap.querySelector(`[data-new-qty="${i}"]`).addEventListener('change', e => { newRowDrafts[i].quantity = Number(e.target.value) || 0; renderNewCompRows(); });
-      wrap.querySelector(`[data-new-cost="${i}"]`).addEventListener('change', e => { newRowDrafts[i].unit_cost = e.target.value; renderNewCompRows(); });
-      wrap.querySelector(`[data-new-provider="${i}"]`).addEventListener('change', e => { newRowDrafts[i].provider = e.target.value; });
-      wrap.querySelector(`[data-new-moq="${i}"]`).addEventListener('input', e => { newRowDrafts[i].moq = e.target.value; });
-      wrap.querySelector(`[data-new-te="${i}"]`).addEventListener('input', e => { newRowDrafts[i].lead_time = e.target.value; });
-      wrap.querySelector(`[data-new-disp="${i}"]`).addEventListener('input', e => { newRowDrafts[i].availability = e.target.value; });
-      wrap.querySelector(`[data-new-status="${i}"]`).addEventListener('change', e => { newRowDrafts[i].status = e.target.value; });
-      wrap.querySelector(`[data-new-po="${i}"]`).addEventListener('input', e => { newRowDrafts[i].po_number_component = e.target.value; });
-      wrap.querySelector(`[data-new-date="${i}"]`).addEventListener('change', e => { newRowDrafts[i].supplier_commitment_date = e.target.value; });
-      wrap.querySelector(`[data-new-remove="${i}"]`).addEventListener('click', () => { newRowDrafts.splice(i, 1); renderNewCompRows(); });
-    });
-  }
-
-  async function saveNewCompRows(projectId) {
-    const msg = document.getElementById('newCompMsg');
-    const rows = newRowDrafts.filter(r => r.component_name && r.component_name.trim());
-    if (rows.length === 0) {
-      msg.className = 'msg error';
-      msg.textContent = 'Agrega al menos un componente con nombre antes de guardar.';
-      return;
-    }
-    if (rows.some(r => r.po_number_component && !r.provider)) {
-      msg.className = 'msg error';
-      msg.textContent = 'Falta elegir el proveedor en alguna fila que ya tiene PO capturada.';
-      return;
-    }
-    const payload = rows.map(r => ({
-      project_id: projectId,
-      component_name: r.component_name.trim(),
-      part_number: (r.part_number || '').trim() || null,
-      quantity: Number(r.quantity) || 1,
-      unit_cost: r.unit_cost === '' || r.unit_cost === null || r.unit_cost === undefined ? null : Number(r.unit_cost),
-      moq: r.moq === '' || r.moq === null || r.moq === undefined ? null : Number(r.moq),
-      lead_time: (r.lead_time || '').trim() || null,
-      availability: (r.availability || '').trim() || null,
-      status: r.status || 'cotizar',
-      provider: r.provider || null,
-      po_number_component: r.po_number_component || null,
-      supplier_commitment_date: r.supplier_commitment_date || null,
-    }));
-    const { error } = await supabaseClient.from('portal_project_components').insert(payload);
-    if (error) {
-      msg.className = 'msg error';
-      msg.textContent = 'Error: ' + error.message;
-      return;
-    }
-    msg.className = 'msg success';
-    msg.textContent = 'Componentes agregados correctamente.';
-    newRowDrafts = [];
-    await reloadComponents();
-    renderExistingComponents(projectId);
-    renderNewCompRows();
-    renderComprasTableIfVisible();
   }
 
   function escapeHtml(str) {

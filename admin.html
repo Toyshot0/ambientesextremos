@@ -305,18 +305,34 @@
     return STATUS_ORDER.map(s => `<option value="${s}"${s === selected ? ' selected' : ''}>${STATUS_LABELS[s]}</option>`).join('');
   }
 
-  const PROVIDER_ORDER = ['nsd', 'mazzella', 'watteredge', 'avanta', 'prysmian'];
-  const PROVIDER_LABELS = {
-    nsd: 'NSD',
-    mazzella: 'Mazzella',
-    watteredge: 'Watteredge',
-    avanta: 'Avanta (fabricación propia)',
-    prysmian: 'Prysmian',
-  };
+  // Proveedores: catálogo editable compartido con Despiece de Ensambles
+  // (2026-09-21) — reemplaza la lista fija que había antes. Cualquier
+  // select de proveedor incluye "+ Agregar proveedor nuevo…".
+  const PROVIDER_NEW_VALUE = '__new__';
   function providerOptionsHtml(selected) {
-    return '<option value="">Seleccione...</option>' + PROVIDER_ORDER.map(p => `<option value="${p}"${p === selected ? ' selected' : ''}>${PROVIDER_LABELS[p]}</option>`).join('');
+    return '<option value="">Seleccione...</option>' +
+      providersCache.map(p => `<option value="${p.id}"${p.id === selected ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('') +
+      `<option value="${PROVIDER_NEW_VALUE}">+ Agregar proveedor nuevo…</option>`;
+  }
+  function wireProviderSelect(selectEl, onSelect) {
+    if (!selectEl) return;
+    selectEl.addEventListener('change', async (e) => {
+      if (e.target.value === PROVIDER_NEW_VALUE) {
+        const name = (prompt('Nombre del proveedor nuevo:') || '').trim();
+        if (!name) { e.target.value = ''; return; }
+        const { data, error } = await supabaseClient.from('portal_providers').insert({ name }).select('id, name, active').single();
+        if (error) { alert('No se pudo crear el proveedor: ' + error.message); e.target.value = ''; return; }
+        providersCache.push(data);
+        providersCache.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+        onSelect(data.id);
+        return;
+      }
+      onSelect(e.target.value || null);
+    });
   }
 
+  let providersCache = [];
+  let assembliesCache = [];
   let clientsCache = [];
   let usersCache = [];
   let projectsCache = [];
@@ -561,7 +577,7 @@
           <div class="form-row" style="grid-template-columns: repeat(5, 1fr); margin-bottom:18px;">
             <div class="field"><label>Filtrar por empresa</label><select id="filterClient"><option value="">Todas</option></select></div>
             <div class="field"><label>Filtrar por usuario</label><select id="filterUser"><option value="">Todos</option></select></div>
-            <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option>${PROVIDER_ORDER.map(p => `<option value="${p}">${PROVIDER_LABELS[p]}</option>`).join('')}</select></div>
+            <div class="field"><label>Filtrar por proveedor</label><select id="filterProvider"><option value="">Todos</option></select></div>
             <div class="field"><label>Filtrar por responsable</label><select id="filterResponsable"><option value="">Todos</option><option value="__unassigned__">Sin asignar</option></select></div>
             <div class="field"><label>Filtrar por estatus</label><select id="filterStatus"><option value="">Todos</option><option value="__active__">En curso (no entregados)</option><option value="__con_oc__">Con OC activa</option>${statusOptionsHtml('')}</select></div>
           </div>
@@ -1083,6 +1099,13 @@
             <div class="field"><label>Nombre del proyecto</label><input type="text" id="projectName" required></div>
           </div>
           <div class="form-row single">
+            <div class="field">
+              <label>Diseño de ensamble (opcional)</label>
+              <select id="projectAssembly"><option value="">Sin ensamble ligado</option></select>
+              <p class="field-note">Solo se puede ligar un diseño ya dado de alta en Despiece de Ensambles — si el que necesitas todavía no existe, créalo ahí primero (con todos sus componentes) y luego regresa a ligarlo aquí.</p>
+            </div>
+          </div>
+          <div class="form-row single">
             <div class="field"><label>Descripción</label><textarea id="projectDesc"></textarea></div>
           </div>
           <div class="form-row">
@@ -1143,8 +1166,8 @@
     dateField.disabled = po.value.trim().length === 0;
   }
 
-  function addSupplierRow(provider, po) {
-    supplierRows.push({ provider: provider || '', po_number_supplier: po || '' });
+  function addSupplierRow(providerId, po) {
+    supplierRows.push({ provider_id: providerId || '', po_number_supplier: po || '' });
   }
 
   function renderSupplierRows() {
@@ -1156,13 +1179,13 @@
     }
     wrap.innerHTML = supplierRows.map((row, i) => `
       <div class="form-row" style="grid-template-columns: 1fr 1fr auto; align-items:end;">
-        <div class="field"><label>Proveedor</label><select data-supplier-provider="${i}">${providerOptionsHtml(row.provider)}</select></div>
+        <div class="field"><label>Proveedor</label><select data-supplier-provider="${i}">${providerOptionsHtml(row.provider_id)}</select></div>
         <div class="field"><label>OC a este proveedor</label><input type="text" data-supplier-po="${i}" value="${escapeHtml(row.po_number_supplier)}" placeholder="Ej. OC-9001"></div>
         <button type="button" class="cancel-btn" data-supplier-remove="${i}" style="margin-left:0;">Quitar</button>
       </div>
     `).join('');
     supplierRows.forEach((row, i) => {
-      wrap.querySelector(`[data-supplier-provider="${i}"]`).addEventListener('change', (e) => { supplierRows[i].provider = e.target.value; });
+      wireProviderSelect(wrap.querySelector(`[data-supplier-provider="${i}"]`), (id) => { supplierRows[i].provider_id = id; renderSupplierRows(); });
       wrap.querySelector(`[data-supplier-po="${i}"]`).addEventListener('input', (e) => { supplierRows[i].po_number_supplier = e.target.value; });
       wrap.querySelector(`[data-supplier-remove="${i}"]`).addEventListener('click', () => { supplierRows.splice(i, 1); renderSupplierRows(); });
     });
@@ -1398,12 +1421,15 @@
   }
 
   async function refreshAll() {
+    await loadProviders();
+    await loadAssemblies();
     await loadClients();
     await loadUsers();
     await loadProjects();
     await loadChecklistCounts();
     refreshClientSelects();
     refreshProjectOwnerOptions();
+    refreshAssemblySelect();
     if (currentRole === 'admin') {
       await loadVendedores();
       await loadAdmins();
@@ -1432,12 +1458,39 @@
     if (!fc || !fu) return;
     fc.innerHTML = '<option value="">Todas</option>' + clientsCache.map(c => `<option value="${c.id}">${escapeHtml(c.company_name)}</option>`).join('');
     fu.innerHTML = '<option value="">Todos</option>' + usersCache.map(u => `<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('');
+    const fp = document.getElementById('filterProvider');
+    if (fp) {
+      const current = fp.value;
+      fp.innerHTML = '<option value="">Todos</option>' + providersCache.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+      if (current) fp.value = current;
+    }
     const fr = document.getElementById('filterResponsable');
     if (fr) {
       const current = fr.value;
       fr.innerHTML = '<option value="">Todos</option><option value="__unassigned__">Sin asignar</option>' + vendedoresCache.map(v => `<option value="${v.id}">${escapeHtml(v.full_name)}</option>`).join('');
       if (current) fr.value = current;
     }
+  }
+
+  async function loadProviders() {
+    const { data } = await supabaseClient.from('portal_providers').select('id, name, active').order('name');
+    providersCache = data || [];
+  }
+
+  async function loadAssemblies() {
+    const { data } = await supabaseClient.from('portal_assemblies').select('id, name, part_number, active').order('name');
+    assembliesCache = data || [];
+  }
+
+  // El diseño de ensamble se da de alta primero en Despiece de Ensambles
+  // (con todos sus componentes) — aquí solo se liga un pedido ya existente
+  // a un diseño ya existente, no se crea uno nuevo desde este formulario.
+  function refreshAssemblySelect() {
+    const sel = document.getElementById('projectAssembly');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Sin ensamble ligado</option>' + assembliesCache.map(a => `<option value="${a.id}">${escapeHtml(a.name)}${a.part_number ? ' — ' + escapeHtml(a.part_number) : ''}</option>`).join('');
+    if (current) sel.value = current;
   }
 
   async function loadClients() {
@@ -1537,7 +1590,7 @@
   async function loadProjects() {
     let query = supabaseClient
       .from('portal_projects')
-      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, internal_estimated_date, notes, portal_project_suppliers(id, provider, po_number_supplier)')
+      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, internal_estimated_date, notes, assembly_id, portal_project_suppliers(id, provider_id, po_number_supplier)')
       .order('created_at', { ascending: false });
     if (currentRole === 'vendedor') query = query.eq('owner_vendedor_id', currentStaffId);
     const { data } = await query;
@@ -1845,6 +1898,7 @@
       actual_delivery_date: document.getElementById('projectActualDate').value || null,
       internal_estimated_date: document.getElementById('projectInternalDate').value || null,
       notes: document.getElementById('projectNotes').value || null,
+      assembly_id: document.getElementById('projectAssembly').value || null,
       updated_at: new Date().toISOString(),
     };
     if (currentRole === 'vendedor' && !editingProjectId) {
@@ -1854,8 +1908,8 @@
       if (responsableSel) payload.owner_vendedor_id = responsableSel.value || null;
     }
 
-    const validSuppliers = supplierRows.filter(r => r.provider);
-    if (supplierRows.some(r => !r.provider && r.po_number_supplier)) {
+    const validSuppliers = supplierRows.filter(r => r.provider_id);
+    if (supplierRows.some(r => !r.provider_id && r.po_number_supplier)) {
       msg.className = 'msg error';
       msg.textContent = 'Falta elegir el proveedor en una de las filas de proveedores.';
       return;
@@ -1873,7 +1927,7 @@
     if (!error && projectId) {
       await supabaseClient.from('portal_project_suppliers').delete().eq('project_id', projectId);
       if (validSuppliers.length > 0) {
-        const rows = validSuppliers.map(r => ({ project_id: projectId, provider: r.provider, po_number_supplier: r.po_number_supplier || null }));
+        const rows = validSuppliers.map(r => ({ project_id: projectId, provider_id: r.provider_id, po_number_supplier: r.po_number_supplier || null }));
         ({ error } = await supabaseClient.from('portal_project_suppliers').insert(rows));
       }
     }
@@ -1935,9 +1989,11 @@
     document.getElementById('projectInternalDate').value = p.internal_estimated_date || '';
     document.getElementById('projectUpdateNote').value = '';
     document.getElementById('projectNotes').value = p.notes || '';
+    const projectAssemblySel = document.getElementById('projectAssembly');
+    if (projectAssemblySel) projectAssemblySel.value = p.assembly_id || '';
     const responsableSel = document.getElementById('projectResponsable');
     if (responsableSel) responsableSel.value = p.owner_vendedor_id || '';
-    supplierRows = (p.portal_project_suppliers || []).map(s => ({ provider: s.provider, po_number_supplier: s.po_number_supplier || '' }));
+    supplierRows = (p.portal_project_suppliers || []).map(s => ({ provider_id: s.provider_id, po_number_supplier: s.po_number_supplier || '' }));
     renderSupplierRows();
     updateProjectDateAvailability();
     document.getElementById('projectSubmitBtn').textContent = 'Guardar cambios';
@@ -1955,6 +2011,8 @@
     document.getElementById('projectFolioLine').style.display = 'none';
     document.getElementById('projectOwner').innerHTML = '<option value="">Seleccione una empresa primero...</option>';
     document.getElementById('projectStatus').value = 'activo';
+    const projectAssemblySel = document.getElementById('projectAssembly');
+    if (projectAssemblySel) projectAssemblySel.value = '';
     const responsableSel = document.getElementById('projectResponsable');
     if (responsableSel) responsableSel.value = '';
     document.getElementById('projectSubmitBtn').textContent = 'Crear proyecto';
@@ -1997,7 +2055,7 @@
     return projectsCache.filter(p => {
       if (clientId && p.client_id !== clientId) return false;
       if (userId && p.owner_user_id !== userId) return false;
-      if (provider && !(p.portal_project_suppliers || []).some(s => s.provider === provider)) return false;
+      if (provider && !(p.portal_project_suppliers || []).some(s => s.provider_id === provider)) return false;
       if (responsable === '__unassigned__' && p.owner_vendedor_id) return false;
       if (responsable && responsable !== '__unassigned__' && p.owner_vendedor_id !== responsable) return false;
       if (status === '__active__' && p.status === 'entregado') return false;

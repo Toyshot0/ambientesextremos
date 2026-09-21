@@ -295,14 +295,6 @@
     entrega_programada: 'Entrega programada',
     entregado: 'Entregado',
   };
-  const PROVIDER_LABELS = {
-    nsd: 'NSD',
-    mazzella: 'Mazzella',
-    watteredge: 'Watteredge',
-    avanta: 'Avanta (fabricación propia)',
-    prysmian: 'Prysmian',
-  };
-
   let currentRole = null; // 'admin' | 'vendedor'
   let currentStaffId = null;
   let currentAuthorLabel = null;
@@ -366,7 +358,7 @@
 
     const { data: p } = await supabaseClient
       .from('portal_projects')
-      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, internal_estimated_date, notes, portal_project_suppliers(id, provider, po_number_supplier)')
+      .select('id, folio, client_id, owner_user_id, owner_vendedor_id, name, description, product_service, quantity, quote_number, po_number, status, estimated_delivery_date, actual_delivery_date, internal_estimated_date, notes, portal_project_suppliers(id, po_number_supplier, portal_providers(name))')
       .eq('id', projectId)
       .maybeSingle();
 
@@ -528,7 +520,7 @@
         <h2>Proveedores</h2>
         ${suppliers.length ? suppliers.map(s => `
           <div class="row-item">
-            <span class="r-main">${escapeHtml(PROVIDER_LABELS[s.provider] || s.provider)}</span>
+            <span class="r-main">${escapeHtml(s.portal_providers ? s.portal_providers.name : 'Sin definir')}</span>
             <span class="r-meta">${s.po_number_supplier ? 'OC interna: ' + escapeHtml(s.po_number_supplier) : 'Sin OC interna capturada'}</span>
           </div>
         `).join('') : '<p class="empty-note">Ningún proveedor registrado para este proyecto.</p>'}

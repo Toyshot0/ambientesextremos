@@ -76,6 +76,7 @@
   .submit-btn { background: var(--orange); color: var(--white); border: none; font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; }
   .submit-btn:hover { background: #d0531a; }
   .cancel-btn { background: transparent; color: var(--steel-300); border: 1px solid var(--gunmetal-600); font-family: 'Oswald', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 11px 22px; border-radius: 3px; cursor: pointer; margin-top: 6px; margin-left: 10px; }
+  .cancel-btn.danger { color: #e05a5a; border-color: #e05a5a; }
 
   .msg { font-size: 13px; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: none; }
   .msg.success { background: rgba(60,180,100,0.12); border: 1px solid #2ecc71; color: #7fe0a5; display: block; }
@@ -127,7 +128,7 @@
   body.content-light .panel h2 { color: var(--ink-900); }
   body.content-light .panel .panel-sub { color: var(--ink-600); }
   body.content-light .field label { color: var(--ink-600); }
-  body.content-light .field input, body.content-light .field select { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .field input, body.content-light .field select { background: var(--p-input-bg); border-color: var(--paper-border); color: var(--ink-900); }
   body.content-light .field-note { color: var(--ink-600); }
   body.content-light .cancel-btn { border-color: var(--paper-border); color: var(--ink-600); }
   body.content-light .msg.success { color: #1f7a45; }
@@ -137,7 +138,7 @@
   body.content-light .comp-table th { color: var(--ink-600); border-color: var(--paper-border); }
   body.content-light .comp-table td { border-color: var(--paper-border); }
   body.content-light .comp-table td .r-meta { color: var(--ink-600); }
-  body.content-light .comp-table select, body.content-light .comp-table input { background: var(--white); border-color: var(--paper-border); color: var(--ink-900); }
+  body.content-light .comp-table select, body.content-light .comp-table input { background: var(--p-input-bg); border-color: var(--paper-border); color: var(--ink-900); }
   body.content-light .row-item { border-color: var(--paper-border); }
   body.content-light .row-item .r-meta { color: var(--ink-600); }
   body.content-light .ensamble-summary { background: var(--paper-800); border-color: var(--paper-border); }
@@ -615,6 +616,7 @@
         <button type="button" class="cancel-btn" id="addAsmCompBtn" style="margin-left:0;">+ Agregar componente</button>
         <button type="button" class="submit-btn hidden" id="saveAddAsmCompBtn" style="margin-left:10px;">Guardar nuevos componentes</button>
         <button type="button" class="cancel-btn" id="closeAsmDetailBtn" style="margin-left:10px;">Cerrar</button>
+        ${currentRole === 'admin' ? '<button type="button" class="cancel-btn danger" id="deleteAsmBtn" style="margin-left:10px;">Eliminar ensamble</button>' : ''}
       </div>
     `;
     document.getElementById('asmEditSaveBtn').addEventListener('click', () => saveAssemblyHeader(a.id));
@@ -627,8 +629,34 @@
       openAssemblyId = null;
       renderAssemblyDetail();
     });
+    const deleteBtn = document.getElementById('deleteAsmBtn');
+    if (deleteBtn) deleteBtn.addEventListener('click', () => deleteAssembly(a.id));
     renderExistingAsmComponents(a.id);
     renderAddAsmCompRows(a.id);
+  }
+
+  async function deleteAssembly(assemblyId) {
+    const a = assembliesCache.find(x => x.id === assemblyId);
+    if (!a) return;
+    const activos = activeOrdersForAssembly(assemblyId);
+    const compCount = componentsCache.filter(c => c.assembly_id === assemblyId).length;
+    let warning = `¿Eliminar el ensamble "${a.name}" por completo? Se eliminarán también sus ${compCount} componente(s) cargado(s). Esta acción no se puede deshacer.`;
+    if (activos > 0) {
+      warning += `\n\nAviso: hay ${activos} pedido(s) activo(s) que usan este diseño — no se eliminan los pedidos, pero se quedarán sin diseño ligado.`;
+    }
+    if (!confirm(warning)) return;
+    const msg = document.getElementById('asmDetailMsg');
+    const { error } = await supabaseClient.from('portal_assemblies').delete().eq('id', assemblyId);
+    if (error) {
+      if (msg) { msg.className = 'msg error'; msg.textContent = 'Error al eliminar: ' + error.message; }
+      return;
+    }
+    assembliesCache = assembliesCache.filter(x => x.id !== assemblyId);
+    componentsCache = componentsCache.filter(c => c.assembly_id !== assemblyId);
+    openAssemblyId = null;
+    renderAssembliesList();
+    renderAssemblyDetail();
+    renderComprasTableIfVisible();
   }
 
   async function saveAssemblyHeader(assemblyId) {

@@ -360,12 +360,13 @@
     currentStaffId = session.user.id;
     const sessionEmail = session.user.email || '';
 
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active').eq('id', currentStaffId).single();
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active, full_name').eq('id', currentStaffId).single();
     if (adminRow) {
       if (adminRow.active === false) { await denyInactive(); return; }
       currentRole = 'admin';
       currentStaffEmail = sessionEmail;
-      setStaffIdentity(`<strong>${escapeHtml(sessionEmail)}</strong> — Administrador`);
+      currentStaffFullName = adminRow.full_name || null;
+      setStaffIdentity(`<strong>${escapeHtml(adminRow.full_name || sessionEmail)}</strong> — Administrador`);
       renderAdmin();
       await refreshAll();
       maybeOpenEditFromQuery();
@@ -878,7 +879,7 @@
       ...clientsCache.map(c => ({ kind: 'client', id: c.id, label: c.company_name, meta: 'Empresa cliente', active: c.active !== false })),
       ...usersCache.map(u => ({ kind: 'user', id: u.id, label: u.full_name, meta: `Usuario — ${clientName(u.client_id)}`, active: u.active !== false })),
       ...vendedoresCache.map(v => ({ kind: 'vendedor', id: v.id, label: v.full_name, meta: 'Vendedor AVANTA', active: v.active !== false })),
-      ...adminsCache.map(a => ({ kind: 'admin', id: a.id, label: a.full_name, meta: 'Administrador AVANTA', active: a.active !== false })),
+      ...adminsCache.map(a => ({ kind: 'admin', id: a.id, label: a.full_name || 'Administrador', meta: 'Administrador AVANTA', active: a.active !== false })),
     ];
     if (rows.length === 0) {
       wrap.innerHTML = '<p class="empty-note">Todavía no hay cuentas registradas.</p>';
@@ -1288,11 +1289,11 @@
     vendedoresCache = data || [];
   }
   async function loadAdmins() {
-    // portal_admins NUNCA ha tenido columnas full_name/email (a diferencia
-    // de portal_vendedores/portal_users) — pedirlas aquí hacía fallar esta
-    // consulta completa (error 400 silencioso) y dejaba la lista de
-    // "Personal interno de AVANTA" siempre vacía para administradores.
-    const { data } = await supabaseClient.from('portal_admins').select('id, active').order('id');
+    // Desde el script v13 (2026-09-22), portal_admins sí guarda
+    // full_name/email (antes solo tenía id/active — ver nota histórica
+    // en renderStaffList). Cuentas creadas antes de ese cambio pueden
+    // traer estos dos campos en null; se completan con "Editar nombre".
+    const { data } = await supabaseClient.from('portal_admins').select('id, active, full_name, email').order('id');
     adminsCache = data || [];
   }
   async function toggleStaffActive(role, id, nextActive) {
@@ -1341,25 +1342,23 @@
       const isLastAdmin = s.role === 'admin' && activeAdminCount <= 1 && s.active !== false;
       const canDelete = !isSelf && !isLastAdmin;
 
-      // portal_admins no guarda full_name/email (a diferencia de
-      // portal_vendedores) — solo podemos mostrar un nombre/correo real
-      // para TU PROPIA cuenta (viene de la sesión de Auth). Para otro
-      // administrador no hay forma de mostrarlo desde aquí sin una Edge
-      // Function nueva que consulte Auth por su cuenta — se puede
-      // construir si en algún momento hace falta más detalle.
+      // Desde v13, portal_admins guarda full_name/email igual que
+      // portal_vendedores. Una cuenta de administrador creada ANTES de
+      // ese cambio puede traer ambos en null — se completa el nombre
+      // con "Editar nombre" (ya funciona para admins); el correo, si
+      // falta, solo se puede completar con un UPDATE manual en Supabase
+      // (nunca se guardó en ningún lado más que en Auth).
       let mainName, metaLine, canRename;
       if (s.role === 'vendedor') {
         mainName = escapeHtml(s.full_name);
         metaLine = escapeHtml(s.email) + ' — Vendedor';
         canRename = true;
-      } else if (isSelf) {
-        mainName = escapeHtml(currentStaffEmail || 'Administrador');
-        metaLine = 'Administrador';
-        canRename = false;
       } else {
-        mainName = 'Administrador';
-        metaLine = 'Correo no disponible aquí — revísalo en Supabase → Authentication → Users';
-        canRename = false;
+        const displayName = s.full_name || (isSelf ? currentStaffEmail : null);
+        const displayEmail = s.email || (isSelf ? currentStaffEmail : null);
+        mainName = displayName ? escapeHtml(displayName) : 'Administrador';
+        metaLine = (displayEmail ? escapeHtml(displayEmail) : 'Correo no disponible aquí — revísalo en Supabase → Authentication → Users') + ' — Administrador';
+        canRename = true;
       }
 
       return `
@@ -1415,8 +1414,9 @@
     const sel = document.getElementById('projectResponsable');
     if (!sel) return;
     const current = sel.value;
-    const activos = vendedoresCache.filter(v => v.active !== false);
-    sel.innerHTML = '<option value="">Sin asignar</option>' + activos.map(v => `<option value="${v.id}">${escapeHtml(v.full_name)}</option>`).join('');
+    const vendedorOpts = vendedoresCache.filter(v => v.active !== false).map(v => `<option value="${v.id}">${escapeHtml(v.full_name)}</option>`);
+    const adminOpts = adminsCache.filter(a => a.active !== false).map(a => `<option value="${a.id}">${escapeHtml(a.full_name || 'Administrador')} (Admin)</option>`);
+    sel.innerHTML = '<option value="">Sin asignar</option>' + vendedorOpts.join('') + adminOpts.join('');
     if (current) sel.value = current;
   }
 
@@ -1467,7 +1467,9 @@
     const fr = document.getElementById('filterResponsable');
     if (fr) {
       const current = fr.value;
-      fr.innerHTML = '<option value="">Todos</option><option value="__unassigned__">Sin asignar</option>' + vendedoresCache.map(v => `<option value="${v.id}">${escapeHtml(v.full_name)}</option>`).join('');
+      const vendedorOpts = vendedoresCache.map(v => `<option value="${v.id}">${escapeHtml(v.full_name)}</option>`);
+      const adminOpts = adminsCache.map(a => `<option value="${a.id}">${escapeHtml(a.full_name || 'Administrador')} (Admin)</option>`);
+      fr.innerHTML = '<option value="">Todos</option><option value="__unassigned__">Sin asignar</option>' + vendedorOpts.join('') + adminOpts.join('');
       if (current) fr.value = current;
     }
   }
@@ -1623,7 +1625,10 @@
   function vendedorName(id) {
     if (id === currentStaffId && currentStaffFullName) return currentStaffFullName;
     const v = vendedoresCache.find(v => v.id === id);
-    return v ? v.full_name : '—';
+    if (v) return v.full_name;
+    const a = adminsCache.find(a => a.id === id);
+    if (a) return (a.full_name || 'Administrador') + ' (Admin)';
+    return '—';
   }
 
   function refreshClientSelects() {

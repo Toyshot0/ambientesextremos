@@ -342,6 +342,7 @@
   let currentStaffId = null;
   let currentStaffFullName = null;
   let currentStaffEmail = null; // solo se llena para administradores (viene de la sesión de Auth — portal_admins no guarda correo)
+  let currentIsOwner = false; // true SOLO para la cuenta marcada portal_admins.is_owner — controla quién ve el desglose de "Historial de actividad" por empleado (la restricción real vive en RLS, esto solo oculta el control)
   let supplierRows = []; // [{provider, po_number_supplier}] — filas del formulario de proyecto en edición
 
   function setStaffIdentity(label) {
@@ -360,12 +361,13 @@
     currentStaffId = session.user.id;
     const sessionEmail = session.user.email || '';
 
-    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active, full_name').eq('id', currentStaffId).single();
+    const { data: adminRow } = await supabaseClient.from('portal_admins').select('id, active, full_name, is_owner').eq('id', currentStaffId).single();
     if (adminRow) {
       if (adminRow.active === false) { await denyInactive(); return; }
       currentRole = 'admin';
       currentStaffEmail = sessionEmail;
       currentStaffFullName = adminRow.full_name || null;
+      currentIsOwner = adminRow.is_owner === true;
       setStaffIdentity(`<strong>${escapeHtml(adminRow.full_name || sessionEmail)}</strong> — Administrador`);
       renderAdmin();
       await refreshAll();
@@ -647,6 +649,14 @@
     document.getElementById('staffPwForm').addEventListener('submit', submitStaffChangePassword);
     document.getElementById('grantForm').addEventListener('submit', submitGrant);
     document.getElementById('grantGrantee').addEventListener('change', refreshGrantTargetOptions);
+    const auditFilterSel = document.getElementById('auditEmployeeFilter');
+    if (auditFilterSel) {
+      auditFilterSel.addEventListener('change', async () => {
+        auditEmployeeId = auditFilterSel.value || '';
+        await loadAuditoria();
+        renderAuditoria();
+      });
+    }
     supplierRows = [];
     renderSupplierRows();
     updateProjectDateAvailability();
@@ -908,34 +918,55 @@
   // sesión) con el historial de cambios de estatus de proyectos que ya
   // existía, en un solo feed ordenado por fecha (más reciente primero). ----
   function historialActividadPanelHtml() {
+    // El filtro por empleado solo se ofrece a la cuenta marcada como "dueño"
+    // (portal_admins.is_owner) — para cualquier otro administrador este
+    // panel se queda exactamente como antes (feed combinado sin filtro). La
+    // restricción real vive en RLS (portal_login_events solo lo puede leer
+    // el dueño); esto solo oculta el control a quien de todas formas no
+    // podría usarlo.
+    const employeeFilterHtml = currentIsOwner ? `
+      <div class="form-row single" style="margin-bottom:14px;">
+        <div class="field"><label>Ver actividad de</label><select id="auditEmployeeFilter"><option value="">Todos (feed general)</option></select></div>
+      </div>
+    ` : '';
     return `
       <div class="panel" id="panel-historial-actividad">
         <h2>Historial de actividad</h2>
-        <p class="panel-sub">Accesos al portal y actualizaciones de estatus publicadas en cualquier proyecto, de más reciente a más antigua.</p>
+        <p class="panel-sub">Accesos al portal y actualizaciones de estatus publicadas en cualquier proyecto, de más reciente a más antigua.${currentIsOwner ? ' Como dueño de la cuenta, puedes filtrar por empleado específico.' : ''}</p>
+        ${employeeFilterHtml}
         <div id="auditoriaList"></div>
       </div>
     `;
   }
 
   let auditoriaCache = [];
+  let auditEmployeeId = ''; // '' = feed general sin filtro; si no, filtra por esa persona (vendedor o admin) — solo se puede fijar desde el control de arriba, visible solo para el dueño
   async function loadAuditoria() {
-    const [updatesRes, loginsRes] = await Promise.all([
-      supabaseClient
-        .from('portal_project_updates')
-        .select('id, status, note, created_at, portal_projects(name, client_id)')
-        .order('created_at', { ascending: false })
-        .limit(50),
-      supabaseClient
-        .from('portal_login_events')
-        .select('id, actor_role, actor_label, created_at')
-        .order('created_at', { ascending: false })
-        .limit(50),
-    ]);
+    let updatesQuery = supabaseClient
+      .from('portal_project_updates')
+      .select('id, status, note, created_at, changed_by_role, changed_by_id, changed_by_label, portal_projects(name, client_id)')
+      .order('created_at', { ascending: false });
+    let loginsQuery = supabaseClient
+      .from('portal_login_events')
+      .select('id, actor_id, actor_role, actor_label, created_at')
+      .order('created_at', { ascending: false });
+
+    if (auditEmployeeId) {
+      // Filtrado por empleado — sin el tope genérico de 50/80 del feed
+      // general, para no perder registros viejos de esa persona.
+      updatesQuery = updatesQuery.eq('changed_by_id', auditEmployeeId).limit(200);
+      loginsQuery = loginsQuery.eq('actor_id', auditEmployeeId).limit(200);
+    } else {
+      updatesQuery = updatesQuery.limit(50);
+      loginsQuery = loginsQuery.limit(50);
+    }
+
+    const [updatesRes, loginsRes] = await Promise.all([updatesQuery, loginsQuery]);
     const updates = (updatesRes.error ? [] : (updatesRes.data || [])).map(u => ({ type: 'update', created_at: u.created_at, data: u }));
     const logins = (loginsRes.error ? [] : (loginsRes.data || [])).map(l => ({ type: 'login', created_at: l.created_at, data: l }));
     auditoriaCache = [...updates, ...logins]
       .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
-      .slice(0, 80);
+      .slice(0, auditEmployeeId ? 300 : 80);
   }
   function renderAuditoria() {
     const wrap = document.getElementById('auditoriaList');
@@ -959,10 +990,11 @@
       const proj = u.portal_projects;
       const projName = proj ? proj.name : '—';
       const cliente = proj ? clientName(proj.client_id) : '—';
+      const byLabel = u.changed_by_label ? ` — por ${escapeHtml(u.changed_by_label)}` : '';
       return `
         <div class="row-item">
           <span class="r-main">${escapeHtml(projName)}</span>
-          <span class="r-meta">${escapeHtml(cliente)} — ${escapeHtml(STATUS_LABELS[u.status] || u.status)} — ${formatDateShort((u.created_at || '').slice(0, 10))}${u.note ? ' — ' + escapeHtml(u.note) : ''}</span>
+          <span class="r-meta">${escapeHtml(cliente)} — ${escapeHtml(STATUS_LABELS[u.status] || u.status)} — ${formatDateShort((u.created_at || '').slice(0, 10))}${byLabel}${u.note ? ' — ' + escapeHtml(u.note) : ''}</span>
         </div>
       `;
     }).join('');
@@ -1420,6 +1452,21 @@
     if (current) sel.value = current;
   }
 
+  // Desplegable "Ver actividad de" del Historial de actividad — solo existe
+  // en el DOM cuando currentIsOwner es true (ver historialActividadPanelHtml).
+  // Incluye empleados desactivados a propósito (a diferencia de
+  // refreshResponsableOptions): para revisar historial, un empleado que ya
+  // no tiene acceso sigue siendo válido buscarlo.
+  function refreshAuditEmployeeFilter() {
+    const sel = document.getElementById('auditEmployeeFilter');
+    if (!sel) return;
+    const current = sel.value;
+    const vendedorOpts = vendedoresCache.map(v => `<option value="${v.id}">${escapeHtml(v.full_name)} (Vendedor)${v.active === false ? ' — desactivado' : ''}</option>`);
+    const adminOpts = adminsCache.map(a => `<option value="${a.id}">${escapeHtml(a.full_name || 'Administrador')} (Admin)${a.active === false ? ' — desactivado' : ''}</option>`);
+    sel.innerHTML = '<option value="">Todos (feed general)</option>' + vendedorOpts.join('') + adminOpts.join('');
+    if (current) sel.value = current;
+  }
+
   async function refreshAll() {
     await loadProviders();
     await loadAssemblies();
@@ -1444,6 +1491,7 @@
       renderGrants();
       await loadAuditoria();
       renderAuditoria();
+      if (currentIsOwner) refreshAuditEmployeeFilter();
       refreshFilterSelects();
     } else {
       refreshFilterSelects();
@@ -1940,7 +1988,14 @@
     // Registrar en el historial cuando el estatus realmente cambió (incluye
     // el caso de un proyecto nuevo, que "cambia" de nada a su estatus inicial).
     if (!error && projectId && status !== previousStatus) {
-      await supabaseClient.from('portal_project_updates').insert({ project_id: projectId, status, note: updateNote });
+      await supabaseClient.from('portal_project_updates').insert({
+        project_id: projectId,
+        status,
+        note: updateNote,
+        changed_by_role: currentRole,
+        changed_by_id: currentStaffId,
+        changed_by_label: currentStaffFullName || currentStaffEmail || null,
+      });
     }
 
     msg.className = error ? 'msg error' : 'msg success';
